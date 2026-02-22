@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: obras-link-db
+    environment:
+      POSTGRES_DB: obraslink
+      POSTGRES_USER: obraslink
+      POSTGRES_PASSWORD: obraslink123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - obras-link-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U obraslink"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: obras-link-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/obraslink
+      SPRING_DATASOURCE_USERNAME: obraslink
+      SPRING_DATASOURCE_PASSWORD: obraslink123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - obras-link-network
+
+volumes:
+  postgres_data:
+
+networks:
+  obras-link-network:
+    driver: bridge
