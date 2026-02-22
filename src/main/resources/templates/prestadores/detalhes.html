@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+
+<head th:replace="~{fragments/layout :: head(${prestador.nome} + ' - Obras Link')}"></head>
+
+<body>
+
+    <nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+    <div class="container" style="padding-top: 120px; padding-bottom: 60px; min-height: 80vh;">
+        <div class="pure-g">
+            <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 24px;">
+                <!-- Profile Sidebar -->
+                <div
+                    style="background: #fff; border-radius: var(--radius-md); padding: 32px 24px; box-shadow: var(--shadow-sm); text-align: center;">
+                    <div
+                        style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary)); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 20px; font-family: 'Outfit', sans-serif; font-weight: 700;">
+                        <span th:text="${#strings.substring(prestador.nome, 0, 1)}">P</span>
+                    </div>
+
+                    <h2 th:text="${prestador.nome}" style="margin-bottom: 8px; font-size: 1.4rem;">Nome do Profissional
+                    </h2>
+                    <div
+                        style="display: inline-block; background: rgba(230,126,34,.1); color: var(--color-primary-dark); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-bottom: 16px;">
+                        <span th:text="${prestador.categoria.icone} + ' ' + ${prestador.categoria.nome}">🧱
+                            Pedreiro</span>
+                    </div>
+
+                    <div
+                        style="text-align: left; margin-top: 24px; border-top: 1px solid var(--color-border); padding-top: 20px;">
+                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
+                            <strong>Experiência:</strong> <span th:text="${prestador.anosExperiencia} + ' anos'">5
+                                anos</span>
+                        </p>
+                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
+                            <strong>Preço mínimo:</strong> <span th:text="'R$ ' + ${prestador.precoMinimo}">R$
+                                50.00</span>
+                        </p>
+                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
+                            <strong>Email:</strong> <span th:text="${prestador.email}">email@exemplo.com</span>
+                        </p>
+                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
+                            <strong>Local:</strong> <span
+                                th:text="${prestador.endereco.cidade} + ' - ' + ${prestador.endereco.estado}">São Paulo
+                                - SP</span>
+                        </p>
+                    </div>
+
+                    <div style="margin-top: 32px;">
+                        <a href="mailto:" th:href="'mailto:' + ${prestador.email}" class="btn btn-primary"
+                            style="width: 100%;">Entrar em Contato</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pure-u-1 pure-u-md-2-3">
+                <!-- Main Content -->
+                <div
+                    style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+                    <h3
+                        style="margin-bottom: 16px; border-bottom: 2px solid var(--color-surface-alt); padding-bottom: 12px;">
+                        Sobre</h3>
+                    <p style="line-height: 1.8; color: var(--color-text-light);"
+                        th:text="${prestador.descricao ?: 'O profissional ainda não adicionou uma descrição.'}">
+                        Descrição do perfil do profissional.
+                    </p>
+                </div>
+
+                <div
+                    style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--color-surface-alt); padding-bottom: 12px; margin-bottom: 24px;">
+                        <h3 style="margin: 0;">Serviços Oferecidos</h3>
+                        <a th:href="@{/servicos/novo(prestadorId=${prestador.id})}" class="btn btn-outline"
+                            style="padding: 6px 12px; font-size: 0.8rem;">+ Adicionar Serviço</a>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(prestador.servicos)}"
+                        style="padding: 24px; text-align: center; color: var(--color-text-muted); background: var(--color-surface-alt); border-radius: var(--radius-sm);">
+                        Este profissional ainda não adicionou serviços específicos.
+                    </div>
+
+                    <div th:unless="${#lists.isEmpty(prestador.servicos)}" class="pure-g">
+                        <div th:each="servico : ${prestador.servicos}" class="pure-u-1 pure-u-md-1-2"
+                            style="padding: 12px;">
+                            <div
+                                style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 20px;">
+                                <h4 th:text="${servico.titulo}" style="margin-bottom: 8px;">Título do Serviço</h4>
+                                <p th:text="${servico.descricao}"
+                                    style="font-size: 0.9rem; color: var(--color-text-light); margin-bottom: 16px; min-height: 48px;">
+                                    Descrição do serviço em detalhes.</p>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 700; color: var(--color-primary-dark);"
+                                        th:text="'R$ ' + ${servico.preco}">R$ 100.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+
+</html>

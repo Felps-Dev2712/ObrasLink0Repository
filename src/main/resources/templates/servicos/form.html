@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+
+<head th:replace="~{fragments/layout :: head('Cadastro de Serviço - Obras Link')}"></head>
+
+<body>
+
+    <nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+    <div class="container" style="padding-top: 100px; min-height: 80vh; max-width: 800px;">
+        <h2 th:text="${servico.id == null ? 'Novo Serviço' : 'Editar Serviço'}" style="margin-bottom: 24px;">Novo
+            Serviço</h2>
+
+        <div style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
+            <form class="pure-form pure-form-stacked"
+                th:action="@{${servico.id == null ? '/servicos' : '/servicos/' + servico.id}}" th:object="${servico}"
+                method="post">
+
+                <fieldset>
+                    <div class="pure-g">
+                        <div class="pure-u-1" style="margin-bottom: 16px;">
+                            <label for="titulo">Título do Serviço</label>
+                            <input id="titulo" type="text" th:field="*{titulo}" class="pure-u-1"
+                                placeholder="Ex: Construção de muro de arrimo" required>
+                        </div>
+
+                        <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px; margin-bottom: 16px;">
+                            <label for="prestador">Profissional / Responsável</label>
+                            <select id="prestador" th:field="*{prestador}" class="pure-u-1" required>
+                                <option value="">Selecione...</option>
+                                <option th:each="p : ${prestadores}" th:value="${p.id}" th:text="${p.nome}"></option>
+                            </select>
+                        </div>
+                        <div class="pure-u-1 pure-u-md-1-2" style="margin-bottom: 16px;">
+                            <label for="categoria">Categoria do Serviço</label>
+                            <select id="categoria" th:field="*{categoria}" class="pure-u-1" required>
+                                <option value="">Selecione...</option>
+                                <option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px; margin-bottom: 16px;">
+                            <label for="preco">Preço / Orçamento Inicial (R$)</label>
+                            <input id="preco" type="number" step="0.01" th:field="*{preco}" class="pure-u-1">
+                        </div>
+                        <div class="pure-u-1 pure-u-md-1-2"
+                            style="margin-bottom: 16px; display: flex; align-items: flex-end;">
+                            <label for="disponivel" class="pure-checkbox" style="padding-bottom: 10px;">
+                                <input id="disponivel" type="checkbox" th:field="*{disponivel}"> Serviço Ativo
+                                (Disponível Vitrine)
+                            </label>
+                        </div>
+
+                        <div class="pure-u-1" style="margin-bottom: 16px;">
+                            <label for="descricao">Descrição Detalhada do Serviço</label>
+                            <textarea id="descricao" th:field="*{descricao}" class="pure-u-1" rows="5" required
+                                placeholder="Descreva o que está incluso no pacote de serviço..."></textarea>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: flex-end;">
+                    <a href="javascript:history.back()" class="btn btn-outline"
+                        style="border: 1px solid var(--color-border); color: var(--color-text);">Cancelar</a>
+                    <button type="submit" class="btn btn-primary" style="border: none;">Salvar Serviço</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+
+</html>

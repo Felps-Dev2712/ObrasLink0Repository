@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Obras Link — Conecte-se com os melhores profissionais da construção civil.">
+    <title th:text="${title}">Obras Link</title>
+
+    <!-- Pure CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/grids-responsive-min.css">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
+
+    <!-- htmx -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+
+<body>
+
+    <!-- ========== NAVBAR ========== -->
+    <nav class="navbar" id="navbar" th:fragment="navbar">
+        <div class="container">
+            <a href="/" class="navbar-brand">
+                <span class="brand-icon">🏗️</span>
+                Obras<span>Link</span>
+            </a>
+
+            <button class="navbar-toggle" id="navbar-toggle" aria-label="Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <ul class="navbar-nav" id="navbar-nav">
+                <li><a href="/servicos">Serviços</a></li>
+                <li><a href="/vitrine">Vitrine</a></li>
+                <li><a href="/prestadores">Profissionais</a></li>
+                <li><a href="/clientes">Clientes</a></li>
+            </ul>
+
+            <div class="navbar-cta">
+                <a href="/prestadores/novo" class="btn btn-primary">Cadastrar Especialista</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="footer" th:fragment="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-about">
+                    <div class="footer-brand">
+                        🏗️ Obras<span>Link</span>
+                    </div>
+                    <p>Conectando profissionais da construção civil com clientes em todo o Brasil. Qualidade, confiança
+                        e praticidade em um só lugar.</p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Plataforma</h4>
+                    <ul>
+                        <li><a href="/vitrine">Vitrine de Serviços</a></li>
+                        <li><a href="/prestadores">Profissionais</a></li>
+                        <li><a href="/clientes">Clientes</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Cadastro</h4>
+                    <ul>
+                        <li><a href="/clientes/novo">Sou Cliente</a></li>
+                        <li><a href="/prestadores/novo">Sou Profissional</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Contato</h4>
+                    <ul>
+                        <li><a href="mailto:contato@obraslink.com.br">contato@obraslink.com.br</a></li>
+                        <li><a href="#">Suporte</a></li>
+                        <li><a href="#">Termos de Uso</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                &copy; 2026 Obras Link. Todos os direitos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========== SCRIPTS ========== -->
+    <th:block th:fragment="scripts">
+        <script>
+            // Navbar scroll effect
+            const navbar = document.getElementById('navbar');
+            if (navbar) {
+                window.addEventListener('scroll', () => {
+                    navbar.classList.toggle('scrolled', window.scrollY > 20);
+                });
+            }
+
+            // Mobile menu toggle
+            const navToggle = document.getElementById('navbar-toggle');
+            const navMenu = document.getElementById('navbar-nav');
+            if (navToggle && navMenu) {
+                navToggle.addEventListener('click', () => {
+                    navMenu.classList.toggle('open');
+                });
+
+                // Close menu on link click
+                navMenu.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        navMenu.classList.remove('open');
+                    });
+                });
+            }
+
+            // Scroll-reveal (fade-in) with IntersectionObserver
+            const fadeEls = document.querySelectorAll('.fade-in');
+            if (fadeEls.length > 0) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.15 });
+
+                fadeEls.forEach(el => observer.observe(el));
+            }
+        </script>
+    </th:block>
+
+</body>
+
+</html>

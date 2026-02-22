@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+
+<head th:replace="~{fragments/layout :: head('Vitrine de Serviços - Obras Link')}"></head>
+
+<body>
+
+    <nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+    <div style="background: var(--color-secondary-dark); color: white; padding: 120px 0 60px 0; text-align: center;">
+        <div class="container">
+            <h1 style="font-family: var(--font-heading); margin-bottom: 16px; font-size: 2.5rem;">Vitrine de Serviços
+            </h1>
+            <p style="font-size: 1.1rem; color: rgba(255,255,255,0.8); max-width: 600px; margin: 0 auto;">
+                Explore especialistas e serviços para impulsionar a sua obra ou reforma.
+            </p>
+        </div>
+    </div>
+
+    <div class="container" style="padding-top: 40px; min-height: 60vh; padding-bottom: 60px;">
+        <!-- Filters -->
+        <div
+            style="background: #fff; padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 32px;">
+            <form action="/vitrine" method="get" class="pure-form"
+                style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;">
+                <div style="flex: 1; min-width: 250px;">
+                    <label for="categoria" style="display: block; margin-bottom: 8px; font-weight: 500;">Filtrar por
+                        Categoria</label>
+                    <select name="categoriaId" id="categoria" class="pure-input-1" onchange="this.form.submit()">
+                        <option value="">Todas as Categorias</option>
+                        <option th:each="cat : ${categorias}" th:value="${cat.id}"
+                            th:text="${cat.icone} + ' ' + ${cat.nome}" th:selected="${cat.id == categoriaAtiva}">
+                        </option>
+                    </select>
+                </div>
+                <div style="padding-bottom: 2px;">
+                    <button type="submit" class="btn btn-primary" style="height: 40px; line-height: 1;">Buscar</button>
+                    <a href="/vitrine" class="btn btn-outline"
+                        style="height: 40px; line-height: 1; margin-left: 8px;">Limpar</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Service Cards Grid -->
+        <div th:if="${#lists.isEmpty(servicos)}"
+            style="text-align: center; padding: 60px 20px; background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 3rem; margin-bottom: 16px;">🔍</div>
+            <h3>Nenhum serviço encontrado.</h3>
+            <p style="color: var(--color-text-light);">Tente limpar os filtros ou buscar por outra categoria.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(servicos)}" class="pure-g">
+            <div th:each="servico : ${servicos}" class="pure-u-1 pure-u-md-1-2 pure-u-lg-1-3"
+                style="padding: 12px; display: flex;">
+                <div
+                    style="background: #fff; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 24px; transition: transform 0.2s ease, box-shadow 0.2s ease; display: flex; flex-direction: column; width: 100%; border: 1px solid var(--color-border); border-top: 4px solid var(--color-primary);">
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                        <span
+                            style="background: rgba(230,126,34,.1); color: var(--color-primary-dark); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+                            <span th:text="${servico.categoria.icone}">🧱</span> <span
+                                th:text="${servico.categoria.nome}">Categoria</span>
+                        </span>
+                        <span style="font-weight: 700; color: var(--color-secondary); font-size: 1.1rem;"
+                            th:if="${servico.preco != null}" th:text="'R$ ' + ${servico.preco}">
+                            R$ 150.00
+                        </span>
+                    </div>
+
+                    <h3 th:text="${servico.titulo}" style="margin-top: 0; margin-bottom: 12px; font-size: 1.2rem;">
+                        Título do Serviço</h3>
+                    <p th:text="${#strings.abbreviate(servico.descricao, 120)}"
+                        style="color: var(--color-text-light); font-size: 0.9rem; flex-grow: 1; margin-bottom: 24px; line-height: 1.6;">
+                        Descrição curta do serviço.</p>
+
+                    <div
+                        style="border-top: 1px solid var(--color-surface-alt); padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div
+                                style="width: 32px; height: 32px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: bold;">
+                                <span th:text="${#strings.substring(servico.prestador.nome, 0, 1)}">P</span>
+                            </div>
+                            <div style="font-size: 0.85rem; font-weight: 500; color: var(--color-secondary);">
+                                <span th:text="${servico.prestador.nome}">Nome Prestador</span>
+                            </div>
+                        </div>
+                        <a th:href="@{/prestadores/{id}(id=${servico.prestador.id})}" class="btn btn-outline"
+                            style="padding: 4px 12px; font-size: 0.8rem; border-color: var(--color-primary); color: var(--color-primary-dark);">Ver
+                            Perfil</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+
+</html>

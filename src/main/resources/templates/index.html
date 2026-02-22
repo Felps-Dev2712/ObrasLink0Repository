@@ -1,49 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Obras Link — Conecte-se com os melhores profissionais da construção civil. Pedreiros, mestres de obras e empreiteiras prontos para seu projeto.">
-    <title>Obras Link — Plataforma de Serviços de Construção Civil</title>
 
-    <!-- Pure CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/grids-responsive-min.css">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
 
-    <!-- Custom Styles -->
-    <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
-
-    <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-</head>
 <body>
 
     <!-- ========== NAVBAR ========== -->
-    <nav class="navbar" id="navbar">
-        <div class="container">
-            <a href="/" class="navbar-brand">
-                <span class="brand-icon">🏗️</span>
-                Obras<span>Link</span>
-            </a>
-
-            <button class="navbar-toggle" id="navbar-toggle" aria-label="Menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-
-            <ul class="navbar-nav" id="navbar-nav">
-                <li><a href="#servicos">Serviços</a></li>
-                <li><a href="#como-funciona">Como Funciona</a></li>
-                <li><a href="/vitrine">Vitrine</a></li>
-                <li><a href="/prestadores">Profissionais</a></li>
-            </ul>
-
-            <div class="navbar-cta">
-                <a href="/cadastro" class="btn btn-primary">Cadastrar</a>
-            </div>
-        </div>
-    </nav>
+    <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
     <!-- ========== HERO ========== -->
     <section class="hero" id="hero">
@@ -64,7 +27,8 @@
                 </h1>
 
                 <p>
-                    Conectamos você aos pedreiros, mestres de obras e empreiteiras mais qualificados da região. Solicite orçamentos, compare perfis e contrate com confiança.
+                    Conectamos você aos pedreiros, mestres de obras e empreiteiras mais qualificados da região. Solicite
+                    orçamentos, compare perfis e contrate com confiança.
                 </p>
 
                 <div class="hero-actions">
@@ -78,16 +42,16 @@
 
                 <div class="hero-stats">
                     <div class="hero-stat">
-                        <div class="number">500+</div>
+                        <div class="number" th:text="${totalPrestadores ?: '500+'}">500+</div>
                         <div class="label">Profissionais</div>
                     </div>
                     <div class="hero-stat">
-                        <div class="number">1.200+</div>
+                        <div class="number" th:text="${totalServicos ?: '1.200+'}">1.200+</div>
                         <div class="label">Obras Realizadas</div>
                     </div>
                     <div class="hero-stat">
-                        <div class="number">98%</div>
-                        <div class="label">Satisfação</div>
+                        <div class="number" th:text="${totalClientes ?: '98%'}">98%</div>
+                        <div class="label">Clientes</div>
                     </div>
                 </div>
             </div>
@@ -111,7 +75,8 @@
             <div class="section-header fade-in">
                 <span class="section-label">Nossos Serviços</span>
                 <h2>Encontre o profissional ideal para cada etapa da sua obra</h2>
-                <p>Profissionais qualificados e prontos para atender você em diversas especialidades da construção civil.</p>
+                <p>Profissionais qualificados e prontos para atender você em diversas especialidades da construção
+                    civil.</p>
             </div>
 
             <div class="services-grid">
@@ -119,48 +84,54 @@
                 <div class="service-card fade-in fade-in-delay-1">
                     <div class="service-card-icon">🧱</div>
                     <h3>Pedreiro</h3>
-                    <p>Construção de paredes, muros, pisos e acabamentos. Profissionais experientes para obras residenciais e comerciais.</p>
-                    <a href="/vitrine?categoria=pedreiro" class="card-link">Ver profissionais →</a>
+                    <p>Construção de paredes, muros, pisos e acabamentos. Profissionais experientes para obras
+                        residenciais e comerciais.</p>
+                    <a href="/vitrine?categoria=1" class="card-link">Ver profissionais →</a>
                 </div>
 
                 <!-- Mestre de Obras -->
                 <div class="service-card fade-in fade-in-delay-2">
                     <div class="service-card-icon">👷</div>
                     <h3>Mestre de Obras</h3>
-                    <p>Coordenação e supervisão completa da sua obra. Gestão de equipe, materiais e cronograma do início ao fim.</p>
-                    <a href="/vitrine?categoria=mestre-de-obras" class="card-link">Ver profissionais →</a>
+                    <p>Coordenação e supervisão completa da sua obra. Gestão de equipe, materiais e cronograma do início
+                        ao fim.</p>
+                    <a href="/vitrine?categoria=2" class="card-link">Ver profissionais →</a>
                 </div>
 
                 <!-- Empreiteira -->
                 <div class="service-card fade-in fade-in-delay-3">
                     <div class="service-card-icon">🏢</div>
                     <h3>Empreiteira</h3>
-                    <p>Empresas especializadas para projetos completos. Da fundação ao acabamento, com equipe qualificada e garantia de serviço.</p>
-                    <a href="/vitrine?categoria=empreiteira" class="card-link">Ver profissionais →</a>
+                    <p>Empresas especializadas para projetos completos. Da fundação ao acabamento, com equipe
+                        qualificada e garantia de serviço.</p>
+                    <a href="/vitrine?categoria=3" class="card-link">Ver profissionais →</a>
                 </div>
 
                 <!-- Eletricista -->
                 <div class="service-card fade-in fade-in-delay-1">
                     <div class="service-card-icon">⚡</div>
                     <h3>Eletricista</h3>
-                    <p>Instalações elétricas residenciais e comerciais. Fiação, quadros de distribuição, iluminação e manutenção elétrica.</p>
-                    <a href="/vitrine?categoria=eletricista" class="card-link">Ver profissionais →</a>
+                    <p>Instalações elétricas residenciais e comerciais. Fiação, quadros de distribuição, iluminação e
+                        manutenção elétrica.</p>
+                    <a href="/vitrine?categoria=4" class="card-link">Ver profissionais →</a>
                 </div>
 
                 <!-- Encanador -->
                 <div class="service-card fade-in fade-in-delay-2">
                     <div class="service-card-icon">🔧</div>
                     <h3>Encanador</h3>
-                    <p>Sistemas hidráulicos completos. Instalação e manutenção de tubulações, registros, aquecedores e esgoto.</p>
-                    <a href="/vitrine?categoria=encanador" class="card-link">Ver profissionais →</a>
+                    <p>Sistemas hidráulicos completos. Instalação e manutenção de tubulações, registros, aquecedores e
+                        esgoto.</p>
+                    <a href="/vitrine?categoria=5" class="card-link">Ver profissionais →</a>
                 </div>
 
                 <!-- Pintor -->
                 <div class="service-card fade-in fade-in-delay-3">
                     <div class="service-card-icon">🎨</div>
                     <h3>Pintor</h3>
-                    <p>Pintura interna e externa com acabamento impecável. Texturas, efeitos decorativos e impermeabilização.</p>
-                    <a href="/vitrine?categoria=pintor" class="card-link">Ver profissionais →</a>
+                    <p>Pintura interna e externa com acabamento impecável. Texturas, efeitos decorativos e
+                        impermeabilização.</p>
+                    <a href="/vitrine?categoria=6" class="card-link">Ver profissionais →</a>
                 </div>
             </div>
         </div>
@@ -238,84 +209,11 @@
     </section>
 
     <!-- ========== FOOTER ========== -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-about">
-                    <div class="footer-brand">
-                        🏗️ Obras<span>Link</span>
-                    </div>
-                    <p>Conectando profissionais da construção civil com clientes em todo o Brasil. Qualidade, confiança e praticidade em um só lugar.</p>
-                </div>
-
-                <div class="footer-col">
-                    <h4>Plataforma</h4>
-                    <ul>
-                        <li><a href="/vitrine">Vitrine de Serviços</a></li>
-                        <li><a href="/prestadores">Profissionais</a></li>
-                        <li><a href="#como-funciona">Como Funciona</a></li>
-                    </ul>
-                </div>
-
-                <div class="footer-col">
-                    <h4>Cadastro</h4>
-                    <ul>
-                        <li><a href="/clientes/novo">Sou Cliente</a></li>
-                        <li><a href="/prestadores/novo">Sou Profissional</a></li>
-                        <li><a href="/login">Entrar</a></li>
-                    </ul>
-                </div>
-
-                <div class="footer-col">
-                    <h4>Contato</h4>
-                    <ul>
-                        <li><a href="mailto:contato@obraslink.com.br">contato@obraslink.com.br</a></li>
-                        <li><a href="#">Suporte</a></li>
-                        <li><a href="#">Termos de Uso</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="footer-bottom">
-                &copy; 2026 Obras Link. Todos os direitos reservados.
-            </div>
-        </div>
-    </footer>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 
     <!-- ========== SCRIPTS ========== -->
-    <script>
-        // Navbar scroll effect
-        const navbar = document.getElementById('navbar');
-        window.addEventListener('scroll', () => {
-            navbar.classList.toggle('scrolled', window.scrollY > 20);
-        });
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 
-        // Mobile menu toggle
-        const navToggle = document.getElementById('navbar-toggle');
-        const navMenu = document.getElementById('navbar-nav');
-        navToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('open');
-        });
-
-        // Close menu on link click
-        navMenu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navMenu.classList.remove('open');
-            });
-        });
-
-        // Scroll-reveal (fade-in) with IntersectionObserver
-        const fadeEls = document.querySelectorAll('.fade-in');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.15 });
-
-        fadeEls.forEach(el => observer.observe(el));
-    </script>
 </body>
+
 </html>

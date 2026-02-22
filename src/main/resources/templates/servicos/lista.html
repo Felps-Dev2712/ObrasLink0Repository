@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+
+<head th:replace="~{fragments/layout :: head('Serviços - Obras Link')}"></head>
+
+<body>
+
+    <nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+    <div class="container" style="padding-top: 100px; min-height: 80vh;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2>Gerenciar Serviços</h2>
+            <a href="/servicos/novo" class="btn btn-primary">Novo Serviço</a>
+        </div>
+
+        <div th:if="${mensagem}" class="alert alert-success"
+            style="padding: 12px; background: #d4edda; color: #155724; border-radius: var(--radius-sm); margin-bottom: 20px;">
+            <span th:text="${mensagem}"></span>
+        </div>
+
+        <div class="table-responsive"
+            style="background: #fff; border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
+            <table class="pure-table pure-table-horizontal" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Título / Descrição</th>
+                        <th>Categoria</th>
+                        <th>Profissional</th>
+                        <th>Preço (R$)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="servico : ${servicos}">
+                        <td>
+                            <strong th:text="${servico.titulo}">Construção Muro</strong><br>
+                            <span style="font-size: 0.85em; color: var(--color-text-light);"
+                                th:text="${#strings.abbreviate(servico.descricao, 50)}">Resumo</span>
+                        </td>
+                        <td th:text="${servico.categoria.nome}">Pedreiro</td>
+                        <td>
+                            <a th:href="@{/prestadores/{id}(id=${servico.prestador.id})}"
+                                th:text="${servico.prestador.nome}"
+                                style="color: var(--color-primary-dark); text-decoration: none; font-weight: 500;">
+                                Profissional
+                            </a>
+                        </td>
+                        <td th:text="${servico.preco}">100.00</td>
+                        <td>
+                            <a th:href="@{/servicos/{id}/editar(id=${servico.id})}" class="btn btn-secondary"
+                                style="color: var(--color-primary); border-color: var(--color-primary); padding: 6px 12px; font-size: 0.8rem;">Editar</a>
+                            <form th:action="@{/servicos/{id}/excluir(id=${servico.id})}" method="post"
+                                style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir?');">
+                                <button type="submit" class="btn"
+                                    style="background: transparent; color: #e74c3c; border: 1px solid #e74c3c; padding: 6px 12px; font-size: 0.8rem;">Excluir</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(servicos)}">
+                        <td colspan="5" style="text-align: center; padding: 40px;">Nenhum serviço cadastrado.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+
+</html>
