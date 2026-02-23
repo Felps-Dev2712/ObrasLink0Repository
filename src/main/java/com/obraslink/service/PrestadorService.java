@@ -33,6 +33,10 @@ public class PrestadorService {
     public Optional<Prestador> findById(Long id) {
         return prestadorRepository.findById(id);
     }
+
+    public Optional<Prestador> findByUsuarioId(Long usuarioId) {
+        return prestadorRepository.findByUsuarioId(usuarioId);
+    }
     
     @Transactional
     public Prestador save(Prestador prestador) {

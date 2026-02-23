@@ -14,4 +14,6 @@ public interface ServicoRepository extends JpaRepository<Servico, Long> {
     List<Servico> findByCategoriaIdAndDisponivelTrue(Long categoriaId);
     
     List<Servico> findByPrestadorId(Long prestadorId);
+
+    boolean existsByIdAndPrestadorUsuarioId(Long id, Long usuarioId);
 }

@@ -19,6 +19,10 @@ public class ServicoService {
         return servicoRepository.findByDisponivelTrue();
     }
 
+    public List<Servico> findAll() {
+        return servicoRepository.findAll();
+    }
+
     public List<Servico> findByCategoria(Long categoriaId) {
         if (categoriaId == null) {
             return findAllAvailable();

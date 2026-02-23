@@ -22,6 +22,10 @@ public class ClienteService {
     public Optional<Cliente> findById(Long id) {
         return clienteRepository.findById(id);
     }
+
+    public Optional<Cliente> findByUsuarioId(Long usuarioId) {
+        return clienteRepository.findByUsuarioId(usuarioId);
+    }
     
     @Transactional
     public Cliente save(Cliente cliente) {

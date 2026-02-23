@@ -39,11 +39,20 @@
                 <li><a href="/#como-funciona">Como Funciona</a></li>
                 <li><a href="/vitrine">Vitrine</a></li>
                 <li><a href="/prestadores">Profissionais</a></li>
-                <li><a href="/clientes">Clientes</a></li>
+                <li th:if="${auth.authenticated}"><a href="/clientes">Clientes</a></li>
+                <li th:if="${auth.authenticated and (auth.isAdmin or auth.hasPrestador)}"><a href="/servicos">Serviços</a></li>
             </ul>
 
             <div class="navbar-cta">
-                <a href="/prestadores/novo" class="btn btn-primary">Cadastrar Especialista</a>
+                <a th:if="${not auth.authenticated}" href="/login" class="btn btn-outline"
+                   style="border-color: var(--color-primary); color: var(--color-primary);">Entrar</a>
+                <a th:if="${not auth.authenticated}" href="/register?perfil=ambos" class="btn btn-primary">Criar Conta</a>
+
+                <span th:if="${auth.authenticated}" style="font-size: 0.85rem; color: var(--color-text-light); margin-right: 8px;"
+                      th:text="${auth.email}">usuario@email.com</span>
+                <form th:if="${auth.authenticated}" th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-primary" style="border: none;">Sair</button>
+                </form>
             </div>
         </div>
     </nav>
@@ -72,8 +81,8 @@
                 <div class="footer-col">
                     <h4>Cadastro</h4>
                     <ul>
-                        <li><a href="/clientes/novo">Sou Cliente</a></li>
-                        <li><a href="/prestadores/novo">Sou Profissional</a></li>
+                        <li><a href="/register?perfil=cliente">Sou Cliente</a></li>
+                        <li><a href="/register?perfil=prestador">Sou Profissional</a></li>
                     </ul>
                 </div>
 

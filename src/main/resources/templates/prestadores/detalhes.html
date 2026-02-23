@@ -71,7 +71,7 @@
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--color-surface-alt); padding-bottom: 12px; margin-bottom: 24px;">
                         <h3 style="margin: 0;">Serviços Oferecidos</h3>
-                        <a th:href="@{/servicos/novo(prestadorId=${prestador.id})}" class="btn btn-outline"
+                        <a th:if="${podeGerenciarPrestador}" th:href="@{/servicos/novo}" class="btn btn-outline"
                             style="padding: 6px 12px; font-size: 0.8rem;">+ Adicionar Serviço</a>
                     </div>
 

@@ -26,10 +26,13 @@
 
                         <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px; margin-bottom: 16px;">
                             <label for="prestador">Profissional / Responsável</label>
-                            <select id="prestador" th:field="*{prestador}" class="pure-u-1" required>
+                            <select th:if="${isAdmin}" id="prestador" th:field="*{prestador}" class="pure-u-1" required>
                                 <option value="">Selecione...</option>
                                 <option th:each="p : ${prestadores}" th:value="${p.id}" th:text="${p.nome}"></option>
                             </select>
+                            <input th:if="${not isAdmin}" type="text" class="pure-u-1"
+                                   th:value="${prestadorAtual.nome}"
+                                   readonly>
                         </div>
                         <div class="pure-u-1 pure-u-md-1-2" style="margin-bottom: 16px;">
                             <label for="categoria">Categoria do Serviço</label>

@@ -10,12 +10,16 @@
     <div class="container" style="padding-top: 100px; min-height: 80vh;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <h2>Gerenciar Serviços</h2>
-            <a href="/servicos/novo" class="btn btn-primary">Novo Serviço</a>
+            <a th:if="${podeGerenciarServicos}" href="/servicos/novo" class="btn btn-primary">Novo Serviço</a>
         </div>
 
         <div th:if="${mensagem}" class="alert alert-success"
             style="padding: 12px; background: #d4edda; color: #155724; border-radius: var(--radius-sm); margin-bottom: 20px;">
             <span th:text="${mensagem}"></span>
+        </div>
+        <div th:if="${mensagemErro}" class="alert alert-danger"
+            style="padding: 12px; background: #f8d7da; color: #721c24; border-radius: var(--radius-sm); margin-bottom: 20px;">
+            <span th:text="${mensagemErro}"></span>
         </div>
 
         <div class="table-responsive"
@@ -47,13 +51,17 @@
                         </td>
                         <td th:text="${servico.preco}">100.00</td>
                         <td>
-                            <a th:href="@{/servicos/{id}/editar(id=${servico.id})}" class="btn btn-secondary"
+                            <a th:if="${isAdmin or (prestadorAtualId != null and prestadorAtualId == servico.prestador.id)}"
+                                th:href="@{/servicos/{id}/editar(id=${servico.id})}" class="btn btn-secondary"
                                 style="color: var(--color-primary); border-color: var(--color-primary); padding: 6px 12px; font-size: 0.8rem;">Editar</a>
-                            <form th:action="@{/servicos/{id}/excluir(id=${servico.id})}" method="post"
+                            <form th:if="${isAdmin or (prestadorAtualId != null and prestadorAtualId == servico.prestador.id)}"
+                                th:action="@{/servicos/{id}/excluir(id=${servico.id})}" method="post"
                                 style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir?');">
                                 <button type="submit" class="btn"
                                     style="background: transparent; color: #e74c3c; border: 1px solid #e74c3c; padding: 6px 12px; font-size: 0.8rem;">Excluir</button>
                             </form>
+                            <span th:if="${not (isAdmin or (prestadorAtualId != null and prestadorAtualId == servico.prestador.id))}"
+                                  style="color: var(--color-text-muted); font-size: 0.85rem;">Somente leitura</span>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(servicos)}">

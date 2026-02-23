@@ -33,6 +33,9 @@ public class Prestador {
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
+    @Column(name = "usuario_id", unique = true)
+    private Long usuarioId;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "endereco_id")
     private Endereco endereco;

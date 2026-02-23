@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+
+<head th:replace="~{fragments/layout :: head('Login - Obras Link')}"></head>
+
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container" style="padding-top: 120px; padding-bottom: 60px; min-height: 80vh; max-width: 520px;">
+    <div style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
+        <h2 style="margin-bottom: 8px;">Entrar</h2>
+        <p style="color: var(--color-text-light); margin-bottom: 20px;">Acesse sua conta para gerenciar seu cadastro.</p>
+
+        <div th:if="${mensagem}" class="alert alert-success"
+             style="padding: 12px; background: #d4edda; color: #155724; border-radius: var(--radius-sm); margin-bottom: 16px;">
+            <span th:text="${mensagem}"></span>
+        </div>
+
+        <div th:if="${param.error}" class="alert alert-danger"
+             style="padding: 12px; background: #f8d7da; color: #721c24; border-radius: var(--radius-sm); margin-bottom: 16px;">
+            E-mail ou senha invalidos.
+        </div>
+
+        <div th:if="${param.logout}" class="alert alert-success"
+             style="padding: 12px; background: #d4edda; color: #155724; border-radius: var(--radius-sm); margin-bottom: 16px;">
+            Sessao encerrada com sucesso.
+        </div>
+
+        <form class="pure-form pure-form-stacked" th:action="@{/login}" method="post">
+            <fieldset>
+                <label for="username">E-mail</label>
+                <input id="username" name="username" type="email" class="pure-u-1" required>
+
+                <label for="password" style="margin-top: 16px;">Senha</label>
+                <input id="password" name="password" type="password" class="pure-u-1" required>
+
+                <button type="submit" class="btn btn-primary" style="border: none; width: 100%; margin-top: 24px;">
+                    Entrar
+                </button>
+            </fieldset>
+        </form>
+
+        <p style="margin-top: 20px; text-align: center; color: var(--color-text-light);">
+            Ainda nao tem conta?
+            <a th:href="@{/register}" style="font-weight: 600;">Crie seu cadastro</a>
+        </p>
+    </div>
+</div>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+
+</body>
+
+</html>
