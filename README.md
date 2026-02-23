@@ -121,6 +121,21 @@ docker exec -it obras-link-app sh
 docker exec -it obras-link-db psql -U obraslink -d obraslink
 ```
 
+## Nota de Atualização (2026-02-23)
+
+As entregas mais recentes deste projeto incluem:
+
+- Camada de autenticação com login por e-mail/senha e papéis `ADMIN`, `CLIENTE` e `PRESTADOR`.
+- Regras de acesso por perfil:
+  - `ADMIN` gerencia tudo.
+  - `CLIENTE` acessa vitrine/profissionais e opera apenas seu próprio cadastro.
+  - `PRESTADOR` acessa clientes e gerencia apenas seu próprio cadastro e catálogo de serviços.
+  - Usuário com ambos os perfis (`CLIENTE` + `PRESTADOR`) enxerga serviços disponíveis de outros prestadores e mantém edição apenas no que é seu.
+- Seeder com dados de teste para facilitar validação:
+  - Usuário admin padrão: `admin@obraslink.com` / `admin123`.
+  - Usuários seed (clientes, prestadores e ambos) com senha padrão: `seed123`.
+  - A geração é idempotente (não duplica os registros seed já existentes).
+
 ## Próximos Passos
 
 1. Implementar modelos de dados (Prestador, Cliente, Serviço)
