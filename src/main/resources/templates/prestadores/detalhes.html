@@ -22,26 +22,25 @@
                     </h2>
                     <div
                         style="display: inline-block; background: rgba(230,126,34,.1); color: var(--color-primary-dark); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-bottom: 16px;">
-                        <span th:text="${prestador.categoria.icone} + ' ' + ${prestador.categoria.nome}">🧱
+                        <span th:text="${prestador.categoria != null ? prestador.categoria.icone + ' ' + prestador.categoria.nome : 'Categoria nao informada'}">🧱
                             Pedreiro</span>
                     </div>
 
                     <div
                         style="text-align: left; margin-top: 24px; border-top: 1px solid var(--color-border); padding-top: 20px;">
                         <p style="margin-bottom: 12px; font-size: 0.9rem;">
-                            <strong>Experiência:</strong> <span th:text="${prestador.anosExperiencia} + ' anos'">5
+                            <strong>Experiência:</strong> <span th:text="${prestador.anosExperiencia != null ? prestador.anosExperiencia + ' anos' : 'Nao informado'}">5
                                 anos</span>
                         </p>
                         <p style="margin-bottom: 12px; font-size: 0.9rem;">
-                            <strong>Preço mínimo:</strong> <span th:text="'R$ ' + ${prestador.precoMinimo}">R$
+                            <strong>Preço mínimo:</strong> <span th:text="${prestador.precoMinimo != null ? 'R$ ' + prestador.precoMinimo : 'Sob consulta'}">R$
                                 50.00</span>
                         </p>
                         <p style="margin-bottom: 12px; font-size: 0.9rem;">
                             <strong>Email:</strong> <span th:text="${prestador.email}">email@exemplo.com</span>
                         </p>
                         <p style="margin-bottom: 12px; font-size: 0.9rem;">
-                            <strong>Local:</strong> <span
-                                th:text="${prestador.endereco.cidade} + ' - ' + ${prestador.endereco.estado}">São Paulo
+                            <strong>Local:</strong> <span th:text="${prestador.endereco != null ? prestador.endereco.cidade + ' - ' + prestador.endereco.estado : 'Nao informado'}">São Paulo
                                 - SP</span>
                         </p>
                     </div>
