@@ -18,6 +18,7 @@ public class RegistroUsuarioForm {
 
     private String prestadorNome;
     private String prestadorCpfCnpj;
+    private String prestadorWhatsapp;
     private String prestadorDescricao;
     private Long categoriaId;
 }

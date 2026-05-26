@@ -28,6 +28,19 @@
 
                     <div
                         style="text-align: left; margin-top: 24px; border-top: 1px solid var(--color-border); padding-top: 20px;">
+                        <div
+                            style="margin-bottom: 16px; padding: 14px; background: var(--color-surface-alt); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <div>
+                                <strong style="display: block; font-size: 0.9rem;">Avaliação média</strong>
+                                <span style="color: var(--color-text-light); font-size: 0.8rem;"
+                                    th:text="${totalAvaliacoes == 1 ? '1 avaliação' : totalAvaliacoes + ' avaliações'}">0 avaliações</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--color-primary-dark);"
+                                    th:text="${mediaAvaliacoes}">0.0</div>
+                                <div style="color: var(--color-primary); letter-spacing: 1px;">★★★★★</div>
+                            </div>
+                        </div>
                         <p style="margin-bottom: 12px; font-size: 0.9rem;">
                             <strong>Experiência:</strong> <span th:text="${prestador.anosExperiencia != null ? prestador.anosExperiencia + ' anos' : 'Nao informado'}">5
                                 anos</span>
@@ -40,15 +53,32 @@
                             <strong>Email:</strong> <span th:text="${prestador.email}">email@exemplo.com</span>
                         </p>
                         <p style="margin-bottom: 12px; font-size: 0.9rem;">
+                            <strong>WhatsApp:</strong> <span th:text="${prestador.whatsapp ?: 'Nao informado'}">(11) 99999-9999</span>
+                        </p>
+                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
                             <strong>Local:</strong> <span th:text="${prestador.endereco != null ? prestador.endereco.cidade + ' - ' + prestador.endereco.estado : 'Nao informado'}">São Paulo
                                 - SP</span>
                         </p>
                     </div>
 
                     <div style="margin-top: 32px;">
-                        <a href="mailto:" th:href="'mailto:' + ${prestador.email}" class="btn btn-primary"
-                            style="width: 100%;">Entrar em Contato</a>
+                        <a th:if="${prestador.whatsapp != null and !#strings.isEmpty(prestador.whatsapp)}"
+                            th:with="numero=${#strings.replace(#strings.replace(#strings.replace(#strings.replace(prestador.whatsapp, ' ', ''), '-', ''), '(', ''), ')', '')}"
+                            th:href="${'https://wa.me/55' + numero + '?text=Ola%2C%20vim%20pelo%20Obras%20Link%20e%20gostaria%20de%20solicitar%20um%20orcamento.%0A%0ADados%20do%20orcamento%3A%0A-%20Prestador%3A%20' + #uris.escapeQueryParam(prestador.nome) + '%0A-%20Categoria%3A%20' + #uris.escapeQueryParam(prestador.categoria != null ? prestador.categoria.nome : 'Nao informada') + '%0A-%20Preco%20minimo%3A%20' + #uris.escapeQueryParam(prestador.precoMinimo != null ? 'R$ ' + prestador.precoMinimo : 'Sob consulta') + '%0A-%20Local%3A%20' + #uris.escapeQueryParam(prestador.endereco != null ? prestador.endereco.cidade + ' - ' + prestador.endereco.estado : 'Nao informado') + '%0A%0APoderia%20me%20passar%20mais%20detalhes%20para%20o%20orcamento%3F'}"
+                            target="_blank" rel="noopener noreferrer" class="btn btn-primary"
+                            style="width: 100%;">Contato pelo WhatsApp</a>
+                        <span th:if="${prestador.whatsapp == null or #strings.isEmpty(prestador.whatsapp)}"
+                            class="btn btn-outline" style="width: 100%; cursor: default;">WhatsApp nao informado</span>
                     </div>
+                </div>
+
+                <div th:if="${mensagem}" class="alert alert-success"
+                    style="padding: 12px; background: #d4edda; color: #155724; border-radius: var(--radius-sm); margin: 20px 0 0;">
+                    <span th:text="${mensagem}"></span>
+                </div>
+                <div th:if="${mensagemErro}" class="alert alert-danger"
+                    style="padding: 12px; background: #f8d7da; color: #721c24; border-radius: var(--radius-sm); margin: 20px 0 0;">
+                    <span th:text="${mensagemErro}"></span>
                 </div>
             </div>
 
@@ -93,6 +123,125 @@
                                         th:text="'R$ ' + ${servico.preco}">R$ 100.00</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm); margin-top: 24px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--color-surface-alt); padding-bottom: 12px; margin-bottom: 24px;">
+                        <div>
+                            <h3 style="margin: 0;">Avaliações de Clientes</h3>
+                            <p style="margin: 6px 0 0; color: var(--color-text-light); font-size: 0.9rem;"
+                               th:text="${totalAvaliacoes == 0 ? 'Ainda sem avaliações registradas.' : (totalAvaliacoes == 1 ? '1 avaliação registrada' : totalAvaliacoes + ' avaliações registradas')}">
+                                Avaliações registradas
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <strong style="display: block; color: var(--color-secondary); font-size: 1.4rem;"
+                                th:text="${mediaAvaliacoes}">0.0</strong>
+                            <span style="color: var(--color-primary); font-size: 0.85rem;">média geral</span>
+                        </div>
+                    </div>
+
+                    <div th:if="${podeAvaliarPrestador}"
+                        style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 24px; margin-bottom: 28px; background: var(--color-surface-alt);">
+                        <h4 style="margin-bottom: 16px;">Registrar avaliação</h4>
+                        <form class="pure-form pure-form-stacked"
+                            th:action="@{/prestadores/{id}/avaliacoes(id=${prestador.id})}"
+                            th:object="${avaliacaoForm}" method="post" data-rating-form>
+                            <div class="pure-g">
+                                <input type="hidden" th:field="*{qualidade}" value="5">
+                                <input type="hidden" th:field="*{prazo}" value="5">
+                                <input type="hidden" th:field="*{preco}" value="5">
+                                <input type="hidden" th:field="*{organizacao}" value="5">
+                                <input type="hidden" th:field="*{atendimento}" value="5">
+
+                                <div class="pure-u-1" style="padding: 8px;">
+                                    <label for="servicoId">Serviço realizado</label>
+                                    <select id="servicoId" th:field="*{servicoId}" class="pure-u-1" required>
+                                        <option value="">Selecione o serviço que deseja avaliar...</option>
+                                        <option th:each="servico : ${prestador.servicos}" th:value="${servico.id}"
+                                            th:text="${servico.titulo}">Serviço</option>
+                                    </select>
+                                </div>
+
+                                <div class="pure-u-1" style="padding: 8px;">
+                                    <p style="margin: 0 0 14px; color: var(--color-text-light); font-size: 0.9rem;">
+                                        Selecione o serviço e clique em uma estrela para registrar a avaliação. A nota escolhida será aplicada aos critérios abaixo.
+                                    </p>
+                                    <div data-star-rating
+                                        style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                                        <button type="button" data-score="1" aria-label="Avaliar com 1 estrela"
+                                            style="font-size: 2rem; color: var(--color-primary); background: transparent; border: 0; cursor: pointer; line-height: 1;">★</button>
+                                        <button type="button" data-score="2" aria-label="Avaliar com 2 estrelas"
+                                            style="font-size: 2rem; color: var(--color-primary); background: transparent; border: 0; cursor: pointer; line-height: 1;">★</button>
+                                        <button type="button" data-score="3" aria-label="Avaliar com 3 estrelas"
+                                            style="font-size: 2rem; color: var(--color-primary); background: transparent; border: 0; cursor: pointer; line-height: 1;">★</button>
+                                        <button type="button" data-score="4" aria-label="Avaliar com 4 estrelas"
+                                            style="font-size: 2rem; color: var(--color-primary); background: transparent; border: 0; cursor: pointer; line-height: 1;">★</button>
+                                        <button type="button" data-score="5" aria-label="Avaliar com 5 estrelas"
+                                            style="font-size: 2rem; color: var(--color-primary); background: transparent; border: 0; cursor: pointer; line-height: 1;">★</button>
+                                        <span data-rating-label style="color: var(--color-text-light); font-size: 0.9rem; margin-left: 8px;">
+                                            5 em todos os critérios
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
+                                        <span style="padding: 6px 10px; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-full); font-size: 0.8rem;">Qualidade</span>
+                                        <span style="padding: 6px 10px; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-full); font-size: 0.8rem;">Prazo</span>
+                                        <span style="padding: 6px 10px; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-full); font-size: 0.8rem;">Preço</span>
+                                        <span style="padding: 6px 10px; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-full); font-size: 0.8rem;">Organização</span>
+                                        <span style="padding: 6px 10px; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-full); font-size: 0.8rem;">Atendimento</span>
+                                    </div>
+                                </div>
+                                <div class="pure-u-1" style="padding: 8px;">
+                                    <label for="comentario">Comentário</label>
+                                    <textarea id="comentario" th:field="*{comentario}" class="pure-u-1" rows="4"
+                                        placeholder="Conte como foi a experiência com este profissional."></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div th:if="${not auth.authenticated}"
+                        style="padding: 20px; border-radius: var(--radius-sm); background: var(--color-surface-alt); margin-bottom: 24px;">
+                        <span style="color: var(--color-text-light);">Entre como cliente para registrar uma avaliação.</span>
+                        <a href="/login" style="font-weight: 700; margin-left: 8px;">Fazer login</a>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(avaliacoes)}"
+                        style="padding: 28px; text-align: center; color: var(--color-text-muted); border: 1px dashed var(--color-border); border-radius: var(--radius-sm);">
+                        Nenhuma avaliação foi registrada para este prestador.
+                    </div>
+
+                    <div th:unless="${#lists.isEmpty(avaliacoes)}">
+                        <div th:each="avaliacao : ${avaliacoes}"
+                            style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 20px; margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px;">
+                                <div>
+                                    <strong th:text="${avaliacao.cliente.nome}">Cliente</strong>
+                                    <p style="margin: 4px 0 0; color: var(--color-text-light); font-size: 0.85rem;"
+                                        th:text="${#temporals.format(avaliacao.criadoEm, 'dd/MM/yyyy HH:mm')}">25/05/2026</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="display: block; color: var(--color-primary); letter-spacing: 1px;">★★★★★</span>
+                                    <strong th:text="${#numbers.formatDecimal((avaliacao.qualidade + avaliacao.prazo + avaliacao.preco + avaliacao.organizacao + avaliacao.atendimento) / 5.0, 1, 1)}">5.0</strong>
+                                </div>
+                            </div>
+                            <div class="pure-g" style="font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 12px;">
+                                <div class="pure-u-1" style="margin-bottom: 8px;">
+                                    Serviço avaliado: <strong th:text="${avaliacao.servico != null ? avaliacao.servico.titulo : 'Nao informado'}">Serviço</strong>
+                                </div>
+                                <div class="pure-u-1 pure-u-md-1-5">Qualidade: <strong th:text="${avaliacao.qualidade}">5</strong></div>
+                                <div class="pure-u-1 pure-u-md-1-5">Prazo: <strong th:text="${avaliacao.prazo}">5</strong></div>
+                                <div class="pure-u-1 pure-u-md-1-5">Preço: <strong th:text="${avaliacao.preco}">5</strong></div>
+                                <div class="pure-u-1 pure-u-md-1-5">Organização: <strong th:text="${avaliacao.organizacao}">5</strong></div>
+                                <div class="pure-u-1 pure-u-md-1-5">Atendimento: <strong th:text="${avaliacao.atendimento}">5</strong></div>
+                            </div>
+                            <p th:if="${avaliacao.comentario != null and !#strings.isEmpty(avaliacao.comentario)}"
+                                th:text="${avaliacao.comentario}"
+                                style="margin: 0; color: var(--color-text); line-height: 1.7;">Comentário</p>
                         </div>
                     </div>
                 </div>

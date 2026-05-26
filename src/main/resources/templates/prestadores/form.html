@@ -33,6 +33,11 @@
                             <input id="cpfCnpj" type="text" th:field="*{cpfCnpj}" class="pure-u-1" required>
                         </div>
                         <div class="pure-u-1 pure-u-md-1-2" style="margin-top: 16px;">
+                            <label for="whatsapp">WhatsApp</label>
+                            <input id="whatsapp" type="text" th:field="*{whatsapp}" class="pure-u-1"
+                                placeholder="Ex: 11999999999" required>
+                        </div>
+                        <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px; margin-top: 16px;">
                             <label for="categoria">Especialidade (Categoria)</label>
                             <select id="categoria" th:field="*{categoria}" class="pure-u-1" required>
                                 <option value="">Selecione...</option>
@@ -41,12 +46,12 @@
                             </select>
                         </div>
 
-                        <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px; margin-top: 16px;">
+                        <div class="pure-u-1 pure-u-md-1-2" style="margin-top: 16px;">
                             <label for="anosExperiencia">Anos de Experiência</label>
                             <input id="anosExperiencia" type="number" th:field="*{anosExperiencia}" class="pure-u-1"
                                 min="0">
                         </div>
-                        <div class="pure-u-1 pure-u-md-1-2" style="margin-top: 16px;">
+                        <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px; margin-top: 16px;">
                             <label for="precoMinimo">Preço Mínimo / Hora (R$)</label>
                             <input id="precoMinimo" type="number" step="0.01" th:field="*{precoMinimo}"
                                 class="pure-u-1">

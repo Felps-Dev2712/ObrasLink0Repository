@@ -143,6 +143,62 @@
 
                 fadeEls.forEach(el => observer.observe(el));
             }
+
+            // Star rating auto-submit
+            document.querySelectorAll('[data-rating-form]').forEach(form => {
+                const stars = Array.from(form.querySelectorAll('[data-score]'));
+                const label = form.querySelector('[data-rating-label]');
+                const serviceSelect = form.querySelector('[name="servicoId"]');
+                const fields = ['qualidade', 'prazo', 'preco', 'organizacao', 'atendimento']
+                    .map(name => form.querySelector(`[name="${name}"]`))
+                    .filter(Boolean);
+                let submitting = false;
+
+                const paintStars = (score) => {
+                    stars.forEach(star => {
+                        const active = Number(star.dataset.score) <= score;
+                        star.style.opacity = active ? '1' : '.28';
+                        star.style.transform = active ? 'translateY(-1px)' : 'none';
+                    });
+                    if (label) {
+                        label.textContent = `${score} em todos os critérios`;
+                    }
+                };
+
+                stars.forEach(star => {
+                    star.addEventListener('mouseenter', () => paintStars(Number(star.dataset.score)));
+                    star.addEventListener('focus', () => paintStars(Number(star.dataset.score)));
+                    star.addEventListener('click', () => {
+                        if (submitting) {
+                            return;
+                        }
+                        if (serviceSelect && !serviceSelect.value) {
+                            serviceSelect.focus();
+                            serviceSelect.style.borderColor = 'var(--color-primary)';
+                            if (label) {
+                                label.textContent = 'Selecione o serviço antes de avaliar';
+                            }
+                            return;
+                        }
+                        submitting = true;
+                        const score = star.dataset.score;
+                        fields.forEach(field => field.value = score);
+                        paintStars(Number(score));
+                        if (label) {
+                            label.textContent = 'Registrando avaliação...';
+                        }
+                        form.requestSubmit();
+                    });
+                });
+
+                form.addEventListener('mouseleave', () => {
+                    if (!submitting) {
+                        paintStars(5);
+                    }
+                });
+
+                paintStars(5);
+            });
         </script>
     </th:block>
 

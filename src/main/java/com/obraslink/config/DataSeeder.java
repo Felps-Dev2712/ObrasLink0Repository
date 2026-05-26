@@ -157,6 +157,7 @@ public class DataSeeder {
                     .nome(randomNomeCompleto(random))
                     .email(email)
                     .cpfCnpj(String.format("300%08d", index))
+                    .whatsapp(randomTelefone(random))
                     .descricao(randomDescricaoPrestador(random))
                     .categoria(randomCategoria(categorias, random))
                     .precoMinimo(randomPrecoMinimo(random))
@@ -167,6 +168,7 @@ public class DataSeeder {
             return prestadorRepository.save(novoPrestador);
         });
 
+        ensurePrestadorWhatsapp(prestador, random);
         seedServicos(prestador, categorias, random);
     }
 
@@ -190,6 +192,7 @@ public class DataSeeder {
                     .nome(randomNomeCompleto(random))
                     .email(email)
                     .cpfCnpj(String.format("400%08d", index))
+                    .whatsapp(randomTelefone(random))
                     .descricao(randomDescricaoPrestador(random))
                     .categoria(randomCategoria(categorias, random))
                     .precoMinimo(randomPrecoMinimo(random))
@@ -200,7 +203,15 @@ public class DataSeeder {
             return prestadorRepository.save(novoPrestador);
         });
 
+        ensurePrestadorWhatsapp(prestador, random);
         seedServicos(prestador, categorias, random);
+    }
+
+    private void ensurePrestadorWhatsapp(Prestador prestador, Random random) {
+        if (prestador.getWhatsapp() == null || prestador.getWhatsapp().isBlank()) {
+            prestador.setWhatsapp(randomTelefone(random));
+            prestadorRepository.save(prestador);
+        }
     }
 
     private void seedServicos(Prestador prestador, List<Categoria> categorias, Random random) {

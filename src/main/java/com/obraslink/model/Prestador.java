@@ -30,6 +30,8 @@ public class Prestador {
     @Column(nullable = false, unique = true)
     private String cpfCnpj;
 
+    private String whatsapp;
+
     @Column(columnDefinition = "TEXT")
     private String descricao;
 

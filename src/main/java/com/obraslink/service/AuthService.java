@@ -67,6 +67,7 @@ public class AuthService {
                     .nome(form.getPrestadorNome().trim())
                     .email(usuario.getEmail())
                     .cpfCnpj(form.getPrestadorCpfCnpj().trim())
+                    .whatsapp(form.getPrestadorWhatsapp())
                     .descricao(form.getPrestadorDescricao())
                     .categoria(categoria)
                     .usuarioId(usuario.getId())
@@ -112,8 +113,8 @@ public class AuthService {
         }
 
         if (cadastroPrestador) {
-            if (isBlank(form.getPrestadorNome()) || isBlank(form.getPrestadorCpfCnpj())) {
-                throw new IllegalArgumentException("Para cadastro de Prestador informe nome e CPF/CNPJ.");
+            if (isBlank(form.getPrestadorNome()) || isBlank(form.getPrestadorCpfCnpj()) || isBlank(form.getPrestadorWhatsapp())) {
+                throw new IllegalArgumentException("Para cadastro de Prestador informe nome, CPF/CNPJ e WhatsApp.");
             }
             if (form.getCategoriaId() == null) {
                 throw new IllegalArgumentException("Selecione uma categoria para o Prestador.");
