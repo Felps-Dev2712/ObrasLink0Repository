@@ -7,14 +7,18 @@
 
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-<div class="container" style="padding-top: 120px; padding-bottom: 60px; min-height: 80vh; max-width: 520px;">
-    <div style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
+<div class="container auth-page" style="padding-top: 120px; padding-bottom: 60px; min-height: 80vh; max-width: 520px;">
+    <div class="auth-card" style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
         <h2 style="margin-bottom: 8px;">Entrar</h2>
         <p style="color: var(--color-text-light); margin-bottom: 20px;">Acesse sua conta para gerenciar seu cadastro.</p>
 
         <div th:if="${mensagem}" class="alert alert-success"
              style="padding: 12px; background: #d4edda; color: #155724; border-radius: var(--radius-sm); margin-bottom: 16px;">
             <span th:text="${mensagem}"></span>
+        </div>
+
+        <div th:if="${param.required}" class="alert alert-error">
+            Para acessar esta área, entre na sua conta ou crie um cadastro.
         </div>
 
         <div th:if="${param.error}" class="alert alert-danger"
@@ -30,10 +34,14 @@
         <form class="pure-form pure-form-stacked" th:action="@{/login}" method="post">
             <fieldset>
                 <label for="username">E-mail</label>
-                <input id="username" name="username" type="email" class="pure-u-1" required>
+                <input id="username" name="username" type="email" class="pure-u-1" required autocomplete="email" placeholder="voce@exemplo.com">
 
                 <label for="password" style="margin-top: 16px;">Senha</label>
-                <input id="password" name="password" type="password" class="pure-u-1" required>
+                <input id="password" name="password" type="password" class="pure-u-1" required minlength="8" autocomplete="current-password" placeholder="Sua senha">
+
+                <div style="margin-top: 10px; text-align: right;">
+                    <a href="/recuperar-senha" style="font-size: .85rem; font-weight: 600;">Esqueci minha senha</a>
+                </div>
 
                 <button type="submit" class="btn btn-primary" style="border: none; width: 100%; margin-top: 24px;">
                     Entrar

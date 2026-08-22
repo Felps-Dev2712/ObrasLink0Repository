@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Notificações - Obras Link')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container notifications-page">
+    <div class="account-heading"><span class="eyebrow">Atualizações</span><h1>Notificações</h1><p>Acompanhe avaliações e outras atividades da sua conta.</p></div>
+    <section class="notifications-card">
+        <a th:each="notificacao : ${notificacoes}" th:href="${notificacao.link}" class="notification-item">
+            <span class="notification-dot" th:classappend="${notificacao.lida} ? ' notification-read' : ''"></span>
+            <span><strong th:text="${notificacao.mensagem}">Você recebeu uma nova avaliação.</strong><small th:text="${#temporals.format(notificacao.criadoEm, 'dd/MM/yyyy HH:mm')}">21/08/2026 10:30</small></span>
+        </a>
+        <div th:if="${#lists.isEmpty(notificacoes)}" class="notifications-empty">Você ainda não possui notificações.</div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,17 +1,16 @@
 package com.obraslink.controller;
 
 import com.obraslink.model.Cliente;
-import com.obraslink.model.PapelUsuario;
 import com.obraslink.model.Usuario;
 import com.obraslink.service.AcessoService;
+import com.obraslink.service.CategoriaService;
 import com.obraslink.service.ClienteService;
+import com.obraslink.service.PrestadorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.List;
 
 @Controller
 @RequestMapping("/clientes")
@@ -19,26 +18,35 @@ import java.util.List;
 public class ClienteController {
 
     private final ClienteService clienteService;
+    private final PrestadorService prestadorService;
+    private final CategoriaService categoriaService;
     private final AcessoService acessoService;
 
     @GetMapping
     public String list(Model model) {
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
-        boolean admin = acessoService.isAdmin(usuario);
-        boolean prestador = usuario.getPapeis().contains(PapelUsuario.PRESTADOR);
+        model.addAttribute("cliente", clienteService.findByUsuarioId(usuario.getId()).orElse(null));
+        model.addAttribute("prestador", prestadorService.findByUsuarioId(usuario.getId()).orElse(null));
+        model.addAttribute("categorias", categoriaService.findAll());
+        return "clientes/minha-conta";
+    }
 
-        List<Cliente> clientes;
-        if (admin || prestador) {
-            clientes = clienteService.findAll();
-        } else {
-            clientes = clienteService.findByUsuarioId(usuario.getId())
-                    .map(List::of)
-                    .orElseGet(List::of);
+    @PostMapping("/minha-conta")
+    public String updateOwnProfile(@ModelAttribute Cliente dados,
+                                   RedirectAttributes redirectAttributes) {
+        Usuario usuario = acessoService.getUsuarioAtualOrThrow();
+        Cliente cliente = clienteService.findByUsuarioId(usuario.getId()).orElse(null);
+        if (cliente == null) {
+            redirectAttributes.addFlashAttribute("mensagemErro", "Seu perfil de cliente não foi encontrado.");
+            return "redirect:/clientes";
         }
 
-        model.addAttribute("clientes", clientes);
-        model.addAttribute("isAdmin", admin);
-        return "clientes/lista";
+        cliente.setNome(dados.getNome());
+        cliente.setCpfCnpj(dados.getCpfCnpj());
+        cliente.setTelefone(dados.getTelefone());
+        clienteService.save(cliente);
+        redirectAttributes.addFlashAttribute("mensagem", "Dados de cliente atualizados com sucesso!");
+        return "redirect:/clientes";
     }
 
     @GetMapping("/novo")

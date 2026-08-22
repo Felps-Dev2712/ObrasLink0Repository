@@ -24,7 +24,7 @@
     <nav class="navbar" id="navbar" th:fragment="navbar">
         <div class="container">
             <a href="/" class="navbar-brand">
-                <span class="brand-icon">🏗️</span>
+                <span class="brand-mark" aria-hidden="true">OL</span>
                 Obras<span>Link</span>
             </a>
 
@@ -35,12 +35,12 @@
             </button>
 
             <ul class="navbar-nav" id="navbar-nav">
-                <li><a href="/#servicos">Serviços</a></li>
-                <li><a href="/#como-funciona">Como Funciona</a></li>
-                <li><a href="/vitrine">Vitrine</a></li>
-                <li><a href="/prestadores">Profissionais</a></li>
-                <li th:if="${auth.authenticated}"><a href="/clientes">Clientes</a></li>
-                <li th:if="${auth.authenticated and (auth.isAdmin or auth.hasPrestador)}"><a href="/servicos">Serviços</a></li>
+                <li><a href="/">Início</a></li>
+                <li th:if="${auth.authenticated and (not auth.hasPrestador or auth.isAdmin)}"><a href="/vitrine">Encontrar profissionais</a></li>
+                <li th:if="${auth.authenticated and (not auth.hasPrestador or auth.isAdmin)}"><a href="/prestadores">Profissionais</a></li>
+                <li th:if="${auth.authenticated}"><a href="/clientes">Minha conta</a></li>
+                <li th:if="${auth.authenticated and (auth.isAdmin or auth.hasPrestador)}"><a href="/servicos">Meus serviços</a></li>
+                <li th:if="${auth.authenticated}"><a href="/notificacoes" class="notification-link">Notificações <span th:if="${auth.notificacoesNaoLidas > 0}" class="notification-badge" th:text="${auth.notificacoesNaoLidas}">1</span></a></li>
             </ul>
 
             <div class="navbar-cta">
@@ -63,16 +63,15 @@
             <div class="footer-grid">
                 <div class="footer-about">
                     <div class="footer-brand">
-                        🏗️ Obras<span>Link</span>
+                        Obras<span>Link</span>
                     </div>
-                    <p>Conectando profissionais da construção civil com clientes em todo o Brasil. Qualidade, confiança
-                        e praticidade em um só lugar.</p>
+                    <p>Encontre profissionais para sua reforma e fale diretamente pelo WhatsApp.</p>
                 </div>
 
                 <div class="footer-col">
                     <h4>Plataforma</h4>
                     <ul>
-                        <li><a href="/vitrine">Vitrine de Serviços</a></li>
+                        <li><a href="/vitrine">Buscar profissionais</a></li>
                         <li><a href="/prestadores">Profissionais</a></li>
                         <li><a href="/clientes">Clientes</a></li>
                     </ul>

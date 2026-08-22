@@ -3,6 +3,7 @@ package com.obraslink.controller;
 import com.obraslink.repository.ClienteRepository;
 import com.obraslink.repository.PrestadorRepository;
 import com.obraslink.repository.ServicoRepository;
+import com.obraslink.service.CategoriaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,6 +16,7 @@ public class HomeController {
     private final PrestadorRepository prestadorRepository;
     private final ClienteRepository clienteRepository;
     private final ServicoRepository servicoRepository;
+    private final CategoriaService categoriaService;
 
     @GetMapping("/")
     public String home(Model model) {
@@ -22,6 +24,7 @@ public class HomeController {
         model.addAttribute("totalPrestadores", prestadorRepository.count());
         model.addAttribute("totalClientes", clienteRepository.count());
         model.addAttribute("totalServicos", servicoRepository.count());
+        model.addAttribute("categorias", categoriaService.findAll());
         model.addAttribute("pageTitle", "Obras Link — Plataforma de Serviços de Construção Civil");
         return "index";
     }

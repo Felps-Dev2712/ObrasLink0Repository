@@ -1,219 +1,27 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
-
-<body>
-
-    <!-- ========== NAVBAR ========== -->
-    <nav th:replace="~{fragments/layout :: navbar}"></nav>
-
-    <!-- ========== HERO ========== -->
-    <section class="hero" id="hero">
-        <div class="hero-shapes">
-            <div class="shape"></div>
-            <div class="shape"></div>
-            <div class="shape"></div>
-        </div>
-
-        <div class="container">
-            <div class="hero-content">
-                <div class="hero-badge">
-                    ⭐ Plataforma #1 em Construção Civil
-                </div>
-
-                <h1>
-                    Encontre os melhores <span class="highlight">profissionais</span> para sua obra
-                </h1>
-
-                <p>
-                    Conectamos você aos pedreiros, mestres de obras e empreiteiras mais qualificados da região. Solicite
-                    orçamentos, compare perfis e contrate com confiança.
-                </p>
-
-                <div class="hero-actions">
-                    <a href="/vitrine" class="btn btn-primary btn-lg">
-                        Encontrar Profissionais →
-                    </a>
-                    <a href="/register?perfil=prestador" class="btn btn-secondary btn-lg">
-                        Sou Profissional
-                    </a>
-                </div>
-
-                <div class="hero-stats">
-                    <div class="hero-stat">
-                        <div class="number" th:text="${totalPrestadores ?: '500+'}">500+</div>
-                        <div class="label">Profissionais</div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="number" th:text="${totalServicos ?: '1.200+'}">1.200+</div>
-                        <div class="label">Obras Realizadas</div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="number" th:text="${totalClientes ?: '98%'}">98%</div>
-                        <div class="label">Clientes</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="hero-illustration">
-            <div class="illustration-grid">
-                <div class="grid-card"></div>
-                <div class="grid-card"></div>
-                <div class="grid-card"></div>
-                <div class="grid-card"></div>
-                <div class="grid-card"></div>
-                <div class="grid-card"></div>
-            </div>
-        </div>
+<body class="app-body">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="app-shell home-shell">
+    <section class="home-intro">
+        <div><p class="eyebrow">Marketplace de serviços</p><h1>O que você precisa resolver hoje?</h1><p class="intro-copy">Encontre profissionais para a sua reforma, compare especialidades e solicite um orçamento.</p></div>
+        <a href="/register?perfil=prestador" class="btn btn-outline">Sou profissional</a>
     </section>
-
-    <!-- ========== SERVIÇOS ========== -->
-    <section class="section" id="servicos">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-label">Nossos Serviços</span>
-                <h2>Encontre o profissional ideal para cada etapa da sua obra</h2>
-                <p>Profissionais qualificados e prontos para atender você em diversas especialidades da construção
-                    civil.</p>
-            </div>
-
-            <div class="services-grid">
-                <!-- Pedreiro -->
-                <div class="service-card fade-in fade-in-delay-1">
-                    <div class="service-card-icon">🧱</div>
-                    <h3>Pedreiro</h3>
-                    <p>Construção de paredes, muros, pisos e acabamentos. Profissionais experientes para obras
-                        residenciais e comerciais.</p>
-                    <a href="/vitrine?categoriaId=1" class="card-link">Ver profissionais →</a>
-                </div>
-
-                <!-- Mestre de Obras -->
-                <div class="service-card fade-in fade-in-delay-2">
-                    <div class="service-card-icon">👷</div>
-                    <h3>Mestre de Obras</h3>
-                    <p>Coordenação e supervisão completa da sua obra. Gestão de equipe, materiais e cronograma do início
-                        ao fim.</p>
-                    <a href="/vitrine?categoriaId=2" class="card-link">Ver profissionais →</a>
-                </div>
-
-                <!-- Empreiteira -->
-                <div class="service-card fade-in fade-in-delay-3">
-                    <div class="service-card-icon">🏢</div>
-                    <h3>Empreiteira</h3>
-                    <p>Empresas especializadas para projetos completos. Da fundação ao acabamento, com equipe
-                        qualificada e garantia de serviço.</p>
-                    <a href="/vitrine?categoriaId=3" class="card-link">Ver profissionais →</a>
-                </div>
-
-                <!-- Eletricista -->
-                <div class="service-card fade-in fade-in-delay-1">
-                    <div class="service-card-icon">⚡</div>
-                    <h3>Eletricista</h3>
-                    <p>Instalações elétricas residenciais e comerciais. Fiação, quadros de distribuição, iluminação e
-                        manutenção elétrica.</p>
-                    <a href="/vitrine?categoriaId=4" class="card-link">Ver profissionais →</a>
-                </div>
-
-                <!-- Encanador -->
-                <div class="service-card fade-in fade-in-delay-2">
-                    <div class="service-card-icon">🔧</div>
-                    <h3>Encanador</h3>
-                    <p>Sistemas hidráulicos completos. Instalação e manutenção de tubulações, registros, aquecedores e
-                        esgoto.</p>
-                    <a href="/vitrine?categoriaId=5" class="card-link">Ver profissionais →</a>
-                </div>
-
-                <!-- Pintor -->
-                <div class="service-card fade-in fade-in-delay-3">
-                    <div class="service-card-icon">🎨</div>
-                    <h3>Pintor</h3>
-                    <p>Pintura interna e externa com acabamento impecável. Texturas, efeitos decorativos e
-                        impermeabilização.</p>
-                    <a href="/vitrine?categoriaId=6" class="card-link">Ver profissionais →</a>
-                </div>
-            </div>
-        </div>
+    <section class="search-panel" aria-label="Buscar profissionais">
+        <form action="/vitrine" method="get" class="home-search-form">
+            <label class="search-field"><span>Qual serviço você procura?</span><select name="categoriaId"><option value="">Todas as especialidades</option><option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.icone + ' ' + categoria.nome}">Eletricista</option></select></label>
+            <button class="btn btn-primary" type="submit">Buscar profissionais</button>
+        </form>
     </section>
-
-    <!-- ========== COMO FUNCIONA ========== -->
-    <section class="section how-it-works" id="como-funciona">
-        <div class="container">
-            <div class="section-header fade-in">
-                <span class="section-label">Como Funciona</span>
-                <h2>Contratar nunca foi tão fácil</h2>
-                <p>Em apenas 3 passos você encontra o profissional perfeito para sua obra.</p>
-            </div>
-
-            <div class="steps-grid">
-                <div class="step-card fade-in fade-in-delay-1">
-                    <div class="step-number">1</div>
-                    <div class="step-icon">📋</div>
-                    <h3>Cadastre-se</h3>
-                    <p>Crie sua conta gratuita em poucos minutos como cliente ou profissional da construção civil.</p>
-                    <div class="step-connector"></div>
-                </div>
-
-                <div class="step-card fade-in fade-in-delay-2">
-                    <div class="step-number">2</div>
-                    <div class="step-icon">🔍</div>
-                    <h3>Busque Serviços</h3>
-                    <p>Navegue pela vitrine de profissionais, compare perfis, avaliações e solicite orçamentos.</p>
-                    <div class="step-connector"></div>
-                </div>
-
-                <div class="step-card fade-in fade-in-delay-3">
-                    <div class="step-number">3</div>
-                    <div class="step-icon">🤝</div>
-                    <h3>Contrate</h3>
-                    <p>Escolha o melhor profissional para seu projeto e comece sua obra com tranquilidade.</p>
-                </div>
-            </div>
-        </div>
+    <section class="quick-section">
+        <div class="section-heading"><div><p class="eyebrow">Comece por aqui</p><h2>Encontre por especialidade</h2></div><a href="/vitrine">Ver todos</a></div>
+        <div class="category-grid"><a th:each="categoria : ${categorias}" th:href="@{/vitrine(categoriaId=${categoria.id})}" class="category-card"><span class="category-icon" th:text="${categoria.icone}">+</span><span th:text="${categoria.nome}">Encanador</span><span aria-hidden="true">&rarr;</span></a></div>
     </section>
-
-    <!-- ========== STATS ========== -->
-    <section class="stats-section">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item fade-in fade-in-delay-1">
-                    <div class="stat-number">500+</div>
-                    <div class="stat-label">Profissionais</div>
-                </div>
-                <div class="stat-item fade-in fade-in-delay-2">
-                    <div class="stat-number">1.200+</div>
-                    <div class="stat-label">Obras Realizadas</div>
-                </div>
-                <div class="stat-item fade-in fade-in-delay-3">
-                    <div class="stat-number">15+</div>
-                    <div class="stat-label">Cidades</div>
-                </div>
-                <div class="stat-item fade-in fade-in-delay-4">
-                    <div class="stat-number">98%</div>
-                    <div class="stat-label">Satisfação</div>
-                </div>
-            </div>
-        </div>
+    <section class="home-bottom-grid">
+        <div class="info-card"><span class="info-icon">1</span><div><h3>Busque e compare</h3><p>Confira especialidades, experiência, avaliações e informações de cada profissional.</p></div></div>
+        <div class="info-card"><span class="info-icon">2</span><div><h3>Solicite seu orçamento</h3><p>Envie os detalhes do serviço diretamente para o profissional pelo WhatsApp.</p></div></div>
+        <div class="platform-stats"><span><strong th:text="${totalPrestadores}">0</strong> profissionais</span><span><strong th:text="${totalServicos}">0</strong> serviços publicados</span><span><strong th:text="${totalClientes}">0</strong> clientes cadastrados</span></div>
     </section>
-
-    <!-- ========== CTA ========== -->
-    <section class="section cta-section">
-        <div class="container">
-            <div class="cta-box fade-in">
-                <h2>É profissional da construção civil?</h2>
-                <p>Cadastre-se gratuitamente e receba solicitações de serviço de clientes da sua região.</p>
-                <a href="/register?perfil=prestador" class="btn btn-primary btn-lg">Cadastrar como Profissional →</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- ========== FOOTER ========== -->
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
-
-    <!-- ========== SCRIPTS ========== -->
-    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
-
-</body>
-
-</html>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>

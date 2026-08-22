@@ -7,11 +7,11 @@
 
     <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-    <div class="container" style="padding-top: 100px; min-height: 80vh; max-width: 800px;">
+    <div class="container workspace-page" style="padding-top: 100px; min-height: 80vh; max-width: 800px;">
         <h2 th:text="${servico.id == null ? 'Novo Serviço' : 'Editar Serviço'}" style="margin-bottom: 24px;">Novo
             Serviço</h2>
 
-        <div style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
+        <div class="workspace-card" style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
             <form class="pure-form pure-form-stacked"
                 th:action="@{${servico.id == null ? '/servicos' : '/servicos/' + servico.id}}" th:object="${servico}"
                 method="post">

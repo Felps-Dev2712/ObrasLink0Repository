@@ -28,6 +28,7 @@ public class AvaliacaoPrestadorService {
     private final PrestadorRepository prestadorRepository;
     private final ServicoRepository servicoRepository;
     private final AcessoService acessoService;
+    private final NotificacaoService notificacaoService;
 
     public List<AvaliacaoPrestador> findByPrestador(Long prestadorId) {
         return avaliacaoRepository.findByPrestadorIdOrderByCriadoEmDesc(prestadorId);
@@ -100,6 +101,12 @@ public class AvaliacaoPrestadorService {
                 .comentario(form.getComentario())
                 .build();
         avaliacaoRepository.save(avaliacao);
+
+        String link = "/prestadores/" + prestador.getId();
+        notificacaoService.criar(usuario.getId(),
+                "Sua avaliação para " + prestador.getNome() + " foi registrada.", link);
+        notificacaoService.criar(prestador.getUsuarioId(),
+                "Você recebeu uma nova avaliação de " + cliente.getNome() + ".", link);
     }
 
     private void validarNota(Integer nota, String criterio) {

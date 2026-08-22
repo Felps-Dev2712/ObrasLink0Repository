@@ -24,6 +24,20 @@ public class AuthController {
         return "auth/login";
     }
 
+    @GetMapping("/recuperar-senha")
+    public String recuperarSenhaForm() {
+        return "auth/recuperar-senha";
+    }
+
+    @PostMapping("/recuperar-senha")
+    public String solicitarRecuperacaoSenha(@RequestParam String email,
+                                            RedirectAttributes redirectAttributes) {
+        // Mantém a mesma resposta para qualquer e-mail e evita expor contas cadastradas.
+        redirectAttributes.addFlashAttribute("mensagem",
+                "Se houver uma conta associada a este e-mail, você receberá as instruções de recuperação.");
+        return "redirect:/recuperar-senha";
+    }
+
     @GetMapping("/register")
     public String registerForm(@RequestParam(required = false) String perfil, Model model) {
         if (!model.containsAttribute("form")) {

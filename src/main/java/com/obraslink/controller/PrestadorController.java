@@ -32,6 +32,14 @@ public class PrestadorController {
     public String list(Model model) {
         Optional<Usuario> usuarioOpt = acessoService.getUsuarioAtual();
         boolean admin = usuarioOpt.map(acessoService::isAdmin).orElse(false);
+        boolean somenteCliente = usuarioOpt
+                .map(usuario -> usuario.getPapeis().contains(PapelUsuario.CLIENTE)
+                        && !usuario.getPapeis().contains(PapelUsuario.PRESTADOR)
+                        && !acessoService.isAdmin(usuario))
+                .orElse(false);
+        if (somenteCliente) {
+            return "redirect:/";
+        }
         Long usuarioAtualId = usuarioOpt.map(Usuario::getId).orElse(null);
 
         model.addAttribute("prestadores", prestadorService.findAllActive());
@@ -114,6 +122,28 @@ public class PrestadorController {
             model.addAttribute("isAdmin", acessoService.isAdmin());
             return "prestadores/form";
         }).orElse("redirect:/prestadores");
+    }
+
+    @PostMapping("/minha-conta")
+    public String updateOwnProfile(@ModelAttribute Prestador dados,
+                                   RedirectAttributes redirectAttributes) {
+        Usuario usuario = acessoService.getUsuarioAtualOrThrow();
+        Prestador prestador = prestadorService.findByUsuarioId(usuario.getId()).orElse(null);
+        if (prestador == null) {
+            redirectAttributes.addFlashAttribute("mensagemErro", "Seu perfil profissional não foi encontrado.");
+            return "redirect:/clientes";
+        }
+
+        prestador.setNome(dados.getNome());
+        prestador.setCpfCnpj(dados.getCpfCnpj());
+        prestador.setWhatsapp(dados.getWhatsapp());
+        prestador.setDescricao(dados.getDescricao());
+        prestador.setCategoria(dados.getCategoria());
+        prestador.setAnosExperiencia(dados.getAnosExperiencia());
+        prestador.setPrecoMinimo(dados.getPrecoMinimo());
+        prestadorService.save(prestador);
+        redirectAttributes.addFlashAttribute("mensagem", "Dados profissionais atualizados com sucesso!");
+        return "redirect:/clientes";
     }
 
     @PostMapping("/{id}")

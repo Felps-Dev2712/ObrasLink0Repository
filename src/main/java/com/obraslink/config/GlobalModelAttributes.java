@@ -5,6 +5,7 @@ import com.obraslink.model.Usuario;
 import com.obraslink.service.AcessoService;
 import com.obraslink.service.ClienteService;
 import com.obraslink.service.PrestadorService;
+import com.obraslink.service.NotificacaoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -20,6 +21,7 @@ public class GlobalModelAttributes {
     private final AcessoService acessoService;
     private final ClienteService clienteService;
     private final PrestadorService prestadorService;
+    private final NotificacaoService notificacaoService;
 
     @ModelAttribute("auth")
     public Map<String, Object> auth() {
@@ -46,6 +48,7 @@ public class GlobalModelAttributes {
         auth.put("email", usuario.getEmail());
         auth.put("clienteId", clienteId);
         auth.put("prestadorId", prestadorId);
+        auth.put("notificacoesNaoLidas", notificacaoService.contarNaoLidas(usuario.getId()));
         return auth;
     }
 }

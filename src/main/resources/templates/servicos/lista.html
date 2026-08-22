@@ -7,7 +7,7 @@
 
     <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-    <div class="container" style="padding-top: 100px; min-height: 80vh;">
+    <div class="container workspace-page" style="padding-top: 100px; min-height: 80vh;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
             <h2>Gerenciar Serviços</h2>
             <a th:if="${podeGerenciarServicos}" href="/servicos/novo" class="btn btn-primary">Novo Serviço</a>
@@ -22,7 +22,7 @@
             <span th:text="${mensagemErro}"></span>
         </div>
 
-        <div class="table-responsive"
+        <div class="table-responsive workspace-card"
             style="background: #fff; border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
             <table class="pure-table pure-table-horizontal" style="width: 100%;">
                 <thead>
