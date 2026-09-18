@@ -37,7 +37,7 @@
                     <tr th:each="cliente : ${clientes}">
                         <td th:text="${cliente.nome}">Maria Santos</td>
                         <td th:text="${cliente.email}">maria@email.com</td>
-                        <td th:text="${cliente.telefone}">(11) 99999-9999</td>
+                        <td th:text="${cliente.telefoneFormatado}">(11) 99999-9999</td>
                         <td>
                             <a th:if="${isAdmin or (auth.authenticated and auth.usuarioId == cliente.usuarioId)}"
                                 th:href="@{/clientes/{id}/editar(id=${cliente.id})}" class="btn btn-secondary"

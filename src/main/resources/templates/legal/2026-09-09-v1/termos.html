@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Termos de Uso - Obras Link')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container legal-page">
+    <article class="legal-card">
+        <h1>Termos de Uso</h1>
+        <p>Versão 2026-09-09-v1 • 9 de setembro de 2026</p>
+        <h2>1. Sobre o Obras Link</h2>
+        <p>O Obras Link permite encontrar profissionais, divulgar serviços, solicitar contato pelo WhatsApp, registrar avaliações e acompanhar as etapas de um atendimento.</p>
+        <h2>2. Sua conta</h2>
+        <p>Informe dados verdadeiros e mantenha seu cadastro atualizado. Proteja sua senha e utilize somente contas e informações que você tenha autorização para utilizar.</p>
+        <h2>3. Contato e contratação</h2>
+        <p>Ao clicar no botão de contato, o site registra seu interesse e informa seu nome ao fornecedor escolhido. O clique abre o WhatsApp com uma sugestão de mensagem; não comprova o envio da mensagem nem a contratação.</p>
+        <p>Preço, escopo, prazo, pagamento e demais condições devem ser combinados entre cliente e fornecedor. A confirmação e a conclusão mostradas no site são registradas pelo fornecedor responsável e não constituem uma verificação independente da execução do serviço.</p>
+        <h2>4. Uso responsável</h2>
+        <p>Não publique conteúdo fraudulento, ofensivo ou que exponha dados de terceiros sem autorização. As avaliações devem refletir sua experiência. Não tente acessar contas ou alterar atendimentos de outras pessoas.</p>
+        <h2>5. Dados pessoais</h2>
+        <p>O <a th:href="@{/privacidade}">Aviso de Privacidade</a> explica os dados utilizados pela plataforma. Aceitar estes termos não representa autorização genérica para qualquer tratamento de dados pessoais.</p>
+        <h2>6. Encerramento e alterações</h2>
+        <p>Você pode sair da conta ou solicitar sua exclusão na área Minha conta. O site registra a versão dos documentos e a data da confirmação. Uma nova versão exigirá nova confirmação antes de continuar usando a conta.</p>
+        <p>Estes termos não afastam direitos assegurados pela legislação aplicável.</p>
+        <h2>7. Contato</h2>
+        <p>Canal de contato divulgado pela plataforma: <a href="mailto:contato@obraslink.com.br">contato@obraslink.com.br</a>.</p>
+        <a th:if="${auth.authenticated}" th:href="@{/termos/aceitar}" class="btn btn-primary">Continuar</a>
+    </article>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

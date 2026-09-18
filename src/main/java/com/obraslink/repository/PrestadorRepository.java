@@ -4,12 +4,17 @@ import com.obraslink.model.Prestador;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PrestadorRepository extends JpaRepository<Prestador, Long> {
+    @Query("select p from Prestador p left join fetch p.categoria where p.ativo = true and exists (select u.id from Usuario u where u.id = p.usuarioId and u.ativo = true) order by p.criadoEm desc, p.id desc")
+    List<Prestador> findDestaques(org.springframework.data.domain.Pageable pageable);
+    @Query(value = "SELECT count(*) > 0 FROM prestadores WHERE regexp_replace(upper(cpf_cnpj), '[.[:space:]/-]', '', 'g') = :documento AND id <> coalesce(:id, -1)", nativeQuery = true)
+    boolean documentoEmUso(@Param("documento") String documento, @Param("id") Long id);
     
     List<Prestador> findByAtivoTrue();
     

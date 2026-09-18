@@ -9,26 +9,28 @@
     <div th:if="${mensagemErro}" class="alert alert-error"><span th:text="${mensagemErro}"></span></div>
 
     <section th:if="${cliente != null}" class="account-card">
+        <p th:if="${not cliente.dadosCadastraisValidos}" class="alert alert-error">Seu cadastro de cliente possui CPF/CNPJ ou telefone inválido. Confira os campos abaixo e informe os dados corretos.</p>
         <div class="account-card-heading"><span class="account-icon">C</span><div><h2>Perfil de cliente</h2><p>Dados usados para solicitar e acompanhar serviços.</p></div></div>
         <form class="pure-form pure-form-stacked" th:action="@{/clientes/minha-conta}" th:object="${cliente}" method="post">
             <div class="pure-g">
                 <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="clienteNome">Nome completo</label><input id="clienteNome" type="text" th:field="*{nome}" class="pure-u-1" required></div>
                 <div class="pure-u-1 pure-u-md-1-2 account-field"><label>E-mail</label><input type="email" th:value="*{email}" class="pure-u-1" readonly></div>
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="clienteCpfCnpj">CPF / CNPJ</label><input id="clienteCpfCnpj" type="text" th:field="*{cpfCnpj}" class="pure-u-1" required></div>
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="clienteTelefone">Telefone</label><input id="clienteTelefone" type="text" th:field="*{telefone}" class="pure-u-1"></div>
+                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="clienteCpfCnpj">CPF / CNPJ</label><input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="clienteCpfCnpj" type="text" th:field="*{cpfCnpj}" class="pure-u-1" required></div>
+                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="clienteTelefone">Telefone</label><input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="clienteTelefone" type="tel" th:field="*{telefone}" class="pure-u-1"></div>
             </div>
             <div class="account-actions"><button type="submit" class="btn btn-primary">Salvar dados de cliente</button></div>
         </form>
     </section>
 
     <section th:if="${prestador != null}" class="account-card">
+        <p th:if="${not prestador.dadosCadastraisValidos}" class="alert alert-error">Seu cadastro profissional possui CPF/CNPJ ou WhatsApp inválido. Confira os campos abaixo e informe os dados corretos.</p>
         <div class="account-card-heading"><span class="account-icon">P</span><div><h2>Perfil profissional</h2><p>Informações exibidas para clientes na sua página profissional.</p></div></div>
         <form class="pure-form pure-form-stacked" th:action="@{/prestadores/minha-conta}" th:object="${prestador}" method="post">
             <div class="pure-g">
                 <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="prestadorNome">Nome completo</label><input id="prestadorNome" type="text" th:field="*{nome}" class="pure-u-1" required></div>
                 <div class="pure-u-1 pure-u-md-1-2 account-field"><label>E-mail</label><input type="email" th:value="*{email}" class="pure-u-1" readonly></div>
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="prestadorCpfCnpj">CPF / CNPJ</label><input id="prestadorCpfCnpj" type="text" th:field="*{cpfCnpj}" class="pure-u-1" required></div>
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="prestadorWhatsapp">WhatsApp</label><input id="prestadorWhatsapp" type="text" th:field="*{whatsapp}" class="pure-u-1" required></div>
+                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="prestadorCpfCnpj">CPF / CNPJ</label><input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="prestadorCpfCnpj" type="text" th:field="*{cpfCnpj}" class="pure-u-1" required></div>
+                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="prestadorWhatsapp">WhatsApp</label><input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="prestadorWhatsapp" type="tel" th:field="*{whatsapp}" class="pure-u-1" required></div>
                 <div class="pure-u-1 pure-u-md-1-3 account-field"><label for="categoria">Especialidade</label><select id="categoria" th:field="*{categoria}" class="pure-u-1" required><option value="">Selecione...</option><option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option></select></div>
                 <div class="pure-u-1 pure-u-md-1-3 account-field"><label for="anosExperiencia">Anos de experiência</label><input id="anosExperiencia" type="number" th:field="*{anosExperiencia}" class="pure-u-1" min="0"></div>
                 <div class="pure-u-1 pure-u-md-1-3 account-field"><label for="precoMinimo">Preço mínimo (R$)</label><input id="precoMinimo" type="number" step="0.01" th:field="*{precoMinimo}" class="pure-u-1" min="0"></div>
@@ -39,6 +41,14 @@
     </section>
 
     <section th:if="${cliente == null and prestador == null}" class="account-card account-empty"><h2>Nenhum perfil encontrado</h2><p>Não foi possível localizar um perfil associado à sua conta.</p></section>
+    <section class="account-card">
+        <h2>Excluir minha conta</h2>
+        <p>A exclusão é permanente. Seus perfis de cliente e prestador, serviços, avaliações vinculadas e notificações serão removidos.</p>
+        <form th:action="@{/clientes/minha-conta/excluir}" method="post"
+              onsubmit="return confirm('Tem certeza de que deseja excluir sua conta e todos os dados vinculados? Esta ação não pode ser desfeita.');">
+            <div class="account-actions"><button type="submit" class="btn btn-danger">Excluir minha conta</button></div>
+        </form>
+    </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>

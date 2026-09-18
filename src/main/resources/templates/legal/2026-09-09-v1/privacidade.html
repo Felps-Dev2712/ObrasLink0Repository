@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Aviso de Privacidade - Obras Link')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container legal-page">
+    <article class="legal-card">
+        <h1>Aviso de Privacidade</h1>
+        <p>Versão 2026-09-09-v1 • 9 de setembro de 2026</p>
+        <h2>1. Dados utilizados</h2>
+        <p>O cadastro utiliza e-mail, senha protegida por hash, nome, CPF/CNPJ e telefone conforme o perfil escolhido. O perfil profissional também pode incluir descrição, categoria, experiência, preços e endereço. O site registra serviços, avaliações, contatos solicitados, etapas dos atendimentos, notificações e a versão e data do aceite dos documentos.</p>
+        <h2>2. Finalidades</h2>
+        <p>Esses dados permitem identificar sua conta, autenticar o acesso, apresentar os perfis e serviços, aproximar clientes e fornecedores e acompanhar as atividades realizadas na plataforma. O registro de aceite documenta a confirmação dos termos e a ciência deste aviso.</p>
+        <p>O tratamento necessário à prestação do serviço deve observar a base legal aplicável a cada finalidade. A ciência deste aviso não é um consentimento genérico. Finalidades opcionais que dependam de consentimento exigem uma escolha específica e separada.</p>
+        <h2>3. Visibilidade e serviços externos</h2>
+        <p>Os dados apresentados no perfil profissional e nas avaliações podem ser vistos por outros usuários conforme as telas disponíveis. Ao solicitar contato, seu nome e o registro do atendimento são disponibilizados ao fornecedor escolhido. Administradores têm acesso às funções de gerenciamento da plataforma.</p>
+        <p>Ao abrir o WhatsApp, você passa a utilizar um serviço externo sujeito às próprias regras de privacidade. O Obras Link não lê as conversas. A mensagem sugerida inclui seu nome e o número do atendimento. O site também carrega arquivos de estilo e scripts de provedores externos, que recebem os dados técnicos necessários às requisições.</p>
+        <h2>4. Sessão e segurança</h2>
+        <p>A plataforma utiliza cookie de sessão para manter a autenticação e proteção contra requisições indevidas nos formulários. Mantenha sua senha em sigilo e encerre a sessão em dispositivos compartilhados.</p>
+        <h2>5. Seus dados e seus direitos</h2>
+        <p>Você pode consultar e corrigir os dados disponíveis em Minha conta e excluir sua conta. Também pode solicitar informações sobre o tratamento, acesso, correção e demais direitos previstos na LGPD pelo canal de contato da plataforma. Quando houver tratamento baseado em consentimento, sua revogação deve estar disponível para essa finalidade.</p>
+        <p>Os dados da conta e das atividades ficam armazenados para as funcionalidades descritas. A exclusão disponível no site remove os registros associados no banco da aplicação. Prazos e procedimentos relativos a cópias de segurança, registros operacionais e eventuais obrigações de conservação devem ser informados pelo responsável pelo serviço.</p>
+        <h2>6. Contato sobre privacidade</h2>
+        <p>Utilize o canal divulgado pelo Obras Link: <a href="mailto:contato@obraslink.com.br">contato@obraslink.com.br</a>. Informe sua solicitação sem enviar senhas.</p>
+        <a th:if="${auth.authenticated}" th:href="@{/termos/aceitar}" class="btn btn-primary">Continuar</a>
+    </article>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

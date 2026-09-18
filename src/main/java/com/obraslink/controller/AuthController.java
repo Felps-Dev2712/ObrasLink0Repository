@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Controller
 @RequiredArgsConstructor
@@ -18,9 +19,11 @@ public class AuthController {
 
     private final AuthService authService;
     private final CategoriaService categoriaService;
+    private final com.obraslink.service.DestaquesService destaquesService;
 
     @GetMapping("/login")
-    public String login() {
+    public String login(Model model) {
+        model.addAttribute("destaques", destaquesService.listar());
         return "auth/login";
     }
 
@@ -66,6 +69,10 @@ public class AuthController {
             return "redirect:/login";
         } catch (IllegalArgumentException ex) {
             model.addAttribute("erro", ex.getMessage());
+            model.addAttribute("categorias", categoriaService.findAll());
+            return "auth/register";
+        } catch (DataIntegrityViolationException ex) {
+            model.addAttribute("erro", "Não foi possível cadastrar: confira se e-mail ou CPF/CNPJ já estão em uso.");
             model.addAttribute("categorias", categoriaService.findAll());
             return "auth/register";
         }

@@ -16,6 +16,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Prestador {
+    @Transient
+    public String getWhatsappFormatado() {
+        return com.obraslink.validation.DadosCadastrais.telefoneValido(whatsapp)
+                ? com.obraslink.validation.DadosCadastrais.telefone(whatsapp, true) : whatsapp;
+    }
+
+    @Transient
+    public boolean isDadosCadastraisValidos() {
+        return com.obraslink.validation.DadosCadastrais.documentoValido(cpfCnpj)
+                && com.obraslink.validation.DadosCadastrais.telefoneValido(whatsapp);
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

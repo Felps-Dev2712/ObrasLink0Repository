@@ -2,6 +2,7 @@ package com.obraslink.service;
 
 import com.obraslink.model.Prestador;
 import com.obraslink.repository.PrestadorRepository;
+import com.obraslink.validation.DadosCadastrais;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,8 +41,21 @@ public class PrestadorService {
     
     @Transactional
     public Prestador save(Prestador prestador) {
+        String documento = DadosCadastrais.documento(prestador.getCpfCnpj());
+        String whatsapp = DadosCadastrais.telefone(prestador.getWhatsapp(), true);
+        if (prestadorRepository.documentoEmUso(DadosCadastrais.documentoSemMascara(documento), prestador.getId())) {
+            throw new IllegalArgumentException("Este CPF/CNPJ já está cadastrado em outro perfil de fornecedor.");
+        }
         if (prestador.getTelefones() != null) {
-            prestador.getTelefones().forEach(t -> t.setPrestador(prestador));
+            prestador.getTelefones().forEach(t -> DadosCadastrais.telefone(t.getNumero(), true));
+        }
+        prestador.setCpfCnpj(documento);
+        prestador.setWhatsapp(whatsapp);
+        if (prestador.getTelefones() != null) {
+            prestador.getTelefones().forEach(t -> {
+                t.setNumero(DadosCadastrais.telefone(t.getNumero(), true));
+                t.setPrestador(prestador);
+            });
         }
         return prestadorRepository.save(prestador);
     }

@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import com.obraslink.validation.DadosCadastrais;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
@@ -67,6 +69,7 @@ public class DataSeeder {
     private final PasswordEncoder passwordEncoder;
 
     @Bean
+    @Order(0)
     public CommandLineRunner initData() {
         return args -> {
             List<Categoria> categorias = seedCategorias();
@@ -141,7 +144,7 @@ public class DataSeeder {
         Cliente cliente = Cliente.builder()
                 .nome(randomNomeCompleto(random))
                 .email(email)
-                .cpfCnpj(String.format("100%08d", index))
+                .cpfCnpj(DocumentosDemonstracao.cpf("100", index))
                 .telefone(randomTelefone(random))
                 .usuarioId(usuario.getId())
                 .build();
@@ -156,7 +159,7 @@ public class DataSeeder {
             Prestador novoPrestador = Prestador.builder()
                     .nome(randomNomeCompleto(random))
                     .email(email)
-                    .cpfCnpj(String.format("300%08d", index))
+                    .cpfCnpj(DocumentosDemonstracao.cpf("300", index))
                     .whatsapp(randomTelefone(random))
                     .descricao(randomDescricaoPrestador(random))
                     .categoria(randomCategoria(categorias, random))
@@ -180,7 +183,7 @@ public class DataSeeder {
             Cliente cliente = Cliente.builder()
                     .nome(randomNomeCompleto(random))
                     .email(email)
-                    .cpfCnpj(String.format("200%08d", index))
+                    .cpfCnpj(DocumentosDemonstracao.cpf("200", index))
                     .telefone(randomTelefone(random))
                     .usuarioId(usuario.getId())
                     .build();
@@ -191,7 +194,7 @@ public class DataSeeder {
             Prestador novoPrestador = Prestador.builder()
                     .nome(randomNomeCompleto(random))
                     .email(email)
-                    .cpfCnpj(String.format("400%08d", index))
+                    .cpfCnpj(DocumentosDemonstracao.cpf("400", index))
                     .whatsapp(randomTelefone(random))
                     .descricao(randomDescricaoPrestador(random))
                     .categoria(randomCategoria(categorias, random))
@@ -281,7 +284,7 @@ public class DataSeeder {
     }
 
     private String randomTelefone(Random random) {
-        return String.format("119%08d", random.nextInt(100000000));
+        return DadosCadastrais.telefone(String.format("119%08d", random.nextInt(100000000)), true);
     }
 
     private BigDecimal randomPrecoMinimo(Random random) {

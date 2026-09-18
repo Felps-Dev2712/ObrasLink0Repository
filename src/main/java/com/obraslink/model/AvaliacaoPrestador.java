@@ -31,6 +31,10 @@ public class AvaliacaoPrestador {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Nulo apenas nas avaliações antigas, que não tinham vínculo com uma contratação.
+    @Column(name = "atendimento_id", unique = true)
+    private Long atendimentoId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prestador_id", nullable = false)
     @ToString.Exclude

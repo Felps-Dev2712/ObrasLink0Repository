@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Dashboard - BOXLINK')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container dashboard-page">
+    <div class="section-heading"><div><p class="eyebrow">PAINEL DO PRESTADOR</p><h1>Seu trabalho em perspectiva.</h1><p>Acompanhe os atendimentos recebidos pela plataforma.</p></div><a href="/notificacoes" class="btn btn-primary">Gerenciar atendimentos</a></div>
+    <div class="dashboard-metrics">
+        <article><span>Total de atendimentos</span><strong th:text="${dashboard.total}"></strong><small>Todo o histórico</small></article>
+        <article><span>Em andamento</span><strong th:text="${dashboard.andamento}"></strong><small>Contratações confirmadas</small></article>
+        <article><span>Concluídos</span><strong th:text="${dashboard.concluidos}"></strong><small>Serviços finalizados</small></article>
+    </div>
+    <p th:if="${dashboard.total == 0}" class="alert">Seu painel está pronto. Os gráficos serão preenchidos quando você receber o primeiro contato.</p>
+    <div class="dashboard-charts">
+        <section class="dashboard-panel"><h2>Situação dos atendimentos</h2><p>Porcentagem do total de atendimentos · maior para menor</p>
+            <div th:each="barra : ${dashboard.status}" class="status-chart-row"><div><span th:text="${barra.titulo}"></span><strong th:text="${barra.percentual + '%'}" th:title="${barra.valor + ' atendimentos'}"></strong></div><div class="chart-track" aria-hidden="true"><span th:style="${'width:' + barra.percentual + '%'}"></span></div></div>
+        </section>
+        <section class="dashboard-panel"><h2>Novos contatos por mês</h2><p>Participação no total dos últimos seis meses · maior para menor · mês atual parcial</p>
+            <div class="monthly-chart"><div th:each="barra : ${dashboard.meses}" class="monthly-column"><strong th:text="${barra.percentual + '%'}" th:title="${barra.valor + ' atendimentos'}"></strong><div class="monthly-track" aria-hidden="true"><span th:style="${'height:' + barra.percentual + '%'}"></span></div><small th:text="${barra.titulo}"></small></div></div>
+        </section>
+    </div>
+    <section class="dashboard-panel"><h2>Atendimentos recentes</h2><p th:if="${#lists.isEmpty(dashboard.recentes)}">Você ainda não recebeu contatos.</p>
+        <a th:each="item : ${dashboard.recentes}" href="/notificacoes" class="dashboard-recent"><span><strong th:text="${item.clienteNome}"></strong><small th:text="${'Atendimento #' + item.id}"></small></span><span th:text="${item.status.name() == 'CONCLUIDO' ? 'Concluído' : (item.status.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Aguardando confirmação')}"></span></a>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

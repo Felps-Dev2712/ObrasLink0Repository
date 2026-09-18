@@ -36,8 +36,10 @@ public class GlobalModelAttributes {
         }
 
         Usuario usuario = usuarioOpt.get();
-        Long clienteId = clienteService.findByUsuarioId(usuario.getId()).map(c -> c.getId()).orElse(null);
-        Long prestadorId = prestadorService.findByUsuarioId(usuario.getId()).map(p -> p.getId()).orElse(null);
+        var cliente = clienteService.findByUsuarioId(usuario.getId());
+        var prestador = prestadorService.findByUsuarioId(usuario.getId());
+        Long clienteId = cliente.map(c -> c.getId()).orElse(null);
+        Long prestadorId = prestador.map(p -> p.getId()).orElse(null);
 
         Map<String, Object> auth = new HashMap<>();
         auth.put("authenticated", true);
@@ -46,6 +48,8 @@ public class GlobalModelAttributes {
         auth.put("hasPrestador", usuario.getPapeis().contains(PapelUsuario.PRESTADOR));
         auth.put("usuarioId", usuario.getId());
         auth.put("email", usuario.getEmail());
+        auth.put("nome", cliente.map(c -> c.getNome()).filter(n -> !n.isBlank())
+                .orElseGet(() -> prestador.map(p -> p.getNome()).filter(n -> !n.isBlank()).orElse("Minha conta")));
         auth.put("clienteId", clienteId);
         auth.put("prestadorId", prestadorId);
         auth.put("notificacoesNaoLidas", notificacaoService.contarNaoLidas(usuario.getId()));

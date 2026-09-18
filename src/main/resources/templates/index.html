@@ -6,7 +6,6 @@
 <main class="app-shell home-shell">
     <section class="home-intro">
         <div><p class="eyebrow">Marketplace de serviços</p><h1>O que você precisa resolver hoje?</h1><p class="intro-copy">Encontre profissionais para a sua reforma, compare especialidades e solicite um orçamento.</p></div>
-        <a href="/register?perfil=prestador" class="btn btn-outline">Sou profissional</a>
     </section>
     <section class="search-panel" aria-label="Buscar profissionais">
         <form action="/vitrine" method="get" class="home-search-form">
@@ -21,7 +20,10 @@
     <section class="home-bottom-grid">
         <div class="info-card"><span class="info-icon">1</span><div><h3>Busque e compare</h3><p>Confira especialidades, experiência, avaliações e informações de cada profissional.</p></div></div>
         <div class="info-card"><span class="info-icon">2</span><div><h3>Solicite seu orçamento</h3><p>Envie os detalhes do serviço diretamente para o profissional pelo WhatsApp.</p></div></div>
-        <div class="platform-stats"><span><strong th:text="${totalPrestadores}">0</strong> profissionais</span><span><strong th:text="${totalServicos}">0</strong> serviços publicados</span><span><strong th:text="${totalClientes}">0</strong> clientes cadastrados</span></div>
     </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

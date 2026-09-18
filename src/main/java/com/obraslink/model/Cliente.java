@@ -13,6 +13,17 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Cliente {
+    @Transient
+    public String getTelefoneFormatado() {
+        return com.obraslink.validation.DadosCadastrais.telefoneValido(telefone)
+                ? com.obraslink.validation.DadosCadastrais.telefone(telefone, false) : telefone;
+    }
+
+    @Transient
+    public boolean isDadosCadastraisValidos() {
+        return com.obraslink.validation.DadosCadastrais.documentoValido(cpfCnpj)
+                && (telefone == null || telefone.isBlank() || com.obraslink.validation.DadosCadastrais.telefoneValido(telefone));
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

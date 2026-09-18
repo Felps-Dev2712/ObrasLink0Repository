@@ -12,6 +12,7 @@
             Cliente</h2>
 
         <div style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
+            <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
             <form class="pure-form pure-form-stacked"
                 th:action="@{${cliente.id == null ? '/clientes' : '/clientes/' + cliente.id}}" th:object="${cliente}"
                 method="post">
@@ -30,11 +31,11 @@
 
                         <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px; margin-top: 16px;">
                             <label for="cpfCnpj">CPF / CNPJ</label>
-                            <input id="cpfCnpj" type="text" th:field="*{cpfCnpj}" class="pure-u-1" required>
+                            <input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="cpfCnpj" type="text" th:field="*{cpfCnpj}" class="pure-u-1" required>
                         </div>
                         <div class="pure-u-1 pure-u-md-1-2" style="margin-top: 16px;">
                             <label for="telefone">Telefone / Celular</label>
-                            <input id="telefone" type="text" th:field="*{telefone}" class="pure-u-1" required>
+                            <input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="telefone" type="tel" th:field="*{telefone}" class="pure-u-1" required>
                         </div>
                     </div>
                 </fieldset>

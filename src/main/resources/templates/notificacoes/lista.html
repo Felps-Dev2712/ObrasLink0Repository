@@ -5,6 +5,37 @@
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 <main class="container notifications-page">
     <div class="account-heading"><span class="eyebrow">Atualizações</span><h1>Notificações</h1><p>Acompanhe avaliações e outras atividades da sua conta.</p></div>
+    <section class="service-tracking" aria-label="Acompanhamento dos serviços">
+        <h2>Meus atendimentos</h2>
+        <p>O contato registra seu interesse. A contratação é confirmada pelo fornecedor após a conversa no WhatsApp.</p>
+        <p th:if="${mensagem}" class="alert alert-success" th:text="${mensagem}"></p>
+        <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+        <p th:if="${#lists.isEmpty(atendimentos)}">Você ainda não possui atendimentos.</p>
+        <article th:each="atendimento : ${atendimentos}" class="service-tracking-card">
+            <h3 th:text="${atendimento.clienteUsuarioId == usuarioAtualId ? atendimento.prestadorNome : atendimento.clienteNome}"></h3>
+            <small th:text="${'Atendimento #' + atendimento.id + ' - ' + #temporals.format(atendimento.criadoEm, 'dd/MM/yyyy HH:mm')}"></small>
+            <ol class="service-steps" aria-label="Etapas do serviço">
+                <li class="step-done">Contato solicitado</li>
+                <li th:classappend="${atendimento.confirmadoEm != null} ? 'step-done' : ''">Serviço em andamento</li>
+                <li th:classappend="${atendimento.concluidoEm != null} ? 'step-done' : ''">Serviço concluído</li>
+            </ol>
+            <p th:if="${atendimento.status.name() == 'CONTATO_SOLICITADO'}">Aguardando o fornecedor confirmar a contratação.</p>
+            <p th:if="${atendimento.confirmadoEm != null}" th:text="${'Contratação confirmada em ' + #temporals.format(atendimento.confirmadoEm, 'dd/MM/yyyy HH:mm')}"></p>
+            <p th:if="${atendimento.concluidoEm != null}" th:text="${'Concluído em ' + #temporals.format(atendimento.concluidoEm, 'dd/MM/yyyy HH:mm')}"></p>
+            <a th:if="${atendimento.clienteUsuarioId == usuarioAtualId and atendimento.status.name() == 'CONCLUIDO'}"
+               th:href="@{/prestadores/{id}(id=${atendimento.prestadorId})} + '#avaliacoes'" class="btn btn-outline">Avaliar prestador</a>
+            <th:block th:if="${atendimento.prestadorUsuarioId == usuarioAtualId}">
+                <a th:if="${atendimento.status.name() == 'CONCLUIDO'}" th:href="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" class="btn btn-outline">Avaliar cliente / ver avaliação</a>
+                <form th:if="${atendimento.status.name() == 'CONTATO_SOLICITADO'}" th:action="@{/notificacoes/atendimentos/{id}/confirmar(id=${atendimento.id})}" method="post">
+                    <button class="btn btn-primary" type="submit">Confirmar que fechou o serviço</button>
+                </form>
+                <form th:if="${atendimento.status.name() == 'EM_ANDAMENTO'}" th:action="@{/notificacoes/atendimentos/{id}/concluir(id=${atendimento.id})}" method="post">
+                    <button class="btn btn-primary" type="submit">Marcar serviço como concluído</button>
+                </form>
+            </th:block>
+            <a th:if="${atendimento.clienteUsuarioId == usuarioAtualId and atendimento.status.name() == 'CONCLUIDO'}" th:href="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" class="btn btn-outline">Ver avaliação recebida</a>
+        </article>
+    </section>
     <section class="notifications-card">
         <a th:each="notificacao : ${notificacoes}" th:href="${notificacao.link}" class="notification-item">
             <span class="notification-dot" th:classappend="${notificacao.lida} ? ' notification-read' : ''"></span>

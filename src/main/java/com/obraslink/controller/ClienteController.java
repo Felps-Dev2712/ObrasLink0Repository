@@ -5,8 +5,14 @@ import com.obraslink.model.Usuario;
 import com.obraslink.service.AcessoService;
 import com.obraslink.service.CategoriaService;
 import com.obraslink.service.ClienteService;
+import com.obraslink.service.ContaService;
 import com.obraslink.service.PrestadorService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +27,24 @@ public class ClienteController {
     private final PrestadorService prestadorService;
     private final CategoriaService categoriaService;
     private final AcessoService acessoService;
+    private final ContaService contaService;
+
+    @PostMapping("/minha-conta/excluir")
+    public String deleteOwnAccount(HttpServletRequest request,
+                                   HttpServletResponse response,
+                                   Authentication authentication,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            contaService.excluirMinhaConta();
+        } catch (DataAccessException ex) {
+            redirectAttributes.addFlashAttribute("mensagemErro",
+                    "Não foi possível excluir sua conta. Tente novamente.");
+            return "redirect:/clientes";
+        }
+        new SecurityContextLogoutHandler()
+                .logout(request, response, authentication);
+        return "redirect:/login?contaExcluida";
+    }
 
     @GetMapping
     public String list(Model model) {

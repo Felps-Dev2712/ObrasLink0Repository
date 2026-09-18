@@ -20,10 +20,6 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(Model model) {
-        // Actual stats for the hero and stats sections
-        model.addAttribute("totalPrestadores", prestadorRepository.count());
-        model.addAttribute("totalClientes", clienteRepository.count());
-        model.addAttribute("totalServicos", servicoRepository.count());
         model.addAttribute("categorias", categoriaService.findAll());
         model.addAttribute("pageTitle", "Obras Link — Plataforma de Serviços de Construção Civil");
         return "index";

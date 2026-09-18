@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<body>
+<fieldset th:fragment="criterio(campo, titulo)" class="rating-criterion" data-rating-criterion>
+    <legend th:text="${titulo}">Critério</legend>
+    <div class="criterion-stars">
+        <label th:each="nota : ${#numbers.sequence(1, 5)}" class="rating-choice">
+            <input type="radio" th:field="*{__${campo}__}" th:value="${nota}" required
+                   th:aria-label="${titulo + ': ' + nota + ' de 5 estrelas'}">
+            <span aria-hidden="true">★</span>
+        </label>
+        <span class="criterion-score" data-criterion-score aria-live="polite">Selecione uma nota</span>
+    </div>
+</fieldset>
+</body>
+</html>

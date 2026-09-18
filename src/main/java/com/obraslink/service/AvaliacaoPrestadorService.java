@@ -5,12 +5,12 @@ import com.obraslink.model.AvaliacaoPrestador;
 import com.obraslink.model.Cliente;
 import com.obraslink.model.PapelUsuario;
 import com.obraslink.model.Prestador;
-import com.obraslink.model.Servico;
+import com.obraslink.model.Atendimento;
 import com.obraslink.model.Usuario;
 import com.obraslink.repository.AvaliacaoPrestadorRepository;
 import com.obraslink.repository.ClienteRepository;
 import com.obraslink.repository.PrestadorRepository;
-import com.obraslink.repository.ServicoRepository;
+import com.obraslink.repository.AtendimentoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,9 +26,17 @@ public class AvaliacaoPrestadorService {
     private final AvaliacaoPrestadorRepository avaliacaoRepository;
     private final ClienteRepository clienteRepository;
     private final PrestadorRepository prestadorRepository;
-    private final ServicoRepository servicoRepository;
+    private final AtendimentoRepository atendimentoRepository;
     private final AcessoService acessoService;
     private final NotificacaoService notificacaoService;
+
+    @Transactional(readOnly = true)
+    public List<Atendimento> atendimentosDisponiveis(Long prestadorId) {
+        return acessoService.getUsuarioAtual()
+                .filter(usuario -> Boolean.TRUE.equals(usuario.getAtivo()) && usuario.getPapeis().contains(PapelUsuario.CLIENTE))
+                .map(usuario -> atendimentoRepository.findDisponiveisParaAvaliar(usuario.getId(), prestadorId, Atendimento.Status.CONCLUIDO))
+                .orElseGet(List::of);
+    }
 
     public List<AvaliacaoPrestador> findByPrestador(Long prestadorId) {
         return avaliacaoRepository.findByPrestadorIdOrderByCriadoEmDesc(prestadorId);
@@ -61,26 +69,33 @@ public class AvaliacaoPrestadorService {
     @Transactional
     public void avaliar(Long prestadorId, AvaliacaoPrestadorForm form) {
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
-        if (!usuario.getPapeis().contains(PapelUsuario.CLIENTE)) {
+        if (!Boolean.TRUE.equals(usuario.getAtivo()) || !usuario.getPapeis().contains(PapelUsuario.CLIENTE)) {
             throw new IllegalArgumentException("Apenas clientes podem registrar avaliacoes.");
+        }
+
+        if (form.getAtendimentoId() == null) {
+            throw new IllegalArgumentException("Selecione um serviço concluído para avaliar.");
+        }
+        Atendimento contratado = atendimentoRepository.findByIdParaAvaliar(form.getAtendimentoId())
+                .orElseThrow(() -> new IllegalArgumentException("Serviço concluído não encontrado para avaliação."));
+        if (!usuario.getId().equals(contratado.getClienteUsuarioId())
+                || !prestadorId.equals(contratado.getPrestadorId())
+                || contratado.getStatus() != Atendimento.Status.CONCLUIDO) {
+            throw new IllegalArgumentException("Você só pode avaliar serviços que contratou e que este prestador já concluiu.");
         }
 
         Cliente cliente = clienteRepository.findByUsuarioId(usuario.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Seu usuario nao possui cadastro de cliente."));
         Prestador prestador = prestadorRepository.findById(prestadorId)
                 .orElseThrow(() -> new IllegalArgumentException("Prestador nao encontrado."));
-        Servico servico = servicoRepository.findById(form.getServicoId())
-                .orElseThrow(() -> new IllegalArgumentException("Selecione o servico realizado para avaliar."));
-
-        if (!servico.getPrestador().getId().equals(prestador.getId())) {
-            throw new IllegalArgumentException("O servico selecionado nao pertence a este prestador.");
-        }
-
         if (prestador.getUsuarioId() != null && prestador.getUsuarioId().equals(usuario.getId())) {
             throw new IllegalArgumentException("Voce nao pode avaliar seu proprio perfil de prestador.");
         }
-        if (avaliacaoRepository.existsByClienteIdAndServicoId(cliente.getId(), servico.getId())) {
-            throw new IllegalArgumentException("Voce ja registrou uma avaliacao para este servico.");
+        if (!contratado.getPrestadorUsuarioId().equals(prestador.getUsuarioId())) {
+            throw new IllegalArgumentException("Este atendimento não pertence à conta atual do prestador.");
+        }
+        if (avaliacaoRepository.existsByAtendimentoId(contratado.getId())) {
+            throw new IllegalArgumentException("Você já avaliou este serviço concluído.");
         }
 
         validarNota(form.getQualidade(), "qualidade");
@@ -92,7 +107,7 @@ public class AvaliacaoPrestadorService {
         AvaliacaoPrestador avaliacao = AvaliacaoPrestador.builder()
                 .prestador(prestador)
                 .cliente(cliente)
-                .servico(servico)
+                .atendimentoId(contratado.getId())
                 .qualidade(form.getQualidade())
                 .prazo(form.getPrazo())
                 .preco(form.getPreco())

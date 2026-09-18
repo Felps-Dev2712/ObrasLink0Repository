@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Aceitar termos - Obras Link')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container legal-page">
+    <section class="legal-card">
+        <span class="eyebrow">Antes de continuar</span>
+        <h1>Termos de Uso e Privacidade</h1>
+        <p>Para usar sua conta, leia os documentos abaixo. Pedimos esta confirmação no primeiro acesso e quando houver uma nova versão.</p>
+        <p>Versão dos documentos: <strong th:text="${versao}"></strong></p>
+        <div class="legal-links">
+            <a th:href="@{/termos}" target="_blank" rel="noopener">Ler Termos de Uso (abre em outra aba)</a>
+            <a th:href="@{/privacidade}" target="_blank" rel="noopener">Ler Aviso de Privacidade (abre em outra aba)</a>
+        </div>
+        <p th:if="${erro}" th:text="${erro}" class="alert alert-error" role="alert"></p>
+        <p th:if="${mensagemErro}" th:text="${mensagemErro}" class="alert alert-error" role="alert"></p>
+        <form th:action="@{/termos/aceitar}" method="post">
+            <input type="hidden" name="versao" th:value="${versao}">
+            <label class="legal-check" for="aceitouTermos">
+                <input id="aceitouTermos" type="checkbox" name="aceitouTermos" value="true" required>
+                <span>Li e aceito os Termos de Uso.</span>
+            </label>
+            <label class="legal-check" for="cientePrivacidade">
+                <input id="cientePrivacidade" type="checkbox" name="cientePrivacidade" value="true" required>
+                <span>Li o Aviso de Privacidade e estou ciente de como meus dados são utilizados.</span>
+            </label>
+            <p>Esta confirmação não autoriza publicidade ou outros usos opcionais dos seus dados.</p>
+            <button type="submit" class="btn btn-primary">Aceitar e continuar</button>
+        </form>
+        <form th:action="@{/logout}" method="post" class="legal-secondary-action">
+            <button type="submit" class="btn btn-outline">Não aceitar e sair</button>
+        </form>
+        <details class="legal-secondary-action">
+            <summary>Prefiro excluir minha conta</summary>
+            <p>A exclusão é permanente e remove seus perfis, serviços, avaliações vinculadas, atendimentos, notificações e registros de aceite.</p>
+            <form th:action="@{/clientes/minha-conta/excluir}" method="post">
+                <button type="submit" class="btn btn-outline">Excluir minha conta permanentemente</button>
+            </form>
+        </details>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

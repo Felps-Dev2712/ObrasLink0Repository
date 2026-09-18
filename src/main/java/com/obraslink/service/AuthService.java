@@ -10,6 +10,7 @@ import com.obraslink.repository.CategoriaRepository;
 import com.obraslink.repository.ClienteRepository;
 import com.obraslink.repository.PrestadorRepository;
 import com.obraslink.repository.UsuarioRepository;
+import com.obraslink.validation.DadosCadastrais;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -107,7 +108,9 @@ public class AuthService {
             if (clienteRepository.existsByEmail(normalizedEmail)) {
                 throw new IllegalArgumentException("Ja existe cadastro de Cliente com esse e-mail.");
             }
-            if (clienteRepository.existsByCpfCnpj(form.getClienteCpfCnpj().trim())) {
+            form.setClienteCpfCnpj(DadosCadastrais.documento(form.getClienteCpfCnpj()));
+            form.setClienteTelefone(DadosCadastrais.telefone(form.getClienteTelefone(), false));
+            if (clienteRepository.documentoEmUso(DadosCadastrais.documentoSemMascara(form.getClienteCpfCnpj()), null)) {
                 throw new IllegalArgumentException("CPF/CNPJ de Cliente ja cadastrado.");
             }
         }
@@ -122,7 +125,9 @@ public class AuthService {
             if (prestadorRepository.existsByEmail(normalizedEmail)) {
                 throw new IllegalArgumentException("Ja existe cadastro de Prestador com esse e-mail.");
             }
-            if (prestadorRepository.existsByCpfCnpj(form.getPrestadorCpfCnpj().trim())) {
+            form.setPrestadorCpfCnpj(DadosCadastrais.documento(form.getPrestadorCpfCnpj()));
+            form.setPrestadorWhatsapp(DadosCadastrais.telefone(form.getPrestadorWhatsapp(), true));
+            if (prestadorRepository.documentoEmUso(DadosCadastrais.documentoSemMascara(form.getPrestadorCpfCnpj()), null)) {
                 throw new IllegalArgumentException("CPF/CNPJ de Prestador ja cadastrado.");
             }
         }

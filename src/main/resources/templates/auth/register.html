@@ -61,11 +61,11 @@
                     </div>
                     <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 16px;">
                         <label for="clienteCpfCnpj">CPF/CNPJ</label>
-                        <input id="clienteCpfCnpj" type="text" th:field="*{clienteCpfCnpj}" class="pure-u-1" data-profile-required>
+                        <input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="clienteCpfCnpj" type="text" th:field="*{clienteCpfCnpj}" class="pure-u-1" data-profile-required>
                     </div>
                     <div class="pure-u-1 pure-u-md-1-3">
                         <label for="clienteTelefone">Telefone</label>
-                        <input id="clienteTelefone" type="text" th:field="*{clienteTelefone}" class="pure-u-1">
+                        <input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="clienteTelefone" type="tel" th:field="*{clienteTelefone}" class="pure-u-1">
                     </div>
                 </div>
             </fieldset>
@@ -80,7 +80,7 @@
                     </div>
                     <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 16px;">
                         <label for="prestadorCpfCnpj">CPF/CNPJ</label>
-                        <input id="prestadorCpfCnpj" type="text" th:field="*{prestadorCpfCnpj}" class="pure-u-1" data-profile-required>
+                        <input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="prestadorCpfCnpj" type="text" th:field="*{prestadorCpfCnpj}" class="pure-u-1" data-profile-required>
                     </div>
                     <div class="pure-u-1 pure-u-md-1-3">
                         <label for="categoriaId">Categoria</label>
@@ -91,8 +91,8 @@
                     </div>
                     <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 16px; margin-top: 16px;">
                         <label for="prestadorWhatsapp">WhatsApp</label>
-                        <input id="prestadorWhatsapp" type="text" th:field="*{prestadorWhatsapp}" class="pure-u-1" data-profile-required
-                               placeholder="Ex: 11999999999">
+                        <input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="prestadorWhatsapp" type="tel" th:field="*{prestadorWhatsapp}" class="pure-u-1" data-profile-required
+                               placeholder="(11) 99999-9999">
                     </div>
                     <div class="pure-u-1" style="margin-top: 16px;">
                         <label for="prestadorDescricao">Descricao profissional</label>
@@ -106,6 +106,7 @@
                    style="border: 1px solid var(--color-border); color: var(--color-text);">Ja tenho conta</a>
                 <button type="submit" class="btn btn-primary" style="border: none;">Criar Conta</button>
             </div>
+            <p>Antes de cadastrar seus dados, consulte os <a th:href="@{/termos}">Termos de Uso</a> e o <a th:href="@{/privacidade}">Aviso de Privacidade</a>. A confirmação será solicitada no primeiro acesso à conta.</p>
         </form>
     </div>
 </div>
@@ -122,6 +123,7 @@
 
         function setRequired(container, active) {
             container.querySelectorAll('[data-profile-required]').forEach(input => input.required = active);
+            container.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !active);
         }
 
         function updateProfiles() {

@@ -76,19 +76,14 @@ public class PrestadorController {
     @GetMapping("/{id}")
     public String view(@PathVariable Long id, Model model) {
         return prestadorService.findById(id).map(prestador -> {
-            Optional<Usuario> usuarioOpt = acessoService.getUsuarioAtual();
-            boolean cliente = usuarioOpt
-                    .map(usuario -> usuario.getPapeis().contains(PapelUsuario.CLIENTE))
-                    .orElse(false);
-            boolean perfilProprio = usuarioOpt
-                    .map(usuario -> prestador.getUsuarioId() != null && prestador.getUsuarioId().equals(usuario.getId()))
-                    .orElse(false);
             List<AvaliacaoPrestador> avaliacoes = avaliacaoPrestadorService.findByPrestador(prestador.getId());
+            var atendimentosParaAvaliar = avaliacaoPrestadorService.atendimentosDisponiveis(prestador.getId());
 
             model.addAttribute("prestador", prestador);
             model.addAttribute("podeGerenciarPrestador", acessoService.podeGerenciarPrestador(prestador.getId()));
-            model.addAttribute("podeAvaliarPrestador", cliente && !perfilProprio);
-            model.addAttribute("avaliacaoForm", new AvaliacaoPrestadorForm());
+            model.addAttribute("podeAvaliarPrestador", !atendimentosParaAvaliar.isEmpty());
+            model.addAttribute("atendimentosParaAvaliar", atendimentosParaAvaliar);
+            if (!model.containsAttribute("avaliacaoForm")) model.addAttribute("avaliacaoForm", new AvaliacaoPrestadorForm());
             model.addAttribute("avaliacoes", avaliacoes);
             model.addAttribute("mediaAvaliacoes", avaliacaoPrestadorService.calcularMediaGeral(avaliacoes));
             model.addAttribute("totalAvaliacoes", avaliacoes.size());
@@ -105,6 +100,7 @@ public class PrestadorController {
             redirectAttributes.addFlashAttribute("mensagem", "Avaliacao registrada com sucesso!");
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("mensagemErro", ex.getMessage());
+            redirectAttributes.addFlashAttribute("avaliacaoForm", avaliacaoForm);
         }
         return "redirect:/prestadores/" + id;
     }

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Avaliação do cliente - Obras Link')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container notifications-page">
+    <a th:href="@{/notificacoes}" class="btn btn-outline">Voltar aos atendimentos</a>
+    <section class="service-tracking-card">
+        <h1>Avaliação do cliente</h1>
+        <p th:text="${'Atendimento #' + atendimento.id + ' · Cliente: ' + atendimento.clienteNome + ' · Prestador: ' + atendimento.prestadorNome}"></p>
+        <p th:if="${mensagem}" class="alert alert-success" th:text="${mensagem}"></p>
+        <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+        <form th:if="${podeAvaliar}" th:action="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" th:object="${avaliacaoForm}" method="post">
+            <p>Avalie sua experiência com o cliente. A avaliação ficará disponível para vocês dois.</p>
+            <th:block th:replace="~{fragments/avaliacao :: criterio('comunicacao', 'Comunicação')}"></th:block>
+            <th:block th:replace="~{fragments/avaliacao :: criterio('pontualidade', 'Pontualidade e disponibilidade')}"></th:block>
+            <th:block th:replace="~{fragments/avaliacao :: criterio('cumprimentoCombinado', 'Cumprimento do combinado')}"></th:block>
+            <label for="comentario">Comentário (opcional)</label>
+            <textarea id="comentario" th:field="*{comentario}" maxlength="2000" rows="4" class="form-control"></textarea>
+            <button type="submit" class="btn btn-primary">Enviar avaliação</button>
+        </form>
+        <div th:if="${avaliacao != null}">
+            <p th:text="${'Enviada em ' + #temporals.format(avaliacao.criadoEm, 'dd/MM/yyyy HH:mm')}"></p>
+            <p>Comunicação: <strong th:text="${avaliacao.comunicacao + ' de 5'}"></strong></p>
+            <p>Pontualidade e disponibilidade: <strong th:text="${avaliacao.pontualidade + ' de 5'}"></strong></p>
+            <p>Cumprimento do combinado: <strong th:text="${avaliacao.cumprimentoCombinado + ' de 5'}"></strong></p>
+            <p th:if="${avaliacao.comentario != null}" th:text="${avaliacao.comentario}"></p>
+        </div>
+        <p th:if="${avaliacao == null and !podeAvaliar}">Nenhuma avaliação recebida. Somente o prestador responsável pode avaliar após concluir o serviço.</p>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/avaliacoes.js}"></script>
+</body>
+</html>

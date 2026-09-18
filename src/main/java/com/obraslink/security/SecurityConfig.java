@@ -9,17 +9,22 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import com.obraslink.service.AcessoService;
+import com.obraslink.service.TermosService;
 
 @Configuration
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final AcessoService acessoService;
+    private final TermosService termosService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/register", "/recuperar-senha", "/error", "/css/**").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/recuperar-senha", "/termos", "/privacidade", "/error", "/css/**", "/js/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
@@ -35,6 +40,7 @@ public class SecurityConfig {
                         .permitAll()
                 );
 
+        http.addFilterAfter(new TermosAceiteFilter(acessoService, termosService), AuthorizationFilter.class);
         return http.build();
     }
 
