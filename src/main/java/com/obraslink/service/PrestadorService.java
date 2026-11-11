@@ -17,7 +17,7 @@ public class PrestadorService {
     private final PrestadorRepository prestadorRepository;
     
     public List<Prestador> findAllActive() {
-        return prestadorRepository.findByAtivoTrue();
+        return prestadorRepository.findAtivosParaListagem();
     }
     
     public List<Prestador> findByCategoria(Long categoriaId) {

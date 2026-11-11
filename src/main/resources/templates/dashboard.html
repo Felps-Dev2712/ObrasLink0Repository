@@ -1,55 +1,180 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-<head th:replace="~{fragments/layout :: head('Dashboard - ObraLink')}"></head>
+<head th:replace="~{fragments/layout :: head('Painel do profissional - ObraLink')}"></head>
 <body class="dashboard-body">
-<nav th:if="${dashboardCliente == null}" th:replace="~{fragments/layout :: navbar}"></nav>
+<div class="app-shell"
+     th:with="aguardando=${dashboard != null ? dashboard.total - dashboard.andamento - dashboard.concluidos : 0},
+              taxa=${dashboard == null or dashboard.total == 0 ? 0 : dashboard.concluidos * 100 / dashboard.total},
+              d7=${fimPadrao != null and inicioPadrao != null ? (fimPadrao.minusDays(6).isBefore(inicioPadrao) ? inicioPadrao : fimPadrao.minusDays(6)) : null},
+              d30=${fimPadrao != null and inicioPadrao != null ? (fimPadrao.minusDays(29).isBefore(inicioPadrao) ? inicioPadrao : fimPadrao.minusDays(29)) : null},
+              d90=${fimPadrao != null and inicioPadrao != null ? (fimPadrao.minusDays(89).isBefore(inicioPadrao) ? inicioPadrao : fimPadrao.minusDays(89)) : null}">
 
-<div th:if="${dashboardCliente != null}" class="customer-dashboard-shell">
-    <aside class="dashboard-sidebar">
-        <a href="/" class="dashboard-brand">ObraLink</a>
-        <div class="sidebar-user"><span class="sidebar-avatar" th:text="${#strings.isEmpty(auth['nome']) ? 'C' : #strings.substring(auth['nome'], 0, 1)}">C</span><span><strong th:text="${auth['nome']}">Minha conta</strong><small th:text="${auth.email}">conta@email.com</small></span><form th:if="${auth.hasCliente and auth.hasPrestador}" th:action="@{/perfil/alternar}" method="post"><input type="hidden" name="retorno" value="/dashboard"><select name="papel" aria-label="Alternar perfil" onchange="this.form.submit()"><option value="CLIENTE" th:selected="${auth.perfilAtivo == 'CLIENTE'}">Cliente</option><option value="PRESTADOR" th:selected="${auth.perfilAtivo == 'PRESTADOR'}">Prestador</option></select></form></div>
-        <p class="sidebar-label">MENU</p>
-        <nav class="sidebar-nav" aria-label="Navegação da conta">
-            <a href="/dashboard" class="active" aria-current="page"><span aria-hidden="true">▦</span> Dashboard</a>
-            <a href="/notificacoes"><span aria-hidden="true">◷</span> Histórico de contato</a>
-            <a href="#client-reviews"><span aria-hidden="true">☆</span> Avaliações</a>
-            <a href="/clientes"><span aria-hidden="true">♙</span> Perfil</a>
-            <a href="/clientes"><span aria-hidden="true">⚙</span> Configuração</a>
-        </nav>
-        <form th:action="@{/logout}" method="post" class="sidebar-logout"><button type="submit"><span aria-hidden="true">↪</span> Sair da conta</button></form>
-    </aside>
-    <main class="customer-dashboard-main">
-        <header class="customer-greeting"><div><p class="eyebrow">Área do cliente</p><h1>Olá, <span th:text="${auth['nome']}">Cliente</span></h1><p>Acompanhe seus contatos e serviços pela plataforma.</p></div><a href="/prestadores" class="btn btn-primary">Encontrar profissional <span aria-hidden="true">→</span></a></header>
-        <section class="customer-metrics" aria-label="Resumo dos atendimentos">
-            <article class="customer-metric"><span class="metric-icon">⌕</span><span>Contatos realizados</span><strong th:text="${dashboardCliente.totalContatos}">0</strong><small>Desde que você entrou na plataforma</small></article>
-            <article class="customer-metric"><span class="metric-icon metric-icon-blue">◷</span><span>Em andamento</span><strong th:text="${dashboardCliente.emAndamento}">0</strong><small>Contratações confirmadas</small></article>
-            <article class="customer-metric"><span class="metric-icon metric-icon-gold">✓</span><span>Concluídos</span><strong th:text="${dashboardCliente.concluidos}">0</strong><small>Serviços marcados como concluídos</small></article>
-        </section>
-        <div class="customer-dashboard-grid">
-            <section class="customer-panel"><div class="panel-heading"><div><h2>Últimos contatos</h2><p>Acompanhe o andamento das conversas iniciadas.</p></div><a href="/notificacoes">Ver histórico</a></div>
-                <article class="contact-row" th:each="item : ${dashboardCliente.recentes}"><span class="contact-avatar" th:text="${#strings.isEmpty(item.prestadorNome) ? 'P' : #strings.substring(item.prestadorNome, 0, 1)}">P</span><span class="contact-description"><strong th:text="${item.prestadorNome}">Profissional</strong><small th:if="${item.servicoTitulo != null}" th:text="${item.servicoTitulo}">Serviço</small><small th:text="${'Atendimento #' + item.id + ' · ' + #temporals.format(item.criadoEm, 'dd/MM/yyyy')}">Atendimento</small><small th:if="${item.dataAgendada != null}" th:text="${'Agendado: ' + #temporals.format(item.dataAgendada,'dd/MM/yyyy') + ' às ' + #temporals.format(item.horarioAgendado,'HH:mm')}">Agendamento</small></span><span class="status-pill" th:classappend="${item.status.name() == 'CONCLUIDO' ? ' status-complete' : (item.status.name() == 'EM_ANDAMENTO' ? ' status-progress' : '')}" th:text="${item.status.name() == 'CONCLUIDO' ? 'Concluído' : (item.status.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Aguardando')}">Status</span><a th:href="@{/prestadores/{id}(id=${item.prestadorId})}" class="row-link" aria-label="Ver perfil do profissional">→</a></article>
-                <p th:if="${#lists.isEmpty(dashboardCliente.recentes)}" class="panel-empty">Você ainda não iniciou contatos. <a href="/prestadores">Encontre um profissional</a> para começar.</p>
-            </section>
-            <section id="client-reviews" class="customer-panel"><div class="panel-heading"><div><h2>Avaliações recebidas</h2><p>Comentários registrados sobre seus atendimentos.</p></div></div>
-                <article class="received-review" th:each="review : ${dashboardCliente.avaliacoes}"><div class="review-meta"><strong th:text="${'Atendimento #' + review.atendimentoId}">Atendimento</strong><span th:text="${#temporals.format(review.criadoEm, 'dd/MM/yyyy')}">Data</span></div><div class="review-rating"><span th:text="${'★ ' + #numbers.formatDecimal((review.comunicacao + review.pontualidade + review.cumprimentoCombinado) / 3.0, 1, 1) + ' de 5'}">★ 5,0 de 5</span></div><p th:if="${review.comentario != null and !#strings.isEmpty(review.comentario)}" th:text="${review.comentario}">Comentário</p><p th:if="${review.comentario == null or #strings.isEmpty(review.comentario)}" class="review-no-comment">Avaliação sem comentário.</p></article>
-                <p th:if="${#lists.isEmpty(dashboardCliente.avaliacoes)}" class="panel-empty">Você ainda não recebeu avaliações.</p>
-            </section>
+    <!-- ===== Menu lateral ===== -->
+    <aside class="dashboard-sidebar" aria-label="Menu do profissional">
+        <a th:replace="~{fragments/layout :: brand('brand-light')}" href="/">ObraLink</a>
+        <div class="sidebar-user">
+            <span class="sidebar-avatar" aria-hidden="true"><img th:if="${auth['fotoPerfil'] != null}" th:src="@{/imagens/{c}(c=${auth['fotoPerfil']})}" alt=""><th:block th:unless="${auth['fotoPerfil'] != null}" th:text="${#strings.isEmpty(auth['nome']) ? 'P' : #strings.substring(auth['nome'], 0, 1)}">P</th:block></span>
+            <span><strong th:text="${auth['nome']}">Minha conta</strong><small th:text="${auth['email']}">conta@email.com</small></span>
+            <form th:if="${auth['hasCliente'] and auth['hasPrestador']}" th:action="@{/perfil/alternar}" method="post">
+                <input type="hidden" name="retorno" value="/">
+                <label class="sr-only" for="sidebar-perfil">Alternar perfil</label>
+                <select id="sidebar-perfil" name="papel" onchange="this.form.submit()">
+                    <option value="PRESTADOR" th:selected="${auth['perfilAtivo'] == 'PRESTADOR'}">Usando como prestador</option>
+                    <option value="CLIENTE" th:selected="${auth['perfilAtivo'] == 'CLIENTE'}">Usando como cliente</option>
+                </select>
+            </form>
         </div>
-        <section th:if="${dashboard != null}" class="dashboard-panel provider-dashboard-extra"><h2>Painel profissional</h2><p>Seu resumo de atendimentos como prestador também está disponível abaixo.</p><div class="dashboard-metrics customer-metrics provider-metrics"><article><span>Total de atendimentos</span><strong th:text="${dashboard.total}"></strong></article><article><span>Em andamento</span><strong th:text="${dashboard.andamento}"></strong></article><article><span>Concluídos</span><strong th:text="${dashboard.concluidos}"></strong></article></div><a href="/servicos" class="btn btn-outline">Meus serviços</a> <a href="/prestadores/minha-disponibilidade" class="btn btn-outline">Disponibilidade</a></section>
+        <p class="sidebar-label">GESTÃO</p>
+        <nav class="sidebar-nav" aria-label="Navegação do profissional">
+            <a href="/dashboard" class="active" aria-current="page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Painel</a>
+            <a href="/notificacoes"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5Z"/></svg>Atendimentos<span th:if="${auth['notificacoesNaoLidas'] > 0}" class="notification-badge" th:text="${auth['notificacoesNaoLidas']}">1</span></a>
+            <a href="/servicos"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Meus serviços</a>
+            <a href="/prestadores/minha-disponibilidade"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda</a>
+            <a href="/prestadores/minhas-certificacoes"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.5 12.9 17 22l-5-3-5 3 1.5-9.1"/></svg>Certificações</a>
+        </nav>
+        <p class="sidebar-label">CONTA</p>
+        <nav class="sidebar-nav" aria-label="Conta">
+            <a th:if="${auth['prestadorId'] != null}" th:href="@{/prestadores/{id}(id=${auth['prestadorId']})}"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>Perfil público</a>
+            <a href="/clientes"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Minha conta</a>
+        </nav>
+        <form th:action="@{/logout}" method="post" class="sidebar-logout">
+            <button type="submit"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Sair da conta</button>
+        </form>
+    </aside>
+
+    <!-- ===== Conteúdo ===== -->
+    <main id="conteudo" class="app-main">
+        <header class="dash-header">
+            <div>
+                <p class="eyebrow">Painel do profissional</p>
+                <h1>Olá, <span th:text="${auth['nome'] ?: 'profissional'}">profissional</span></h1>
+                <p th:if="${inicioFiltro != null}" th:text="${'Resultados de ' + #temporals.format(inicioFiltro, 'dd/MM/yyyy') + ' a ' + #temporals.format(fimFiltro, 'dd/MM/yyyy')}">Período</p>
+            </div>
+            <div class="page-header-actions">
+                <a href="/servicos/novo" class="btn btn-outline">+ Novo serviço</a>
+                <a href="/notificacoes" class="btn btn-primary">Gerenciar atendimentos</a>
+            </div>
+        </header>
+
+        <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+
+        <th:block th:if="${dashboard != null}">
+            <!-- Período -->
+            <section class="dash-toolbar" aria-label="Período">
+                <nav class="segmented" aria-label="Períodos rápidos" th:if="${d7 != null}">
+                    <a th:href="@{/dashboard(inicio=${d7},fim=${fimPadrao})}" th:aria-current="${inicioFiltro == d7 and fimFiltro == fimPadrao ? 'page' : null}">7 dias</a>
+                    <a th:href="@{/dashboard(inicio=${d30},fim=${fimPadrao})}" th:aria-current="${inicioFiltro == d30 and fimFiltro == fimPadrao and d30 != d7 ? 'page' : null}">30 dias</a>
+                    <a th:href="@{/dashboard(inicio=${d90},fim=${fimPadrao})}" th:aria-current="${inicioFiltro == d90 and fimFiltro == fimPadrao and d90 != d30 ? 'page' : null}">90 dias</a>
+                    <a th:href="@{/dashboard(inicio=${inicioPadrao},fim=${fimPadrao})}" th:aria-current="${inicioFiltro == inicioPadrao and fimFiltro == fimPadrao and inicioPadrao != d90 ? 'page' : null}">Tudo</a>
+                </nav>
+                <form action="/dashboard" method="get" class="dash-range">
+                    <label><span class="sr-only">Data inicial</span><input type="date" name="inicio" th:value="${inicioFiltro}" th:min="${inicioPadrao}" th:max="${fimPadrao}" required aria-label="Data inicial"></label>
+                    <span aria-hidden="true" class="text-subtle">até</span>
+                    <label><span class="sr-only">Data final</span><input type="date" name="fim" th:value="${fimFiltro}" th:min="${inicioPadrao}" th:max="${fimPadrao}" required aria-label="Data final"></label>
+                    <button class="btn btn-outline" type="submit">Aplicar</button>
+                </form>
+            </section>
+
+            <!-- Indicadores -->
+            <section class="dashboard-metrics kpi-grid" aria-label="Indicadores do período">
+                <article class="kpi">
+                    <div class="kpi-head"><span>Contatos recebidos</span><span class="metric-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5Z"/></svg></span></div>
+                    <strong th:text="${dashboard.total}">0</strong>
+                    <small>Total no período</small>
+                </article>
+                <article class="kpi">
+                    <div class="kpi-head"><span>Aguardando você</span><span class="metric-icon metric-icon-warn"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></span></div>
+                    <strong th:text="${aguardando}">0</strong>
+                    <small><a th:if="${aguardando > 0}" href="/notificacoes">Confirmar contratações →</a><th:block th:unless="${aguardando > 0}">Nenhuma pendência</th:block></small>
+                </article>
+                <article class="kpi">
+                    <div class="kpi-head"><span>Em andamento</span><span class="metric-icon metric-icon-blue"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div>
+                    <strong th:text="${dashboard.andamento}">0</strong>
+                    <small>Contratações confirmadas</small>
+                </article>
+                <article class="kpi">
+                    <div class="kpi-head"><span>Taxa de conclusão</span><span class="metric-icon metric-icon-gold"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></div>
+                    <strong th:text="${taxa + '%'}">0%</strong>
+                    <small th:text="${dashboard.concluidos + (dashboard.concluidos == 1 ? ' serviço concluído' : ' serviços concluídos')}">0 serviços concluídos</small>
+                </article>
+            </section>
+
+            <div th:if="${dashboard.total == 0}" class="empty-state mb-24">
+                <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5Z"/></svg></span>
+                <h2>Nenhum contato neste período</h2>
+                <p>Perfis completos recebem mais contatos. Cadastre seus serviços, informe sua agenda e envie suas certificações.</p>
+                <div class="cluster"><a href="/servicos/novo" class="btn btn-primary">Cadastrar serviço</a><a href="/prestadores/minha-disponibilidade" class="btn btn-outline">Definir agenda</a></div>
+            </div>
+
+            <div class="dash-grid" th:if="${dashboard.total > 0}">
+                <!-- Situação dos atendimentos -->
+                <section class="dashboard-panel" data-reveal aria-labelledby="status-title">
+                    <div class="panel-heading"><div><h2 id="status-title">Situação dos atendimentos</h2><p>Distribuição dos contatos do período</p></div></div>
+                    <div class="stacked-bar" role="img" th:attr="aria-label=${aguardando + ' aguardando, ' + dashboard.andamento + ' em andamento, ' + dashboard.concluidos + ' concluídos'}">
+                        <span th:each="barra : ${dashboard.status}" th:if="${barra.valor > 0}"
+                              th:classappend="${barra.titulo.startsWith('Aguard') ? 'seg-warn' : (barra.titulo.startsWith('Em') ? 'seg-info' : 'seg-success')}"
+                              th:style="${'width:' + barra.percentual + '%'}"></span>
+                    </div>
+                    <ul class="legend-list">
+                        <li th:each="barra : ${dashboard.status}">
+                            <span class="legend-dot" th:classappend="${barra.titulo.startsWith('Aguard') ? 'seg-warn' : (barra.titulo.startsWith('Em') ? 'seg-info' : 'seg-success')}"></span>
+                            <span th:text="${barra.titulo}">Status</span>
+                            <strong th:text="${barra.valor}">0</strong>
+                            <small th:text="${barra.percentual + '%'}">0%</small>
+                        </li>
+                    </ul>
+                </section>
+
+                <!-- Meses com mais contatos -->
+                <section class="dashboard-panel" data-reveal aria-labelledby="months-title">
+                    <div class="panel-heading"><div><h2 id="months-title">Meses com mais contatos</h2><p>Últimos seis meses, do maior para o menor · mês atual parcial</p></div></div>
+                    <div class="rank-list">
+                        <div th:each="barra : ${dashboard.meses}" class="rank-row">
+                            <span class="rank-label" th:text="${barra.titulo}">mês</span>
+                            <div class="chart-track" aria-hidden="true"><span th:style="${'width:' + barra.percentual + '%'}"></span></div>
+                            <strong th:text="${barra.valor}" th:title="${barra.percentual + '% do total'}">0</strong>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Atendimentos recentes -->
+            <section class="dashboard-panel" data-reveal aria-labelledby="recent-title" th:if="${dashboard.total > 0}">
+                <div class="panel-heading">
+                    <div><h2 id="recent-title">Atendimentos recentes</h2><p>Os cinco contatos mais recentes do período</p></div>
+                    <a href="/notificacoes">Ver todos →</a>
+                </div>
+                <div class="table-wrap table-flat">
+                    <table class="table">
+                        <thead><tr><th scope="col">Cliente</th><th scope="col">Serviço</th><th scope="col">Recebido em</th><th scope="col">Agendamento</th><th scope="col">Situação</th></tr></thead>
+                        <tbody>
+                        <tr th:each="item : ${dashboard.recentes}">
+                            <td>
+                                <div class="cell-person">
+                                    <span class="avatar avatar-sm" aria-hidden="true" th:text="${#strings.isEmpty(item.clienteNome) ? 'C' : #strings.substring(item.clienteNome, 0, 1)}">C</span>
+                                    <span><strong th:text="${item.clienteNome}">Cliente</strong><span class="cell-sub" th:text="${'#' + item.id}">#1</span></span>
+                                </div>
+                            </td>
+                            <td th:text="${item.servicoTitulo ?: 'Contato pelo perfil'}">Serviço</td>
+                            <td th:text="${#temporals.format(item.criadoEm, 'dd/MM/yyyy')}">01/01/2026</td>
+                            <td th:text="${item.dataAgendada != null ? #temporals.format(item.dataAgendada,'dd/MM') + ' às ' + #temporals.format(item.horarioAgendado,'HH:mm') : '—'}">—</td>
+                            <td><span class="status-pill" th:classappend="${item.status.name() == 'CONCLUIDO' ? ' status-complete' : (item.status.name() == 'EM_ANDAMENTO' ? ' status-progress' : '')}"
+                                      th:text="${item.status.name() == 'CONCLUIDO' ? 'Concluído' : (item.status.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Aguardando')}">Status</span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Atalhos -->
+            <section class="quick-links" aria-label="Atalhos">
+                <a href="/servicos" class="quick-link" data-reveal><span class="metric-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span><span><strong>Meus serviços</strong><small>Cadastre, edite ou pause serviços</small></span></a>
+                <a href="/prestadores/minha-disponibilidade" class="quick-link" data-reveal><span class="metric-icon metric-icon-blue"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span><span><strong>Agenda semanal</strong><small>Mostre quando você atende</small></span></a>
+                <a href="/prestadores/minhas-certificacoes" class="quick-link" data-reveal><span class="metric-icon metric-icon-gold"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.5 12.9 17 22l-5-3-5 3 1.5-9.1"/></svg></span><span><strong>Certificações</strong><small>Aumente a confiança dos clientes</small></span></a>
+            </section>
+        </th:block>
     </main>
 </div>
-
-    <main th:if="${dashboard != null}" class="container dashboard-page provider-dashboard-page">
-    <div class="section-heading provider-dashboard-heading"><div><p class="eyebrow">Painel do prestador</p><h1>Seu trabalho em perspectiva.</h1><p>Acompanhe os atendimentos recebidos pela plataforma.</p></div><div class="provider-dashboard-actions"><a href="/notificacoes" class="btn btn-primary">Gerenciar atendimentos</a> <a href="/servicos" class="btn btn-outline">Meus serviços</a> <a href="/prestadores/minha-disponibilidade" class="btn btn-outline">Disponibilidade</a></div></div>
-    <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
-    <form th:if="${dashboard != null}" action="/dashboard" method="get" class="dashboard-period-filter provider-period-filter"><label>Data inicial<input type="date" name="inicio" th:value="${inicioFiltro}" required></label><label>Data final<input type="date" name="fim" th:value="${fimFiltro}" required></label><button class="btn btn-primary" type="submit">Aplicar filtro</button><a class="btn btn-outline" th:href="@{/dashboard(inicio=${inicioPadrao},fim=${fimPadrao})}">Limpar filtro</a></form>
-    <div class="dashboard-metrics customer-metrics provider-metrics"><article><span>Total de atendimentos no período</span><strong th:text="${dashboard.total}"></strong></article><article><span>Em andamento</span><strong th:text="${dashboard.andamento}"></strong></article><article><span>Concluídos</span><strong th:text="${dashboard.concluidos}"></strong></article></div>
-    <p th:if="${dashboard.total == 0}" class="alert">Seu painel está pronto. Os gráficos serão preenchidos quando você receber o primeiro contato.</p>
-    <div class="dashboard-charts provider-dashboard-grid"><section class="dashboard-panel customer-panel"><h2>Situação dos atendimentos</h2><p>Porcentagem do total de atendimentos · maior para menor</p><div th:each="barra : ${dashboard.status}" class="status-chart-row"><div><span th:text="${barra.titulo}"></span><strong th:text="${barra.percentual + '%'}" th:title="${barra.valor + ' atendimentos'}"></strong></div><div class="chart-track" aria-hidden="true"><span th:style="${'width:' + barra.percentual + '%'}"></span></div></div></section>
-        <section class="dashboard-panel customer-panel"><h2>Novos contatos por mês</h2><p>Participação no total dos últimos seis meses · mês atual parcial</p><div class="monthly-chart"><div th:each="barra : ${dashboard.meses}" class="monthly-column"><strong th:text="${barra.percentual + '%'}" th:title="${barra.valor + ' atendimentos'}"></strong><div class="monthly-track" aria-hidden="true"><span th:style="${'height:' + barra.percentual + '%'}"></span></div><small th:text="${barra.titulo}"></small></div></div></section></div>
-    <section class="dashboard-panel customer-panel"><h2>Atendimentos recentes</h2><p th:if="${#lists.isEmpty(dashboard.recentes)}">Você ainda não recebeu contatos no período.</p><a th:each="item : ${dashboard.recentes}" href="/notificacoes" class="dashboard-recent"><span><strong th:text="${item.clienteNome}"></strong><small th:text="${'Atendimento #' + item.id}"></small><small th:if="${item.dataAgendada != null}" th:text="${'Agendado: ' + #temporals.format(item.dataAgendada,'dd/MM/yyyy') + ' às ' + #temporals.format(item.horarioAgendado,'HH:mm')}"></small></span><span th:classappend="${item.status.name() == 'CONCLUIDO' ? ' status-complete' : (item.status.name() == 'EM_ANDAMENTO' ? ' status-progress' : '')}" th:text="${item.status.name() == 'CONCLUIDO' ? 'Concluído' : (item.status.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Aguardando confirmação')}"></span></a></section>
-</main>
-<footer th:if="${dashboardCliente == null}" th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
 </html>

@@ -3,58 +3,62 @@
 <head th:replace="~{fragments/layout :: head('Certificações - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="container workspace-page certification-page">
-    <h1>Certificações profissionais</h1>
-    <p>Cadastre seus certificados e acompanhe o resultado da análise. O envio não representa aprovação automática.</p>
+<main id="conteudo" class="container container-narrow page certification-page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Perfil profissional</p>
+            <h1>Certificações</h1>
+            <p>Cadastre seus certificados e acompanhe a análise. O envio não representa aprovação automática.</p>
+        </div>
+    </header>
+
     <p th:if="${mensagem}" class="alert alert-success" role="status" th:text="${mensagem}"></p>
     <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
 
-    <section class="certification-panel" aria-labelledby="new-certification-title">
-        <h2 id="new-certification-title">Adicionar certificação</h2>
-        <form th:action="@{/prestadores/minhas-certificacoes}" method="post" enctype="multipart/form-data" class="certification-form">
-            <label>Nome da certificação<input name="nome" maxlength="180" placeholder="Ex.: NR-10 — Segurança em instalações elétricas" required></label>
-            <label>Emissor ou instituição<input name="emissor" maxlength="180" placeholder="Ex.: SENAI" required></label>
-            <label>Data de emissão<input type="date" name="dataEmissao" th:max="${dataMaximaEmissao}" required></label>
-            <label>Data de validade (opcional)<input type="date" name="dataValidade"></label>
-            <label>Código de registro (opcional)<input name="codigoRegistro" maxlength="100" placeholder="Número ou código do certificado"></label>
-            <label class="certification-file">Documento comprobatório (PDF, JPG ou PNG; até 10 MB)<input type="file" name="documento" accept="application/pdf,image/jpeg,image/png" required data-file-name><small data-file-label>Nenhum arquivo selecionado</small></label>
-            <button class="btn btn-primary" type="submit">Enviar para análise</button>
-        </form>
+    <section class="card" aria-labelledby="new-certification-title" data-reveal>
+        <div class="card-header"><div><h2 id="new-certification-title">Adicionar certificação</h2><p>Anexe um comprovante legível. Ele só é visto por você e pela equipe de análise.</p></div></div>
+        <div class="card-body">
+            <form th:action="@{/prestadores/minhas-certificacoes}" method="post" enctype="multipart/form-data" class="certification-form" data-submit-once>
+                <label>Nome da certificação<input name="nome" maxlength="180" placeholder="Ex.: NR-10 — Segurança em instalações elétricas" required></label>
+                <label>Emissor ou instituição<input name="emissor" maxlength="180" placeholder="Ex.: SENAI" required></label>
+                <label>Data de emissão<input type="date" name="dataEmissao" th:max="${dataMaximaEmissao}" required></label>
+                <label>Data de validade <span class="text-subtle">(opcional)</span><input type="date" name="dataValidade"></label>
+                <label class="span-all">Código de registro <span class="text-subtle">(opcional)</span><input name="codigoRegistro" maxlength="100" placeholder="Número ou código do certificado"></label>
+                <label class="certification-file">Comprovante (PDF, JPG ou PNG; até 10 MB)<input type="file" name="documento" accept="application/pdf,image/jpeg,image/png" required data-file-name><small data-file-label class="help">Nenhum arquivo selecionado</small></label>
+                <button class="btn btn-primary" type="submit">Enviar para análise</button>
+            </form>
+        </div>
     </section>
 
-    <section class="certification-list" aria-labelledby="my-certifications-title">
-        <h2 id="my-certifications-title">Minhas certificações</h2>
-        <article class="certification-card" th:each="c : ${certificacoes}">
+    <section class="mt-24" aria-labelledby="my-certifications-title">
+        <div class="section-subtitle"><h2 id="my-certifications-title">Minhas certificações</h2></div>
+        <article class="certification-card" th:each="c, stat : ${certificacoes}" data-reveal th:style="${'--i:' + (stat.index % 6)}">
             <div class="certification-card-heading">
                 <h3 th:text="${c.nome}">Certificação</h3>
-                <span class="certification-state" th:classappend="${' state-' + #strings.toLowerCase(c.estado.name())}" th:text="${c.estado == T(com.obraslink.model.Certificacao.Estado).PENDENTE ? 'Pendente de análise' : (c.estado == T(com.obraslink.model.Certificacao.Estado).APROVADA ? 'Aprovada' : 'Reprovada')}">Pendente de análise</span>
+                <span class="certification-state" th:classappend="${' state-' + #strings.toLowerCase(c.estado.name())}" th:text="${c.estado == T(com.obraslink.model.Certificacao.Estado).PENDENTE ? 'Em análise' : (c.estado == T(com.obraslink.model.Certificacao.Estado).APROVADA ? 'Aprovada' : 'Reprovada')}">Em análise</span>
             </div>
             <dl class="certification-details">
-                <div><dt>Emissor</dt><dd th:text="${c.emissor}">Instituição emissora</dd></div>
-                <div><dt>Data de emissão</dt><dd th:text="${#temporals.format(c.dataEmissao, 'dd/MM/yyyy')}">01/01/2026</dd></div>
-                <div><dt>Validade</dt><dd th:text="${c.dataValidade != null ? #temporals.format(c.dataValidade, 'dd/MM/yyyy') : 'Sem validade informada'}">—</dd></div>
-                <div><dt>Código de registro</dt><dd th:text="${c.codigoRegistro != null and !c.codigoRegistro.isBlank() ? c.codigoRegistro : 'Não informado'}">—</dd></div>
+                <div><dt>Emissor</dt><dd th:text="${c.emissor}">Instituição</dd></div>
+                <div><dt>Emissão</dt><dd th:text="${#temporals.format(c.dataEmissao, 'dd/MM/yyyy')}">01/01/2026</dd></div>
+                <div><dt>Validade</dt><dd th:text="${c.dataValidade != null ? #temporals.format(c.dataValidade, 'dd/MM/yyyy') : 'Sem validade'}">—</dd></div>
+                <div><dt>Registro</dt><dd th:text="${c.codigoRegistro != null and !c.codigoRegistro.isBlank() ? c.codigoRegistro : 'Não informado'}">—</dd></div>
             </dl>
             <p th:if="${c.observacaoValidacao != null and !c.observacaoValidacao.isBlank()}" class="certification-note"><strong>Observação da análise:</strong> <span th:text="${c.observacaoValidacao}"></span></p>
             <div class="certification-actions">
-                <a class="btn btn-outline" th:href="@{/certificacoes/{id}/documento(id=${c.id})}" th:text="${c.documentoNome}">Consultar documento</a>
-                <a th:if="${c.estado != T(com.obraslink.model.Certificacao.Estado).APROVADA}" class="btn btn-outline" th:href="@{/prestadores/minhas-certificacoes/{id}/editar(id=${c.id})}">Editar certificação</a>
+                <a class="btn btn-outline btn-sm" th:href="@{/certificacoes/{id}/documento(id=${c.id})}">Baixar comprovante <span class="text-subtle" th:text="${'(' + c.documentoNome + ')'}"></span></a>
+                <a th:if="${c.estado != T(com.obraslink.model.Certificacao.Estado).APROVADA}" class="btn btn-ghost btn-sm" th:href="@{/prestadores/minhas-certificacoes/{id}/editar(id=${c.id})}">Editar</a>
             </div>
         </article>
-        <p th:if="${#lists.isEmpty(certificacoes)}">Nenhuma certificação cadastrada.</p>
+        <div th:if="${#lists.isEmpty(certificacoes)}" class="empty-inline">Nenhuma certificação cadastrada ainda.</div>
     </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 <script>
-document.querySelectorAll('[data-file-name]').forEach(input => input.addEventListener('change', () => {
-    const label = input.parentElement.querySelector('[data-file-label]');
-    label.textContent = input.files.length ? input.files[0].name : 'Nenhum arquivo selecionado';
-}));
-document.querySelectorAll('.certification-form').forEach(form => form.addEventListener('submit', () => {
-    const button = form.querySelector('button[type="submit"]');
-    if (button) { button.disabled = true; button.textContent = 'Enviando…'; }
-}));
+    document.querySelectorAll('[data-file-name]').forEach(input => input.addEventListener('change', () => {
+        const label = input.parentElement.querySelector('[data-file-label]');
+        label.textContent = input.files.length ? input.files[0].name : 'Nenhum arquivo selecionado';
+    }));
 </script>
 </body>
 </html>

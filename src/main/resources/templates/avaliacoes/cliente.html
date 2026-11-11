@@ -3,28 +3,45 @@
 <head th:replace="~{fragments/layout :: head('Avaliação do cliente - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="container notifications-page">
-    <a th:href="@{/notificacoes}" class="btn btn-outline">Voltar aos atendimentos</a>
-    <section class="service-tracking-card">
-        <h1>Avaliação do cliente</h1>
-        <p th:text="${'Atendimento #' + atendimento.id + ' · Cliente: ' + atendimento.clienteNome + ' · Prestador: ' + atendimento.prestadorNome}"></p>
-        <p th:if="${mensagem}" class="alert alert-success" th:text="${mensagem}"></p>
-        <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
-        <form th:if="${podeAvaliar}" th:action="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" th:object="${avaliacaoForm}" method="post" class="client-review-form">
-            <p>Avalie sua experiência com o cliente. A avaliação ficará disponível para vocês dois.</p>
-            <th:block th:replace="~{fragments/avaliacao :: criterio('comunicacao', 'Comunicação')}"></th:block>
-            <th:block th:replace="~{fragments/avaliacao :: criterio('pontualidade', 'Pontualidade e disponibilidade')}"></th:block>
-            <th:block th:replace="~{fragments/avaliacao :: criterio('cumprimentoCombinado', 'Cumprimento do combinado')}"></th:block>
-            <div class="client-review-comment"><label for="comentario">Comentário (opcional)</label><textarea id="comentario" th:field="*{comentario}" maxlength="2000" rows="4" class="form-control"></textarea><button type="submit" class="btn btn-primary">Enviar avaliação</button></div>
-        </form>
-        <div th:if="${avaliacao != null}">
-            <p th:text="${'Enviada em ' + #temporals.format(avaliacao.criadoEm, 'dd/MM/yyyy HH:mm')}"></p>
-            <p>Comunicação: <strong th:text="${avaliacao.comunicacao + ' de 5'}"></strong></p>
-            <p>Pontualidade e disponibilidade: <strong th:text="${avaliacao.pontualidade + ' de 5'}"></strong></p>
-            <p>Cumprimento do combinado: <strong th:text="${avaliacao.cumprimentoCombinado + ' de 5'}"></strong></p>
-            <p th:if="${avaliacao.comentario != null}" th:text="${avaliacao.comentario}"></p>
+<main id="conteudo" class="container container-narrow page notifications-page">
+    <a th:href="@{/notificacoes}" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar aos atendimentos</a>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow" th:text="${'Atendimento #' + atendimento.id}">Atendimento</p>
+            <h1>Avaliação do cliente</h1>
+            <p th:text="${'Cliente: ' + atendimento.clienteNome + ' · Profissional: ' + atendimento.prestadorNome}"></p>
         </div>
-        <p th:if="${avaliacao == null and !podeAvaliar}">Nenhuma avaliação recebida. Somente o prestador responsável pode avaliar após concluir o serviço.</p>
+    </header>
+
+    <p th:if="${mensagem}" class="alert alert-success" role="status" th:text="${mensagem}"></p>
+    <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+
+    <section class="card" data-reveal>
+        <div class="card-body">
+            <form th:if="${podeAvaliar}" th:action="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" th:object="${avaliacaoForm}" method="post" class="client-review-form">
+                <p class="text-muted mb-24">Avalie sua experiência com o cliente. A avaliação ficará visível para vocês dois.</p>
+                <th:block th:replace="~{fragments/avaliacao :: criterio('comunicacao', 'Comunicação')}"></th:block>
+                <th:block th:replace="~{fragments/avaliacao :: criterio('pontualidade', 'Pontualidade e disponibilidade')}"></th:block>
+                <th:block th:replace="~{fragments/avaliacao :: criterio('cumprimentoCombinado', 'Cumprimento do combinado')}"></th:block>
+                <div class="client-review-comment">
+                    <label for="comentario">Comentário <span class="text-subtle">(opcional)</span></label>
+                    <textarea id="comentario" th:field="*{comentario}" maxlength="2000" rows="4" class="form-control"></textarea>
+                    <button type="submit" class="btn btn-primary">Enviar avaliação</button>
+                </div>
+            </form>
+
+            <div th:if="${avaliacao != null}">
+                <p class="text-subtle" th:text="${'Enviada em ' + #temporals.format(avaliacao.criadoEm, 'dd/MM/yyyy HH:mm')}"></p>
+                <div class="review-result">
+                    <div><span>Comunicação</span><strong th:text="${avaliacao.comunicacao + ' de 5'}"></strong></div>
+                    <div><span>Pontualidade e disponibilidade</span><strong th:text="${avaliacao.pontualidade + ' de 5'}"></strong></div>
+                    <div><span>Cumprimento do combinado</span><strong th:text="${avaliacao.cumprimentoCombinado + ' de 5'}"></strong></div>
+                </div>
+                <p th:if="${avaliacao.comentario != null}" class="mt-16" th:text="${avaliacao.comentario}"></p>
+            </div>
+
+            <div th:if="${avaliacao == null and !podeAvaliar}" class="empty-inline">Nenhuma avaliação recebida. Somente o profissional responsável pode avaliar depois de concluir o serviço.</div>
+        </div>
     </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>

@@ -22,10 +22,22 @@ public class ContaService {
     private final FavoritoRepository favoritos;
     private final DisponibilidadeRepository disponibilidades;
     private final CertificacaoRepository certificacoes;
+    private final ServicoFotoRepository servicoFotos;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ImagemService imagemService;
 
     @Transactional
     public void excluirMinhaConta() {
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
+        // Imagens: guarda as chaves para apagar os arquivos depois que a exclusão for confirmada.
+        java.util.List<String> imagens = new java.util.ArrayList<>(servicoFotos.chavesDaConta(usuario.getId()));
+        prestadorRepository.findByUsuarioId(usuario.getId()).ifPresent(p -> {
+            if (p.getFotoPerfilChave() != null) imagens.add(p.getFotoPerfilChave());
+            if (p.getBannerChave() != null) imagens.add(p.getBannerChave());
+        });
+        clienteRepository.findByUsuarioId(usuario.getId())
+                .map(c -> c.getFotoPerfilChave()).ifPresent(imagens::add);
+        servicoFotos.deleteDaConta(usuario.getId());
         // Remove as referencias antes dos perfis e dos servicos em cascata.
         aceiteTermosRepository.deleteByUsuarioId(usuario.getId());
         clienteRepository.findByUsuarioId(usuario.getId()).ifPresent(c->favoritos.deleteByClienteId(c.getId()));
@@ -37,5 +49,6 @@ public class ContaService {
         clienteRepository.findByUsuarioId(usuario.getId()).ifPresent(clienteRepository::delete);
         prestadorRepository.findByUsuarioId(usuario.getId()).ifPresent(prestadorRepository::delete);
         usuarioRepository.delete(usuario);
+        if (imagemService != null) imagemService.excluirArquivosAposConfirmar(imagens);
     }
 }

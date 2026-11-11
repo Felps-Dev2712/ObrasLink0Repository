@@ -3,55 +3,215 @@
 <head th:replace="~{fragments/layout :: head('Minha conta - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="container account-page">
-    <div class="account-heading"><span class="eyebrow">Minha conta</span><h1>Atualize suas informações</h1><p>Mantenha seus dados e seu perfil profissional sempre atualizados.</p></div>
-    <div th:if="${mensagem}" class="alert alert-success"><span th:text="${mensagem}"></span></div>
-    <div th:if="${mensagemErro}" class="alert alert-error"><span th:text="${mensagemErro}"></span></div>
-
-    <section th:if="${cliente != null or prestador != null}" class="account-card account-shared-info">
-        <div><span class="account-icon">@</span><div><strong>E-mail da conta</strong><p>Este endereço é compartilhado pelos seus perfis e não precisa ser repetido em cada formulário.</p></div></div>
-        <span class="account-email" th:text="${cliente != null ? cliente.email : prestador.email}">voce@exemplo.com</span>
-    </section>
-
-    <section th:if="${cliente != null}" class="account-card">
-        <p th:if="${not cliente.dadosCadastraisValidos}" class="alert alert-error">Seu cadastro de cliente possui CPF/CNPJ ou telefone inválido. Confira os campos abaixo e informe os dados corretos.</p>
-        <div class="account-card-heading"><span class="account-icon">C</span><div><h2>Perfil de cliente</h2><p>Dados usados para solicitar e acompanhar serviços.</p></div></div>
-        <form class="pure-form pure-form-stacked" th:action="@{/clientes/minha-conta}" th:object="${cliente}" method="post">
-            <div class="pure-g">
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="clienteNome">Nome de contato</label><input id="clienteNome" type="text" th:field="*{nome}" class="pure-u-1" required></div>
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="clienteCpfCnpj">CPF / CNPJ</label><input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="clienteCpfCnpj" type="text" th:field="*{cpfCnpj}" class="pure-u-1" required></div>
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="clienteTelefone">Telefone</label><input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="clienteTelefone" type="tel" th:field="*{telefone}" class="pure-u-1"></div>
+<main id="conteudo" class="account-page">
+    <section class="dir-hero is-compact">
+        <div class="container container-narrow">
+            <div class="account-hero dir-hero-top">
+                <span class="pro-avatar" aria-hidden="true">
+                    <img th:if="${auth['fotoPerfil'] != null}" th:src="@{/imagens/{c}(c=${auth['fotoPerfil']})}" alt="">
+                    <th:block th:unless="${auth['fotoPerfil'] != null}" th:text="${#strings.isEmpty(auth['nome']) ? 'C' : #strings.substring(auth['nome'], 0, 1)}">C</th:block>
+                </span>
+                <div>
+                    <p class="eyebrow">Minha conta</p>
+                    <h1 th:text="${auth['nome'] ?: 'Minha conta'}">Minha conta</h1>
+                    <p th:text="${cliente != null ? cliente.email : (prestador != null ? prestador.email : auth['email'])}">voce@exemplo.com</p>
+                    <div class="chip-row" aria-label="Perfis da conta">
+                        <span class="chip" th:if="${cliente != null}"><span class="chip-icon" aria-hidden="true">🏠</span>Cliente</span>
+                        <span class="chip" th:if="${prestador != null}"><span class="chip-icon" aria-hidden="true">🧰</span>Profissional</span>
+                        <a th:if="${prestador != null}" th:href="@{/prestadores/{id}(id=${prestador.id})}" class="chip"><span class="chip-icon" aria-hidden="true">👁</span>Ver perfil público</a>
+                    </div>
+                </div>
             </div>
-            <div class="account-actions"><button type="submit" class="btn btn-primary">Salvar dados de cliente</button></div>
-        </form>
+        </div>
     </section>
 
-    <section th:if="${prestador != null}" class="account-card">
-        <p th:if="${not prestador.dadosCadastraisValidos}" class="alert alert-error">Seu cadastro profissional possui CPF/CNPJ ou WhatsApp inválido. Confira os campos abaixo e informe os dados corretos.</p>
-        <div class="account-card-heading"><span class="account-icon">P</span><div><h2>Perfil profissional</h2><p>Informações exibidas para clientes na sua página profissional.</p></div></div>
-        <form class="pure-form pure-form-stacked" th:action="@{/prestadores/minha-conta}" th:object="${prestador}" method="post">
-            <div class="pure-g">
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="prestadorNome">Nome público profissional</label><input id="prestadorNome" type="text" th:field="*{nome}" class="pure-u-1" required></div>
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="prestadorCpfCnpj">CPF / CNPJ</label><input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="prestadorCpfCnpj" type="text" th:field="*{cpfCnpj}" class="pure-u-1" required></div>
-                <div class="pure-u-1 pure-u-md-1-2 account-field"><label for="prestadorWhatsapp">WhatsApp</label><input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="prestadorWhatsapp" type="tel" th:field="*{whatsapp}" class="pure-u-1" required></div>
-                <div class="pure-u-1 pure-u-md-1-3 account-field"><label for="categoria">Especialidade</label><select id="categoria" th:field="*{categoria}" class="pure-u-1" required><option value="">Selecione...</option><option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option></select></div>
-                <div class="pure-u-1 pure-u-md-1-3 account-field"><label for="anosExperiencia">Anos de experiência</label><input id="anosExperiencia" type="number" th:field="*{anosExperiencia}" class="pure-u-1" min="0"></div>
-                <div class="pure-u-1 pure-u-md-1-3 account-field"><label for="precoMinimo">Preço mínimo (R$)</label><input id="precoMinimo" type="number" step="0.01" th:field="*{precoMinimo}" class="pure-u-1" min="0"></div>
-                <div class="pure-u-1 account-field"><label for="descricao">Descrição profissional</label><textarea id="descricao" th:field="*{descricao}" class="pure-u-1" rows="4" placeholder="Conte brevemente sobre sua experiência e os serviços que oferece."></textarea></div>
-            </div>
-            <div class="account-actions"><button type="submit" class="btn btn-primary">Salvar perfil profissional</button></div>
-        </form>
-    </section>
+    <div class="container container-narrow dir-body">
+        <div th:if="${mensagem}" class="alert alert-success" role="status"><span th:text="${mensagem}"></span></div>
+        <div th:if="${mensagemErro}" class="alert alert-error" role="alert"><span th:text="${mensagemErro}"></span></div>
 
-    <section th:if="${cliente == null and prestador == null}" class="account-card account-empty"><h2>Nenhum perfil encontrado</h2><p>Não foi possível localizar um perfil associado à sua conta.</p></section>
-    <section class="account-card">
-        <h2>Excluir minha conta</h2>
-        <p>A exclusão é permanente. Seus perfis de cliente e prestador, serviços, avaliações vinculadas e notificações serão removidos.</p>
-        <form th:action="@{/clientes/minha-conta/excluir}" method="post"
-              onsubmit="return confirm('Tem certeza de que deseja excluir sua conta e todos os dados vinculados? Esta ação não pode ser desfeita.');">
-            <div class="account-actions"><button type="submit" class="btn btn-danger">Excluir minha conta</button></div>
-        </form>
-    </section>
+        <div class="account-sections">
+            <section th:if="${cliente != null}" class="card" aria-labelledby="client-profile-title" data-reveal style="--i:0">
+                <div class="card-header">
+                    <div><h2 id="client-profile-title">Perfil de cliente</h2><p>Dados usados para solicitar e acompanhar serviços.</p></div>
+                </div>
+                <div class="card-body">
+                    <p th:if="${not cliente.dadosCadastraisValidos}" class="alert alert-warning">Seu cadastro de cliente possui CPF/CNPJ ou telefone inválido. Confira os campos abaixo e informe os dados corretos.</p>
+                    <form th:action="@{/clientes/minha-conta}" th:object="${cliente}" method="post" data-submit-once>
+                        <div class="form-grid">
+                            <div class="field"><label for="clienteNome">Nome de contato</label><input id="clienteNome" type="text" th:field="*{nome}" autocomplete="name" required></div>
+                            <div class="field"><label for="clienteCpfCnpj">CPF / CNPJ</label><input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="clienteCpfCnpj" type="text" th:field="*{cpfCnpj}" required></div>
+                            <div class="field"><label for="clienteTelefone">Telefone <span class="text-subtle">(opcional)</span></label><input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="clienteTelefone" type="tel" th:field="*{telefone}"></div>
+                        </div>
+
+                        <fieldset class="form-section" data-address-picker>
+                            <legend>Endereço e localização</legend>
+                            <p class="form-section-desc">Usado para mostrar profissionais perto de você. Seu endereço exato não aparece para ninguém.</p>
+                            <div class="form-grid form-grid-address">
+                                <div class="field col-2"><label for="c-cep">CEP</label><input id="c-cep" th:field="*{endereco.cep}" maxlength="9" inputmode="numeric" autocomplete="postal-code" data-geo="cep" required></div>
+                                <div class="field col-4"><label for="c-rua">Rua ou avenida</label><input id="c-rua" th:field="*{endereco.logradouro}" autocomplete="address-line1" data-geo="logradouro" required></div>
+                                <div class="field col-2"><label for="c-num">Número</label><input id="c-num" th:field="*{endereco.numero}" data-geo="numero" required></div>
+                                <div class="field col-4"><label for="c-comp">Complemento <span class="text-subtle">(opcional)</span></label><input id="c-comp" th:field="*{endereco.complemento}" autocomplete="address-line2"></div>
+                                <div class="field col-2"><label for="c-bairro">Bairro</label><input id="c-bairro" th:field="*{endereco.bairro}" data-geo="bairro" required></div>
+                                <div class="field col-3"><label for="c-cidade">Cidade</label><input id="c-cidade" th:field="*{endereco.cidade}" autocomplete="address-level2" data-geo="cidade" required></div>
+                                <div class="field col-1"><label for="c-uf">UF</label><input id="c-uf" th:field="*{endereco.estado}" maxlength="2" autocomplete="address-level1" data-geo="estado" required></div>
+                            </div>
+                            <input type="hidden" th:field="*{endereco.latitude}" data-geo="lat">
+                            <input type="hidden" th:field="*{endereco.longitude}" data-geo="lng">
+                            <div class="geo-picker">
+                                <div class="geo-toolbar">
+                                    <span class="geo-status" data-geo-status aria-live="polite"></span>
+                                    <span class="cluster">
+                                        <button type="button" class="btn btn-outline btn-sm" data-geo-buscar>Localizar no mapa</button>
+                                        <button type="button" class="btn btn-ghost btn-sm" data-geo-gps>Usar minha localização</button>
+                                    </span>
+                                </div>
+                                <div class="geo-map" data-geo-map role="application" aria-label="Mapa do seu endereço. Clique ou arraste o marcador para ajustar."></div>
+                            </div>
+                        </fieldset>
+                        <div class="form-actions"><button type="submit" class="btn btn-primary">Salvar dados de cliente</button></div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Foto do perfil de cliente -->
+            <section th:if="${cliente != null}" class="card" aria-labelledby="client-photo-title" data-reveal style="--i:1">
+                <div class="card-header">
+                    <div><h2 id="client-photo-title">Sua foto</h2><p>Aparece para os profissionais nos seus atendimentos. JPG, PNG ou WebP de até 5 MB.</p></div>
+                </div>
+                <div class="card-body">
+                    <div class="media-avatar-row media-avatar-row-solo">
+                        <span class="pro-avatar media-avatar" aria-hidden="true">
+                            <img th:if="${cliente.fotoPerfilChave != null}" th:src="@{/imagens/{c}(c=${cliente.fotoPerfilChave})}" alt="">
+                            <th:block th:unless="${cliente.fotoPerfilChave != null}" th:text="${#strings.isEmpty(cliente.nome) ? 'C' : #strings.substring(cliente.nome, 0, 1)}">C</th:block>
+                        </span>
+                        <div class="media-actions">
+                            <form th:action="@{/clientes/minha-conta/foto}" method="post" enctype="multipart/form-data" data-auto-upload>
+                                <label class="btn btn-outline btn-sm">
+                                    <input type="file" name="arquivo" accept="image/jpeg,image/png,image/webp" class="sr-only" required>
+                                    <span th:text="${cliente.fotoPerfilChave == null ? 'Enviar foto' : 'Trocar foto'}">Enviar foto</span>
+                                </label>
+                                <noscript><button class="btn btn-sm btn-primary" type="submit">Enviar</button></noscript>
+                            </form>
+                            <form th:if="${cliente.fotoPerfilChave != null}" th:action="@{/clientes/minha-conta/foto/remover}" method="post">
+                                <button type="submit" class="btn btn-ghost btn-sm">Remover foto</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Fotos do perfil público (capa e foto) -->
+            <section th:if="${prestador != null}" class="card" aria-labelledby="photos-title" data-reveal style="--i:1">
+                <div class="card-header">
+                    <div><h2 id="photos-title">Fotos do perfil</h2><p>Aparecem no seu perfil público e nas listas de profissionais. JPG, PNG ou WebP de até 5 MB.</p></div>
+                </div>
+                <div class="card-body">
+                    <div class="media-editor">
+                        <div class="media-banner" th:style="${prestador.bannerChave != null ? 'background-image:url(/imagens/' + prestador.bannerChave + ')' : ''}"
+                             th:classappend="${prestador.bannerChave == null} ? ' is-empty'">
+                            <span th:if="${prestador.bannerChave == null}" class="media-placeholder">Sem capa — use uma foto de obra sua na horizontal</span>
+                        </div>
+                        <div class="media-avatar-row">
+                            <span class="pro-avatar media-avatar" aria-hidden="true">
+                                <img th:if="${prestador.fotoPerfilChave != null}" th:src="@{/imagens/{c}(c=${prestador.fotoPerfilChave})}" alt="">
+                                <th:block th:unless="${prestador.fotoPerfilChave != null}" th:text="${#strings.substring(prestador.nome, 0, 1)}">P</th:block>
+                            </span>
+                            <div class="media-actions">
+                                <form th:action="@{/prestadores/minha-conta/foto}" method="post" enctype="multipart/form-data" data-auto-upload>
+                                    <label class="btn btn-outline btn-sm">
+                                        <input type="file" name="arquivo" accept="image/jpeg,image/png,image/webp" class="sr-only" required>
+                                        <span th:text="${prestador.fotoPerfilChave == null ? 'Enviar foto de perfil' : 'Trocar foto de perfil'}">Enviar foto</span>
+                                    </label>
+                                    <noscript><button class="btn btn-sm btn-primary" type="submit">Enviar</button></noscript>
+                                </form>
+                                <form th:if="${prestador.fotoPerfilChave != null}" th:action="@{/prestadores/minha-conta/foto/remover}" method="post">
+                                    <button type="submit" class="btn btn-ghost btn-sm">Remover foto</button>
+                                </form>
+                                <form th:action="@{/prestadores/minha-conta/banner}" method="post" enctype="multipart/form-data" data-auto-upload>
+                                    <label class="btn btn-outline btn-sm">
+                                        <input type="file" name="arquivo" accept="image/jpeg,image/png,image/webp" class="sr-only" required>
+                                        <span th:text="${prestador.bannerChave == null ? 'Enviar capa' : 'Trocar capa'}">Enviar capa</span>
+                                    </label>
+                                    <noscript><button class="btn btn-sm btn-primary" type="submit">Enviar</button></noscript>
+                                </form>
+                                <form th:if="${prestador.bannerChave != null}" th:action="@{/prestadores/minha-conta/banner/remover}" method="post">
+                                    <button type="submit" class="btn btn-ghost btn-sm">Remover capa</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section th:if="${prestador != null}" class="card" aria-labelledby="provider-profile-title" data-reveal style="--i:2">
+                <div class="card-header">
+                    <div><h2 id="provider-profile-title">Perfil profissional</h2><p>Informações exibidas para clientes na sua página profissional.</p></div>
+                </div>
+                <div class="card-body">
+                    <p th:if="${not prestador.dadosCadastraisValidos}" class="alert alert-warning">Seu cadastro profissional possui CPF/CNPJ ou WhatsApp inválido. Confira os campos abaixo e informe os dados corretos.</p>
+                    <form th:action="@{/prestadores/minha-conta}" th:object="${prestador}" method="post" data-submit-once>
+                        <div class="form-grid">
+                            <div class="field"><label for="prestadorNome">Nome público profissional</label><input id="prestadorNome" type="text" th:field="*{nome}" required></div>
+                            <div class="field"><label for="prestadorCpfCnpj">CPF / CNPJ</label><input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="prestadorCpfCnpj" type="text" th:field="*{cpfCnpj}" required></div>
+                            <div class="field"><label for="prestadorWhatsapp">WhatsApp</label><input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="prestadorWhatsapp" type="tel" th:field="*{whatsapp}" required><small>Os clientes entram em contato por este número.</small></div>
+                            <div class="field"><label for="categoria">Especialidade principal</label><select id="categoria" th:field="*{categoria}" required><option value="">Selecione...</option><option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option></select></div>
+                            <div class="field"><label for="anosExperiencia">Anos de experiência</label><input id="anosExperiencia" type="number" th:field="*{anosExperiencia}" min="0" inputmode="numeric"></div>
+                            <div class="field"><label for="precoMinimo">Preço mínimo (R$)</label><input id="precoMinimo" type="number" step="0.01" th:field="*{precoMinimo}" min="0" inputmode="decimal"></div>
+                            <div class="field span-all"><label for="descricao">Descrição profissional</label><textarea id="descricao" th:field="*{descricao}" rows="4" placeholder="Conte brevemente sobre sua experiência e os serviços que oferece."></textarea></div>
+                        </div>
+
+                        <fieldset class="form-section" data-address-picker>
+                            <legend>Endereço e área de atendimento</legend>
+                            <p class="form-section-desc">Os clientes veem só a região aproximada e o raio que você atende — nunca o endereço exato.</p>
+                            <div class="form-grid form-grid-address">
+                                <div class="field col-2"><label for="p-cep">CEP</label><input id="p-cep" th:field="*{endereco.cep}" maxlength="9" inputmode="numeric" autocomplete="postal-code" data-geo="cep" required></div>
+                                <div class="field col-4"><label for="p-rua">Rua ou avenida</label><input id="p-rua" th:field="*{endereco.logradouro}" autocomplete="address-line1" data-geo="logradouro" required></div>
+                                <div class="field col-2"><label for="p-num">Número</label><input id="p-num" th:field="*{endereco.numero}" data-geo="numero" required></div>
+                                <div class="field col-4"><label for="p-comp">Complemento <span class="text-subtle">(opcional)</span></label><input id="p-comp" th:field="*{endereco.complemento}" autocomplete="address-line2"></div>
+                                <div class="field col-2"><label for="p-bairro">Bairro</label><input id="p-bairro" th:field="*{endereco.bairro}" data-geo="bairro" required></div>
+                                <div class="field col-3"><label for="p-cidade">Cidade</label><input id="p-cidade" th:field="*{endereco.cidade}" autocomplete="address-level2" data-geo="cidade" required></div>
+                                <div class="field col-1"><label for="p-uf">UF</label><input id="p-uf" th:field="*{endereco.estado}" maxlength="2" autocomplete="address-level1" data-geo="estado" required></div>
+                            </div>
+                            <input type="hidden" th:field="*{endereco.latitude}" data-geo="lat">
+                            <input type="hidden" th:field="*{endereco.longitude}" data-geo="lng">
+                            <label class="geo-raio" for="p-raio">
+                                <span>Raio de atendimento: <strong data-raio-valor th:text="${prestador.raioEfetivoKm + ' km'}">15 km</strong></span>
+                                <input id="p-raio" type="range" min="1" max="100" step="1" name="raioAtendimentoKm" th:value="${prestador.raioEfetivoKm}" data-geo="raio"
+                                       oninput="this.closest('label').querySelector('[data-raio-valor]').textContent = this.value + ' km'">
+                                <small>Clientes fora desse raio veem que você não atende a região deles.</small>
+                            </label>
+                            <div class="geo-picker">
+                                <div class="geo-toolbar">
+                                    <span class="geo-status" data-geo-status aria-live="polite"></span>
+                                    <span class="cluster">
+                                        <button type="button" class="btn btn-outline btn-sm" data-geo-buscar>Localizar no mapa</button>
+                                        <button type="button" class="btn btn-ghost btn-sm" data-geo-gps>Usar minha localização</button>
+                                    </span>
+                                </div>
+                                <div class="geo-map" data-geo-map role="application" aria-label="Mapa do seu endereço e área de atendimento. Clique ou arraste o marcador para ajustar."></div>
+                            </div>
+                        </fieldset>
+                        <div class="form-actions"><button type="submit" class="btn btn-primary">Salvar perfil profissional</button></div>
+                    </form>
+                </div>
+            </section>
+
+            <section th:if="${cliente == null and prestador == null}" class="empty-state">
+                <h2>Nenhum perfil encontrado</h2>
+                <p>Não foi possível localizar um perfil associado à sua conta.</p>
+            </section>
+
+            <section class="card" aria-labelledby="danger-title" data-reveal style="--i:2">
+                <div class="card-header"><div><h2 id="danger-title">Excluir minha conta</h2><p>A exclusão é permanente. Seus perfis de cliente e prestador, serviços, avaliações vinculadas e notificações serão removidos.</p></div></div>
+                <div class="card-body">
+                    <form th:action="@{/clientes/minha-conta/excluir}" method="post"
+                          onsubmit="return confirm('Tem certeza de que deseja excluir sua conta e todos os dados vinculados? Esta ação não pode ser desfeita.');">
+                        <button type="submit" class="btn btn-danger-outline">Excluir minha conta</button>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>

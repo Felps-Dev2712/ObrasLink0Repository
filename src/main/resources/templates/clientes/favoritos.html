@@ -1,1 +1,89 @@
-<!doctype html><html xmlns:th="http://www.thymeleaf.org" lang="pt-BR"><head th:replace="~{fragments/layout :: head('Meus favoritos - ObraLink')}"></head><body><nav th:replace="~{fragments/layout :: navbar}"></nav><main class="container workspace-page" style="padding:48px 0;min-height:65vh"><p class="eyebrow">Sua lista</p><h1>Profissionais favoritos</h1><p th:if="${mensagem}" class="alert alert-success" th:text="${mensagem}"></p><article class="professional-result" th:each="fav : ${favoritos}"><a th:href="@{/prestadores/{id}(id=${fav.id})}" th:text="${fav.nome}">Ver profissional</a><p th:text="${fav.categoria}">Especialidade</p><form th:action="@{/favoritos/{id}(id=${fav.id})}" method="post"><input type="hidden" name="adicionar" value="false"><button class="btn btn-outline">Remover</button></form></article><p th:if="${#lists.isEmpty(favoritos)}">Você ainda não salvou profissionais.</p></main><footer th:replace="~{fragments/layout :: footer}"></footer><th:block th:replace="~{fragments/layout :: scripts}"></th:block></body></html>
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Meus favoritos - ObraLink')}"></head>
+<body class="directory-page">
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo">
+    <section class="dir-hero">
+        <div class="container">
+            <div class="dir-hero-top">
+                <div>
+                    <p class="eyebrow">Sua lista</p>
+                    <h1>Profissionais favoritos</h1>
+                    <p class="dir-hero-lead">Guarde quem você quer contratar ou comparar depois. Toque no coração para tirar da lista.</p>
+                </div>
+                <a href="/prestadores" class="btn btn-primary">Encontrar profissionais</a>
+            </div>
+            <div class="dir-search" role="search">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <label class="sr-only" for="busca-favorito">Buscar nos favoritos</label>
+                <input id="busca-favorito" type="search" placeholder="Buscar pelo nome ou especialidade…" autocomplete="off" data-filter-input>
+                <span class="dir-search-count" data-filter-count aria-live="polite"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="container dir-body" aria-labelledby="results-title">
+        <div th:if="${mensagem}" class="alert alert-success" role="status"><span th:text="${mensagem}"></span></div>
+        <div th:if="${mensagemErro}" class="alert alert-error" role="alert"><span th:text="${mensagemErro}"></span></div>
+
+        <div class="results-heading">
+            <h2 id="results-title">Seus favoritos</h2>
+            <span data-fav-total th:text="${#lists.size(favoritos) + (#lists.size(favoritos) == 1 ? ' profissional' : ' profissionais')}">0 profissionais</span>
+        </div>
+
+        <div class="pro-grid" th:unless="${#lists.isEmpty(favoritos)}">
+            <article class="pro-card" th:each="fav, stat : ${favoritos}" data-reveal data-filter-item data-fav-card
+                     th:attr="data-filter-text=${fav.nome + ' ' + fav.categoria}" th:style="${'--i:' + (stat.index % 6)}">
+                <div class="pro-card-head">
+                    <span class="pro-avatar" aria-hidden="true" th:text="${#strings.isEmpty(fav.nome) ? 'P' : #strings.substring(fav.nome, 0, 1)}">P</span>
+                    <div class="pro-card-title">
+                        <h3><a th:href="@{/prestadores/{id}(id=${fav.id})}" th:text="${fav.nome}">Profissional</a></h3>
+                        <span class="pro-specialty" th:text="${fav.categoria}">Especialidade</span>
+                    </div>
+                    <div class="pro-card-fav" th:insert="~{fragments/favorito :: botao(${fav.id}, true)}"></div>
+                </div>
+                <a th:href="@{/prestadores/{id}(id=${fav.id})}" class="pro-link mt-16" th:attr="aria-label=${'Ver perfil de ' + fav.nome}">
+                    Ver perfil
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+            </article>
+        </div>
+
+        <div class="empty-state" data-filter-empty hidden>
+            <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <h3>Nenhum favorito encontrado</h3>
+            <p>Confira a grafia ou limpe a busca.</p>
+        </div>
+
+        <div class="empty-state" data-fav-empty th:hidden="${!#lists.isEmpty(favoritos)}">
+            <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></svg></span>
+            <h2>Você ainda não salvou profissionais</h2>
+            <p>Toque no coração no perfil ou na lista de profissionais para guardá-los aqui.</p>
+            <a href="/prestadores" class="btn btn-primary">Encontrar profissionais</a>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script>
+    // Ao desfavoritar aqui, o cartão sai da lista com animação
+    document.addEventListener('favorito:alterado', event => {
+        if (event.detail.favoritado) return;
+        const card = event.target.closest('[data-fav-card]');
+        if (!card) return;
+        card.classList.add('is-removing');
+        setTimeout(() => {
+            card.remove();
+            const restantes = document.querySelectorAll('[data-fav-card]').length;
+            document.querySelector('[data-fav-total]').textContent = restantes + (restantes === 1 ? ' profissional' : ' profissionais');
+            if (!restantes) {
+                document.querySelector('.pro-grid')?.remove();
+                document.querySelector('.dir-search')?.setAttribute('hidden', '');
+                document.querySelector('[data-fav-empty]').hidden = false;
+            }
+        }, 320);
+    });
+</script>
+</body>
+</html>

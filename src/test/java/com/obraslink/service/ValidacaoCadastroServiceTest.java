@@ -55,4 +55,29 @@ class ValidacaoCadastroServiceTest {
         verify(usuarios, never()).save(any());
         verify(clientes, never()).save(any());
     }
+
+    @Test
+    void cadastroSemPontoNoMapaEhRecusadoAntesDeGravar() {
+        UsuarioRepository usuarios = mock(UsuarioRepository.class);
+        AuthService auth = new AuthService(usuarios, clientes, prestadores, mock(CategoriaRepository.class), mock(PasswordEncoder.class));
+        RegistroUsuarioForm form = new RegistroUsuarioForm();
+        form.setEmail("cliente@exemplo.com");
+        form.setNome("Cliente Teste");
+        form.setSenha("senha1234");
+        form.setConfirmarSenha("senha1234");
+        form.setCadastroCliente(true);
+        form.setClienteNome("Cliente Teste");
+        form.setClienteCpfCnpj("529.982.247-25");
+        form.setClienteTelefone("(11) 99999-9999");
+        form.setClienteCep("01310-100");
+        form.setClienteLogradouro("Avenida Paulista");
+        form.setClienteNumero("1000");
+        form.setClienteBairro("Bela Vista");
+        form.setClienteCidade("São Paulo");
+        form.setClienteEstado("SP");
+        var erro = assertThrows(IllegalArgumentException.class, () -> auth.registrar(form));
+        assertTrue(erro.getMessage().contains("mapa"), erro.getMessage());
+        verify(usuarios, never()).save(any());
+        verify(clientes, never()).save(any());
+    }
 }

@@ -3,31 +3,42 @@
 <head th:replace="~{fragments/layout :: head('Editar certificação - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="container workspace-page certification-page">
-    <h1>Editar certificação</h1>
-    <p>As alterações serão enviadas para uma nova análise. O documento atual será mantido se você não selecionar outro.</p>
+<main id="conteudo" class="container container-narrow page certification-page">
+    <a th:href="@{/prestadores/minhas-certificacoes}" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar para certificações</a>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Certificações</p>
+            <h1>Editar certificação</h1>
+            <p>As alterações serão enviadas para uma nova análise. O comprovante atual é mantido se você não selecionar outro.</p>
+        </div>
+    </header>
+
     <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
-    <form th:action="@{/prestadores/minhas-certificacoes/{id}/editar(id=${certificacao.id})}" method="post" enctype="multipart/form-data" class="certification-form certification-panel">
-        <label>Nome da certificação<input name="nome" maxlength="180" th:value="${certificacao.nome}" required></label>
-        <label>Emissor ou instituição<input name="emissor" maxlength="180" th:value="${certificacao.emissor}" required></label>
-        <label>Data de emissão<input type="date" name="dataEmissao" th:value="${certificacao.dataEmissao}" th:max="${dataMaximaEmissao}" required></label>
-        <label>Data de validade (opcional)<input type="date" name="dataValidade" th:value="${certificacao.dataValidade}"></label>
-        <label>Código de registro (opcional)<input name="codigoRegistro" maxlength="100" th:value="${certificacao.codigoRegistro}"></label>
-        <label class="certification-file">Substituir documento (PDF, JPG ou PNG; até 10 MB)<input type="file" name="documento" accept="application/pdf,image/jpeg,image/png" data-file-name><small data-file-label th:text="${'Documento atual: ' + certificacao.documentoNome}"></small></label>
-        <div class="certification-actions"><button class="btn btn-primary" type="submit">Salvar e enviar para análise</button><a class="btn btn-outline" th:href="@{/prestadores/minhas-certificacoes}">Cancelar</a></div>
-    </form>
+
+    <div class="card" data-reveal>
+        <div class="card-body">
+            <form th:action="@{/prestadores/minhas-certificacoes/{id}/editar(id=${certificacao.id})}" method="post" enctype="multipart/form-data" class="certification-form" data-submit-once>
+                <label>Nome da certificação<input name="nome" maxlength="180" th:value="${certificacao.nome}" required></label>
+                <label>Emissor ou instituição<input name="emissor" maxlength="180" th:value="${certificacao.emissor}" required></label>
+                <label>Data de emissão<input type="date" name="dataEmissao" th:value="${certificacao.dataEmissao}" th:max="${dataMaximaEmissao}" required></label>
+                <label>Data de validade <span class="text-subtle">(opcional)</span><input type="date" name="dataValidade" th:value="${certificacao.dataValidade}"></label>
+                <label class="span-all">Código de registro <span class="text-subtle">(opcional)</span><input name="codigoRegistro" maxlength="100" th:value="${certificacao.codigoRegistro}"></label>
+                <label class="certification-file">Substituir comprovante (PDF, JPG ou PNG; até 10 MB)<input type="file" name="documento" accept="application/pdf,image/jpeg,image/png" data-file-name><small data-file-label class="help" th:text="${'Comprovante atual: ' + certificacao.documentoNome}"></small></label>
+                <div class="form-actions certification-actions">
+                    <a class="btn btn-ghost" th:href="@{/prestadores/minhas-certificacoes}">Cancelar</a>
+                    <button class="btn btn-primary" type="submit">Salvar e enviar para análise</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 <script>
-document.querySelectorAll('[data-file-name]').forEach(input => input.addEventListener('change', () => {
-    const label = input.parentElement.querySelector('[data-file-label]');
-    if (input.files.length) label.textContent = 'Novo documento: ' + input.files[0].name;
-}));
-document.querySelectorAll('.certification-form').forEach(form => form.addEventListener('submit', () => {
-    const button = form.querySelector('button[type="submit"]');
-    if (button) { button.disabled = true; button.textContent = 'Enviando…'; }
-}));
+    document.querySelectorAll('[data-file-name]').forEach(input => input.addEventListener('change', () => {
+        const label = input.parentElement.querySelector('[data-file-label]');
+        if (input.files.length) label.textContent = 'Novo comprovante: ' + input.files[0].name;
+    }));
 </script>
 </body>
 </html>

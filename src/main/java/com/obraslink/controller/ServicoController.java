@@ -27,15 +27,36 @@ public class ServicoController {
     private final AcessoService acessoService;
     private final com.obraslink.service.RelacionamentosService relacionamentosService;
     @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.PerfilAtivoService perfilAtivo;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.ImagemService imagemService;
+
+    /** Primeira foto de cada serviço (uma consulta só), para as listagens. */
+    private java.util.Map<Long, String> capas(List<Servico> servicos) {
+        if (imagemService == null || servicos == null || servicos.isEmpty()) return java.util.Map.of();
+        var porServico = imagemService.fotosPorServico(servicos.stream().map(Servico::getId).toList());
+        var capas = new java.util.HashMap<Long, String>();
+        porServico.forEach((id, lista) -> { if (!lista.isEmpty()) capas.put(id, lista.get(0).getChave()); });
+        return capas;
+    }
+
+    /** Anexa as fotos enviadas junto do formulário; um erro nas fotos não desfaz o serviço já salvo. */
+    private void anexarFotos(Long servicoId, List<org.springframework.web.multipart.MultipartFile> fotos, RedirectAttributes attrs) {
+        if (imagemService == null || fotos == null) return;
+        try {
+            imagemService.adicionarFotosServico(servicoId, fotos);
+        } catch (IllegalArgumentException e) {
+            attrs.addFlashAttribute("mensagemErro", "Serviço salvo, mas as fotos não foram enviadas: " + e.getMessage());
+        }
+    }
 
     private boolean podeGerenciarServico(Long id){return acessoService.isAdmin()||(perfilAtivo==null||perfilAtivo.atual()==PapelUsuario.PRESTADOR)&&acessoService.podeGerenciarServico(id);}
 
     @GetMapping("/vitrine")
     public String vitrine(@RequestParam(required = false) Long categoriaId, Model model) {
-        model.addAttribute("servicos", servicoService.findByCategoria(categoriaId));
+        List<Servico> servicos = servicoService.findByCategoria(categoriaId);
+        model.addAttribute("servicos", servicos);
+        model.addAttribute("capasServicos", capas(servicos));
         model.addAttribute("categorias", categoriaService.findAll());
         model.addAttribute("categoriaAtiva", categoriaId);
-        model.addAttribute("favoritosPrestadores", relacionamentosService.idsFavoritosDoAtual());
         return "vitrine/index";
     }
 
@@ -75,6 +96,7 @@ public class ServicoController {
         }
 
         model.addAttribute("servicos", servicos);
+        model.addAttribute("capasServicos", capas(servicos));
         model.addAttribute("isAdmin", admin);
         model.addAttribute("prestadorAtualId", prestadorAtualId);
         model.addAttribute("podeGerenciarServicos", admin || prestador);
@@ -112,7 +134,9 @@ public class ServicoController {
     }
 
     @PostMapping("/servicos")
-    public String save(@ModelAttribute Servico servico, RedirectAttributes redirectAttributes) {
+    public String save(@ModelAttribute Servico servico,
+                       @RequestParam(value = "fotos", required = false) List<org.springframework.web.multipart.MultipartFile> fotos,
+                       RedirectAttributes redirectAttributes) {
         boolean admin = acessoService.isAdmin();
         boolean prestador = acessoService.hasPapel(PapelUsuario.PRESTADOR)&&(perfilAtivo==null||perfilAtivo.atual()==PapelUsuario.PRESTADOR);
         if (!admin && !prestador) {
@@ -130,8 +154,9 @@ public class ServicoController {
             servico.setPrestador(prestadorAtual);
         }
 
-        servicoService.save(servico);
-        redirectAttributes.addFlashAttribute("mensagem", "Servico criado com sucesso!");
+        Servico salvo = servicoService.save(servico);
+        redirectAttributes.addFlashAttribute("mensagem", "Serviço criado com sucesso!");
+        anexarFotos(salvo.getId(), fotos, redirectAttributes);
         return "redirect:/servicos";
     }
 
@@ -154,6 +179,8 @@ public class ServicoController {
             }
             model.addAttribute("categorias", categoriaService.findAll());
             model.addAttribute("isAdmin", admin);
+            model.addAttribute("fotosServico", imagemService == null ? List.of() : imagemService.fotosDoServico(id));
+            model.addAttribute("maxFotos", com.obraslink.service.ImagemService.MAX_FOTOS_POR_SERVICO);
             return "servicos/form";
         }).orElse("redirect:/servicos");
     }
@@ -161,6 +188,7 @@ public class ServicoController {
     @PostMapping("/servicos/{id}")
     public String update(@PathVariable Long id,
                          @ModelAttribute Servico servico,
+                         @RequestParam(value = "fotos", required = false) List<org.springframework.web.multipart.MultipartFile> fotos,
                          RedirectAttributes redirectAttributes) {
         if (!podeGerenciarServico(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para editar este servico.");
@@ -188,7 +216,8 @@ public class ServicoController {
         }
 
         servicoService.save(servico);
-        redirectAttributes.addFlashAttribute("mensagem", "Servico atualizado com sucesso!");
+        redirectAttributes.addFlashAttribute("mensagem", "Serviço atualizado com sucesso!");
+        anexarFotos(id, fotos, redirectAttributes);
         return "redirect:/servicos";
     }
 

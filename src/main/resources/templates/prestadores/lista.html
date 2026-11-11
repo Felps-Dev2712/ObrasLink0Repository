@@ -1,38 +1,124 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head('Profissionais - ObraLink')}"></head>
-<body class="app-body directory-page">
+<body class="directory-page">
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="directory-shell">
-    <header class="directory-heading"><div><p class="eyebrow">Encontre profissionais</p><h1>Quem pode ajudar na sua obra?</h1><p>Conheça profissionais cadastrados e veja os serviços que oferecem.</p></div>
-        <a th:if="${isAdmin}" href="/prestadores/novo" class="btn btn-primary">Novo profissional</a></header>
-    <div th:if="${mensagem}" class="alert alert-success" role="status" th:text="${mensagem}"></div>
-    <div th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></div>
-    <div class="directory-layout">
-        <aside class="filter-card" aria-label="Filtros de profissionais">
-            <div class="filter-card-heading"><h2>Filtros</h2><a href="/prestadores">Limpar</a></div>
-            <form action="/prestadores" method="get">
-                <label for="categoriaId">Especialidade</label>
-                <select id="categoriaId" name="categoriaId">
-                    <option value="">Todas as categorias</option>
-                    <option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.nome}" th:selected="${categoria.id == categoriaAtiva}">Categoria</option>
-                </select>
-                <button class="btn btn-primary filter-submit" type="submit">Aplicar filtro</button>
-            </form>
-            <p class="filter-note">A lista usa os profissionais ativos cadastrados na plataforma.</p>
-        </aside>
-        <section class="directory-results" aria-label="Resultados de profissionais">
-            <div class="results-heading"><h2>Profissionais</h2><span th:text="${#lists.size(prestadores) + (#lists.size(prestadores) == 1 ? ' resultado' : ' resultados')}">0 resultados</span></div>
-            <article class="professional-result" th:each="prestador : ${prestadores}">
-                <div class="result-avatar" aria-hidden="true" th:text="${#strings.isEmpty(prestador.nome) ? 'P' : #strings.substring(prestador.nome, 0, 1)}">P</div>
-                <div class="result-main"><div class="result-title-row"><div><h3 th:text="${prestador.nome}">Profissional</h3><p class="result-category" th:text="${prestador.categoria != null ? prestador.categoria.nome : 'Especialidade não informada'}">Especialidade</p></div><span class="result-location" th:if="${prestador.endereco != null}" th:text="${prestador.endereco.cidade + ' · ' + prestador.endereco.estado}">Local</span></div>
-                    <div class="result-facts"><span th:if="${prestador.anosExperiencia != null}" th:text="${prestador.anosExperiencia + (prestador.anosExperiencia == 1 ? ' ano de experiência' : ' anos de experiência')}">Experiência</span><span th:if="${prestador.precoMinimo != null}" th:text="${'A partir de R$ ' + #numbers.formatDecimal(prestador.precoMinimo, 1, 'POINT', 2, 'COMMA')}">Preço inicial</span></div>
+<main id="conteudo">
+    <!-- Cabeçalho: título, busca por nome e filtros por especialidade -->
+    <section class="dir-hero">
+        <div class="container">
+            <div class="dir-hero-top">
+                <div>
+                    <p class="eyebrow">Encontre profissionais</p>
+                    <h1>Quem pode ajudar na sua obra?</h1>
+                    <p class="dir-hero-lead">Compare especialidades, veja onde atendem e fale direto com quem vai executar o serviço.</p>
                 </div>
-                <a th:href="@{/prestadores/{id}(id=${prestador.id})}" class="btn btn-outline result-action">Acessar perfil <span aria-hidden="true">→</span></a>
+                <a th:if="${isAdmin}" href="/prestadores/novo" class="btn btn-primary">+ Novo profissional</a>
+            </div>
+
+            <div class="dir-search" role="search">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <label class="sr-only" for="busca-nome">Buscar profissional pelo nome</label>
+                <input id="busca-nome" type="search" placeholder="Buscar pelo nome do profissional…" autocomplete="off" data-filter-input>
+                <span class="dir-search-count" data-filter-count aria-live="polite"></span>
+            </div>
+
+            <nav class="chip-row" aria-label="Filtrar por especialidade">
+                <a href="/prestadores" class="chip" th:aria-current="${categoriaAtiva == null ? 'page' : null}">
+                    <span class="chip-icon" aria-hidden="true">✦</span>Todas
+                </a>
+                <a th:each="categoria : ${categorias}" th:href="${'/prestadores?categoriaId=' + categoria.id + (soRegiao ? '&amp;regiao=1' : '')}" class="chip"
+                   th:aria-current="${categoria.id == categoriaAtiva ? 'page' : null}">
+                    <span class="chip-icon" aria-hidden="true" th:text="${categoria.icone ?: '+'}">+</span><span th:text="${categoria.nome}">Categoria</span>
+                </a>
+            </nav>
+        </div>
+    </section>
+
+    <section class="container dir-body" aria-labelledby="results-title">
+        <div th:if="${mensagem}" class="alert alert-success" role="status"><span th:text="${mensagem}"></span></div>
+        <div th:if="${mensagemErro}" class="alert alert-error" role="alert"><span th:text="${mensagemErro}"></span></div>
+
+        <div class="results-heading">
+            <h2 id="results-title">
+                <th:block th:if="${categoriaAtiva == null}">Todos os profissionais</th:block>
+                <th:block th:each="categoria : ${categorias}" th:if="${categoria.id == categoriaAtiva}" th:text="${categoria.nome}">Categoria</th:block>
+            </h2>
+            <span th:text="${#lists.size(prestadores) + (#lists.size(prestadores) == 1 ? ' profissional' : ' profissionais') + (temLocalizacao ? ' · do mais perto ao mais longe' : '')}">0 profissionais</span>
+        </div>
+
+        <!-- Proximidade: filtro por raio de atendimento e mapa dos resultados -->
+        <div class="geo-bar" th:if="${temLocalizacao}">
+            <nav class="segmented" aria-label="Filtrar por região">
+                <a th:href="${categoriaAtiva == null ? '/prestadores' : '/prestadores?categoriaId=' + categoriaAtiva}" th:aria-current="${soRegiao ? null : 'page'}">Todos</a>
+                <a th:href="${categoriaAtiva == null ? '/prestadores?regiao=1' : '/prestadores?categoriaId=' + categoriaAtiva + '&amp;regiao=1'}" th:aria-current="${soRegiao ? 'page' : null}">Atendem minha região</a>
+            </nav>
+            <span class="text-subtle" th:text="${#sets.size(atendeRegiao) + (#sets.size(atendeRegiao) == 1 ? ' profissional atende' : ' profissionais atendem') + ' o seu endereço'}">0 atendem</span>
+        </div>
+        <div class="alert" th:if="${!temLocalizacao and auth['perfilAtivo'] == 'CLIENTE'}">
+            <span>Cadastre seu endereço em <a href="/clientes">Minha conta</a> para ver os profissionais mais perto de você e quem atende a sua região.</span>
+        </div>
+
+        <div class="card map-card mb-24" th:unless="${#lists.isEmpty(pontosMapa)}" data-reveal>
+            <script th:inline="javascript">window.__mapaLista = /*[[${mapaDados}]]*/ {};</script>
+            <div class="geo-map geo-map-lista" data-mapa-lista role="application" aria-label="Mapa dos profissionais da lista. Use os marcadores para ver o nome e abrir o perfil."></div>
+            <p class="geo-note"><span class="map-legend is-atende"></span> atende sua região · <span class="map-legend"></span> outros profissionais · ⌂ seu endereço. Localizações aproximadas.</p>
+        </div>
+
+        <div class="pro-grid" th:unless="${#lists.isEmpty(prestadores)}">
+            <article class="pro-card" th:each="prestador, stat : ${prestadores}" data-reveal data-filter-item
+                     th:attr="data-filter-text=${#strings.toLowerCase(prestador.nome)}" th:style="${'--i:' + (stat.index % 6)}">
+                <div class="pro-card-head">
+                    <span class="pro-avatar" aria-hidden="true"><img th:if="${prestador.fotoPerfilChave != null}" th:src="@{/imagens/{c}(c=${prestador.fotoPerfilChave})}" alt="" loading="lazy"><th:block th:unless="${prestador.fotoPerfilChave != null}" th:text="${#strings.isEmpty(prestador.nome) ? 'P' : #strings.substring(prestador.nome, 0, 1)}">P</th:block></span>
+                    <div class="pro-card-title">
+                        <h3><a th:href="@{/prestadores/{id}(id=${prestador.id})}" th:text="${prestador.nome}">Profissional</a></h3>
+                        <span class="pro-specialty" th:text="${prestador.categoria != null ? prestador.categoria.nome : 'Especialidade não informada'}">Especialidade</span>
+                    </div>
+                    <div class="pro-card-fav" th:if="${auth['authenticated'] and auth['hasCliente'] and auth['perfilAtivo'] == 'CLIENTE' and prestador.usuarioId != auth['usuarioId']}"
+                         th:insert="~{fragments/favorito :: botao(${prestador.id}, ${favoritosPrestadores.contains(prestador.id)})}"></div>
+                </div>
+
+                <p class="pro-desc" th:if="${prestador.descricao != null and !#strings.isEmpty(prestador.descricao)}" th:text="${prestador.descricao}">Descrição</p>
+
+                <ul class="pro-facts">
+                    <li th:if="${prestador.endereco != null}">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span th:text="${prestador.endereco.bairro + ', ' + prestador.endereco.cidade + ' · ' + prestador.endereco.estado}">Local</span>
+                    </li>
+                    <li th:if="${distancias[prestador.id] != null}" class="pro-distance" th:classappend="${atendeRegiao.contains(prestador.id)} ? ' is-atende' : ''">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 22 2l-9 19-2-8-8-2Z"/></svg>
+                        <span th:text="${#numbers.formatDecimal(distancias[prestador.id], 1, 'POINT', 1, 'COMMA') + ' km de você · ' + (atendeRegiao.contains(prestador.id) ? 'atende sua região' : 'atende até ' + prestador.raioEfetivoKm + ' km')}">2,3 km de você</span>
+                    </li>
+                    <li th:if="${prestador.anosExperiencia != null}">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.5 12.9 17 22l-5-3-5 3 1.5-9.1"/></svg>
+                        <span th:text="${prestador.anosExperiencia + (prestador.anosExperiencia == 1 ? ' ano de experiência' : ' anos de experiência')}">Experiência</span>
+                    </li>
+                    <li th:if="${prestador.precoMinimo != null}">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        <span th:text="${'A partir de R$ ' + #numbers.formatDecimal(prestador.precoMinimo, 1, 'POINT', 2, 'COMMA')}">Preço</span>
+                    </li>
+                </ul>
+
+                <a th:href="@{/prestadores/{id}(id=${prestador.id})}" class="pro-link" th:attr="aria-label=${'Ver perfil de ' + prestador.nome}">
+                    Ver perfil
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
             </article>
-            <div th:if="${#lists.isEmpty(prestadores)}" class="directory-empty"><span aria-hidden="true">⌕</span><h3>Nenhum profissional encontrado</h3><p>Tente selecionar outra especialidade ou limpar o filtro.</p><a href="/prestadores" class="btn btn-outline">Limpar filtros</a></div>
-        </section>
-    </div>
+        </div>
+
+        <div class="empty-state" data-filter-empty hidden>
+            <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <h3>Nenhum nome encontrado</h3>
+            <p>Confira a grafia ou limpe a busca para ver todos os profissionais desta lista.</p>
+        </div>
+
+        <div th:if="${#lists.isEmpty(prestadores)}" class="empty-state">
+            <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <h3>Nenhum profissional nesta especialidade</h3>
+            <p>Ainda não há profissionais ativos aqui. Tente outra especialidade ou veja todos.</p>
+            <a href="/prestadores" class="btn btn-outline">Ver todos os profissionais</a>
+        </div>
+    </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>

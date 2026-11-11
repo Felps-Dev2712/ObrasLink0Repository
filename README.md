@@ -131,10 +131,9 @@ As entregas mais recentes deste projeto incluem:
   - `CLIENTE` acessa vitrine/profissionais e opera apenas seu próprio cadastro.
   - `PRESTADOR` acessa clientes e gerencia apenas seu próprio cadastro e catálogo de serviços.
   - Usuário com ambos os perfis (`CLIENTE` + `PRESTADOR`) enxerga serviços disponíveis de outros prestadores e mantém edição apenas no que é seu.
-- Seeder com dados de teste para facilitar validação:
-  - Usuário admin padrão: `admin@obraslink.com` / `admin123`.
-  - Usuários seed (clientes, prestadores e ambos) com senha padrão: `seed123`.
-  - A geração é idempotente (não duplica os registros seed já existentes).
+- Seeder com dados fictícios para testar a plataforma (só roda com o banco vazio, nunca altera dados existentes):
+  - Contas de teste, senhas e o que cada uma permite testar: veja [docs/contas-de-teste.md](docs/contas-de-teste.md).
+  - Para recriar os dados do zero, siga a seção "Recriar os dados" desse arquivo.
 
 ## Próximos Passos
 

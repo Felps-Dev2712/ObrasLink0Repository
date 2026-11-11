@@ -24,6 +24,12 @@ public class GlobalModelAttributes {
     private final NotificacaoService notificacaoService;
     private final com.obraslink.service.PerfilAtivoService perfilAtivoService;
 
+    // Usado pelo layout para destacar o item ativo do menu e voltar à mesma página ao trocar de perfil.
+    @ModelAttribute("currentPath")
+    public String currentPath(jakarta.servlet.http.HttpServletRequest request) {
+        return request.getRequestURI();
+    }
+
     @ModelAttribute("auth")
     public Map<String, Object> auth() {
         Optional<Usuario> usuarioOpt = acessoService.getUsuarioAtual();
@@ -55,6 +61,12 @@ public class GlobalModelAttributes {
         auth.put("prestadorId", prestadorId);
         auth.put("notificacoesNaoLidas", notificacaoService.contarNaoLidas(usuario.getId()));
         var perfilAtivo=perfilAtivoService.atual();
+        // Foto do perfil em uso (cliente ou prestador); se ele não tiver, usa a do outro perfil da conta
+        String fotoCliente = cliente.map(c -> c.getFotoPerfilChave()).orElse(null);
+        String fotoPrestador = prestador.map(p -> p.getFotoPerfilChave()).orElse(null);
+        auth.put("fotoPerfil", perfilAtivo == PapelUsuario.CLIENTE
+                ? (fotoCliente != null ? fotoCliente : fotoPrestador)
+                : (fotoPrestador != null ? fotoPrestador : fotoCliente));
         auth.put("perfilAtivo",perfilAtivo==null?"ADMIN":perfilAtivo.name());
         return auth;
     }

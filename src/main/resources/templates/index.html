@@ -1,50 +1,85 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
-<body class="app-body home-page">
+<body class="home-page">
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main>
+<main id="conteudo">
+    <div th:if="${mensagemErro}" class="container mt-16"><p class="alert alert-warning" role="alert" th:text="${mensagemErro}"></p></div>
+
+    <!-- Hero: título, busca e nota, centralizados -->
     <section class="home-hero">
         <div class="home-hero-content">
             <p class="eyebrow">ObraLink · serviços para construir</p>
             <h1>Encontre quem transforma<br>seu projeto em <span>realidade.</span></h1>
             <p class="intro-copy">Profissionais de confiança para sua obra, reforma ou manutenção. Compare especialidades e fale direto com quem entende.</p>
-            <form action="/vitrine" method="get" class="home-search-form" aria-label="Buscar serviços">
-                <label class="search-field"><span>Qual serviço você precisa?</span>
-                    <select name="categoriaId"><option value="">Todas as especialidades</option>
+            <form action="/vitrine" method="get" class="home-search-form" role="search" aria-label="Buscar serviços">
+                <svg class="icon search-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg>
+                <label class="search-field" for="busca-categoria"><span class="sr-only">Qual serviço você precisa?</span>
+                    <select id="busca-categoria" name="categoriaId" aria-label="Qual serviço você precisa?">
+                        <option value="">Todas as especialidades</option>
                         <option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.nome}">Eletricista</option>
                     </select>
                 </label>
-                <button class="btn btn-primary" type="submit"><span aria-hidden="true">⌕</span> Buscar serviços</button>
+                <button class="btn btn-primary" type="submit">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    Buscar
+                </button>
             </form>
             <p class="hero-note">Contato direto pelo WhatsApp · Sem intermediários</p>
         </div>
     </section>
 
+    <!-- Categorias -->
     <section class="home-section home-categories" aria-labelledby="categories-title">
-        <div class="section-heading"><div><p class="eyebrow">Encontre por especialidade</p><h2 id="categories-title">O que sua obra precisa?</h2></div><a href="/categorias">Ver serviços <span aria-hidden="true">→</span></a></div>
+        <div class="section-heading">
+            <div><p class="eyebrow">Encontre por especialidade</p><h2 id="categories-title">O que sua obra precisa?</h2></div>
+            <a href="/categorias">Ver categorias <span aria-hidden="true">→</span></a>
+        </div>
         <div class="category-grid">
-            <a th:each="categoria : ${categorias}" th:href="@{/vitrine(categoriaId=${categoria.id})}" class="category-card">
-                <span class="category-icon" aria-hidden="true" th:text="${categoria.icone}">+</span><span th:text="${categoria.nome}">Encanador</span><span class="category-arrow" aria-hidden="true">→</span>
+            <a th:each="categoria, stat : ${categorias}" th:href="@{/vitrine(categoriaId=${categoria.id})}" class="category-card"
+               th:style="${'--i:' + stat.index}">
+                <span class="category-icon" aria-hidden="true" th:text="${categoria.icone ?: '+'}">+</span>
+                <span class="category-text">
+                    <strong th:text="${categoria.nome}">Encanador</strong>
+                    <small th:text="${categoria.descricao != null and !#strings.isEmpty(categoria.descricao) ? categoria.descricao : 'Ver serviços disponíveis'}">Ver serviços disponíveis</small>
+                </span>
+                <span class="category-go" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
             </a>
         </div>
+        <div th:if="${#lists.isEmpty(categorias)}" class="empty-inline">As categorias aparecerão aqui assim que forem cadastradas.</div>
     </section>
 
+    <!-- Profissionais em destaque (faixa escura) -->
     <section class="home-featured" aria-labelledby="featured-title">
         <div class="home-section featured-inner">
-            <div class="section-heading section-heading-light"><div><p class="eyebrow">Gente que constrói</p><h2 id="featured-title">Profissionais em destaque</h2><p>Conheça alguns dos profissionais da comunidade ObraLink.</p></div><a href="/prestadores">Ver profissionais <span aria-hidden="true">→</span></a></div>
+            <div class="section-heading section-heading-light">
+                <div><p class="eyebrow">Gente que constrói</p><h2 id="featured-title">Profissionais em destaque</h2><p>Conheça alguns dos profissionais da comunidade ObraLink.</p></div>
+                <a href="/prestadores">Ver profissionais <span aria-hidden="true">→</span></a>
+            </div>
             <div class="provider-grid">
-                <article class="provider-card" th:each="profissional : ${destaques}">
-                    <div class="provider-card-top"><span class="provider-avatar" aria-hidden="true" th:text="${profissional.inicial}">P</span><span class="provider-verified" th:unless="${auth.authenticated and auth.hasCliente and auth.perfilAtivo == 'CLIENTE'}">Profissional</span><div class="provider-card-favorite" th:if="${auth.authenticated and auth.hasCliente and auth.perfilAtivo == 'CLIENTE'}" th:insert="~{fragments/favorito :: botao(${profissional.id}, ${favoritosPrestadores.contains(profissional.id)})}"></div></div>
-                    <h3 th:text="${profissional.nome}">Profissional</h3><p th:text="${profissional.especialidade}">Especialidade</p>
-                    <a th:href="@{/prestadores/{id}(id=${profissional.id})}" class="btn btn-outline">Ver perfil <span aria-hidden="true">→</span></a>
+                <article class="provider-card" th:each="profissional, stat : ${destaques}" data-reveal th:style="${'--i:' + stat.index}">
+                    <div class="provider-card-top">
+                        <span class="provider-avatar" aria-hidden="true" th:text="${profissional.inicial}">P</span>
+                        <div class="provider-card-favorite" th:if="${auth['authenticated'] and auth['hasCliente'] and auth['perfilAtivo'] == 'CLIENTE'}"
+                             th:insert="~{fragments/favorito :: botao(${profissional.id}, ${favoritosPrestadores.contains(profissional.id)})}"></div>
+                    </div>
+                    <h3 th:text="${profissional.nome}">Profissional</h3>
+                    <span class="provider-specialty">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                        <span th:text="${profissional.especialidade}">Especialidade</span>
+                    </span>
+                    <a th:href="@{/prestadores/{id}(id=${profissional.id})}" class="provider-link" th:attr="aria-label=${'Ver perfil de ' + profissional.nome}">
+                        Ver perfil
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
                 </article>
                 <p th:if="${#lists.isEmpty(destaques)}" class="empty-featured">Ainda não há profissionais em destaque.</p>
             </div>
         </div>
     </section>
 
-    <section class="home-section how-section" aria-labelledby="how-title">
+    <!-- Como funciona -->
+    <section class="home-section how-section" id="como-funciona" aria-labelledby="how-title">
         <div class="section-heading centered-heading"><div><p class="eyebrow">Simples assim</p><h2 id="how-title">Sua obra começa com uma boa conexão</h2></div></div>
         <div class="steps-grid">
             <article class="step-card"><span class="step-number">01</span><h3>Encontre</h3><p>Busque por especialidade e conheça profissionais e serviços disponíveis.</p></article>

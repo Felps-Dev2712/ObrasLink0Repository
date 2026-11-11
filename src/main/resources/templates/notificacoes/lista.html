@@ -3,50 +3,133 @@
 <head th:replace="~{fragments/layout :: head('Notificações - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="container notifications-page">
-    <div class="account-heading"><span class="eyebrow">Atualizações</span><h1>Notificações</h1><p>Acompanhe avaliações e outras atividades da sua conta.</p></div>
-    <section class="service-tracking" aria-label="Acompanhamento dos serviços">
-        <h2>Meus atendimentos</h2>
-        <p>O contato registra seu interesse. A contratação é confirmada pelo fornecedor após a conversa no WhatsApp.</p>
-        <p th:if="${mensagem}" class="alert alert-success" th:text="${mensagem}"></p>
+<main id="conteudo" class="notifications-page"
+      th:with="qtdAguardando=${#lists.size(atendimentos.?[status.name() == 'CONTATO_SOLICITADO'])},
+               qtdAndamento=${#lists.size(atendimentos.?[status.name() == 'EM_ANDAMENTO'])},
+               qtdConcluido=${#lists.size(atendimentos.?[status.name() == 'CONCLUIDO'])}">
+    <section class="dir-hero">
+        <div class="container">
+            <div class="dir-hero-top">
+                <div>
+                    <p class="eyebrow">Atualizações</p>
+                    <h1>Atendimentos e notificações</h1>
+                    <p class="dir-hero-lead">Acompanhe cada contato, confirme agendamentos e veja as atividades da sua conta.</p>
+                </div>
+            </div>
+
+            <div class="hero-stats-row" aria-label="Resumo dos atendimentos">
+                <span class="hero-stat-pill"><span class="metric-icon metric-icon-warn"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></span><strong th:text="${qtdAguardando}">0</strong><span>aguardando</span></span>
+                <span class="hero-stat-pill"><span class="metric-icon metric-icon-blue"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><strong th:text="${qtdAndamento}">0</strong><span>em andamento</span></span>
+                <span class="hero-stat-pill"><span class="metric-icon metric-icon-gold"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><strong th:text="${qtdConcluido}">0</strong><span>concluídos</span></span>
+            </div>
+
+            <div class="dir-search" role="search" th:unless="${#lists.isEmpty(atendimentos)}">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <label class="sr-only" for="busca-atendimento">Buscar atendimento</label>
+                <input id="busca-atendimento" type="search" placeholder="Buscar por nome, serviço ou número…" autocomplete="off" data-filter-input>
+                <span class="dir-search-count" data-filter-count aria-live="polite"></span>
+            </div>
+
+            <div class="chip-row" role="group" aria-label="Filtrar atendimentos por situação" th:unless="${#lists.isEmpty(atendimentos)}">
+                <button type="button" class="chip" data-filter-chip="todos" aria-pressed="true">Todos <span class="chip-count" th:text="${#lists.size(atendimentos)}">0</span></button>
+                <button type="button" class="chip" data-filter-chip="contato_solicitado" aria-pressed="false">Aguardando <span class="chip-count" th:text="${qtdAguardando}">0</span></button>
+                <button type="button" class="chip" data-filter-chip="em_andamento" aria-pressed="false">Em andamento <span class="chip-count" th:text="${qtdAndamento}">0</span></button>
+                <button type="button" class="chip" data-filter-chip="concluido" aria-pressed="false">Concluídos <span class="chip-count" th:text="${qtdConcluido}">0</span></button>
+            </div>
+        </div>
+    </section>
+
+    <div class="container dir-body">
+        <p th:if="${mensagem}" class="alert alert-success" role="status" th:text="${mensagem}"></p>
         <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
-        <p th:if="${#lists.isEmpty(atendimentos)}">Você ainda não possui atendimentos.</p>
-        <article th:each="atendimento : ${atendimentos}" class="service-tracking-card">
-            <h3 th:text="${atendimento.clienteUsuarioId == usuarioAtualId ? atendimento.prestadorNome : atendimento.clienteNome}"></h3>
-            <p th:if="${atendimento.servicoTitulo != null}" th:text="${'Serviço solicitado: ' + atendimento.servicoTitulo}"></p>
-            <small th:text="${'Atendimento #' + atendimento.id + ' - ' + #temporals.format(atendimento.criadoEm, 'dd/MM/yyyy HH:mm')}"></small>
-            <ol class="service-steps" aria-label="Etapas do serviço">
-                <li class="step-done">Contato solicitado</li>
-                <li th:classappend="${atendimento.confirmadoEm != null} ? 'step-done' : ''">Serviço em andamento</li>
-                <li th:classappend="${atendimento.concluidoEm != null} ? 'step-done' : ''">Serviço concluído</li>
-            </ol>
-            <p th:if="${atendimento.status.name() == 'CONTATO_SOLICITADO'}">Aguardando o fornecedor confirmar a contratação.</p>
-            <p th:if="${atendimento.confirmadoEm != null}" th:text="${'Contratação confirmada em ' + #temporals.format(atendimento.confirmadoEm, 'dd/MM/yyyy HH:mm')}"></p>
-            <p th:if="${atendimento.dataAgendada != null}" class="appointment-info" th:text="${'Agendado para ' + #temporals.format(atendimento.dataAgendada,'dd/MM/yyyy') + ' às ' + #temporals.format(atendimento.horarioAgendado,'HH:mm')}"></p>
-            <p th:if="${atendimento.concluidoEm != null}" th:text="${'Concluído em ' + #temporals.format(atendimento.concluidoEm, 'dd/MM/yyyy HH:mm')}"></p>
-            <a th:if="${atendimento.clienteUsuarioId == usuarioAtualId and atendimento.status.name() == 'CONCLUIDO'}"
-               th:href="@{/prestadores/{id}(id=${atendimento.prestadorId})} + '#avaliacoes'" class="btn btn-outline">Avaliar prestador</a>
-            <th:block th:if="${atendimento.prestadorUsuarioId == usuarioAtualId}">
-                <a th:if="${atendimento.status.name() == 'CONCLUIDO'}" th:href="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" class="btn btn-outline">Avaliar cliente / ver avaliação</a>
-                <form th:if="${atendimento.status.name() == 'CONTATO_SOLICITADO'}" th:action="@{/notificacoes/atendimentos/{id}/confirmar-fechamento(id=${atendimento.id})}" method="post" class="appointment-form">
-                    <label>Data combinada<input type="date" name="dataAgendada" th:attr="min=${hoje}" required></label>
-                    <label>Horário combinado<input type="time" name="horarioAgendado" required></label>
-                    <button class="btn btn-primary" type="submit">Confirmar fechamento e agendamento</button>
-                </form>
-                <form th:if="${atendimento.status.name() == 'EM_ANDAMENTO'}" th:action="@{/notificacoes/atendimentos/{id}/concluir(id=${atendimento.id})}" method="post">
-                    <button class="btn btn-primary" type="submit">Marcar serviço como concluído</button>
-                </form>
-            </th:block>
-            <a th:if="${atendimento.clienteUsuarioId == usuarioAtualId and atendimento.status.name() == 'CONCLUIDO'}" th:href="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" class="btn btn-outline">Ver avaliação recebida</a>
-        </article>
-    </section>
-    <section class="notifications-card">
-        <a th:each="notificacao : ${notificacoes}" th:href="${notificacao.link}" class="notification-item">
-            <span class="notification-dot" th:classappend="${notificacao.lida} ? ' notification-read' : ''"></span>
-            <span><strong th:text="${notificacao.mensagem}">Você recebeu uma nova avaliação.</strong><small th:text="${#temporals.format(notificacao.criadoEm, 'dd/MM/yyyy HH:mm')}">21/08/2026 10:30</small></span>
-        </a>
-        <div th:if="${#lists.isEmpty(notificacoes)}" class="notifications-empty">Você ainda não possui notificações.</div>
-    </section>
+
+        <div class="notifications-layout">
+            <section class="service-tracking" aria-labelledby="tracking-title">
+                <div class="section-subtitle">
+                    <h2 id="tracking-title">Meus atendimentos</h2>
+                </div>
+                <p class="alert">O contato registra seu interesse. A contratação é confirmada pelo profissional depois da conversa no WhatsApp.</p>
+
+                <div th:if="${#lists.isEmpty(atendimentos)}" class="empty-state">
+                    <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                    <h3>Você ainda não possui atendimentos</h3>
+                    <p>Quando você entrar em contato com um profissional, o andamento aparece aqui.</p>
+                    <a href="/prestadores" class="btn btn-primary">Encontrar profissionais</a>
+                </div>
+
+                <article th:each="atendimento, stat : ${atendimentos}" class="service-tracking-card" data-reveal data-filter-item
+                         th:attr="data-filter-group=${#strings.toLowerCase(atendimento.status.name())},data-filter-text=${atendimento.prestadorNome + ' ' + atendimento.clienteNome + ' ' + (atendimento.servicoTitulo ?: '') + ' #' + atendimento.id}"
+                         th:style="${'--i:' + (stat.index % 6)}">
+                    <div class="tracking-head">
+                        <div class="cell-person">
+                            <span class="pro-avatar avatar-sm" aria-hidden="true"
+                                  th:with="outro=${atendimento.clienteUsuarioId == usuarioAtualId ? atendimento.prestadorNome : atendimento.clienteNome}"
+                                  th:text="${#strings.isEmpty(outro) ? '?' : #strings.substring(outro, 0, 1)}">P</span>
+                            <div>
+                                <h3 th:text="${atendimento.clienteUsuarioId == usuarioAtualId ? atendimento.prestadorNome : atendimento.clienteNome}">Nome</h3>
+                                <small th:text="${'Atendimento #' + atendimento.id + ' · ' + #temporals.format(atendimento.criadoEm, 'dd/MM/yyyy HH:mm')}">Atendimento</small>
+                            </div>
+                        </div>
+                        <span class="status-pill"
+                              th:classappend="${atendimento.status.name() == 'CONCLUIDO' ? ' status-complete' : (atendimento.status.name() == 'EM_ANDAMENTO' ? ' status-progress' : '')}"
+                              th:text="${atendimento.status.name() == 'CONCLUIDO' ? 'Concluído' : (atendimento.status.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Aguardando confirmação')}">Status</span>
+                    </div>
+                    <p class="tracking-service" th:if="${atendimento.servicoTitulo != null}" th:text="${'Serviço solicitado: ' + atendimento.servicoTitulo}"></p>
+
+                    <ol class="service-steps" aria-label="Etapas do serviço">
+                        <li class="step-done">Contato solicitado</li>
+                        <li th:classappend="${atendimento.confirmadoEm != null} ? 'step-done' : ''">Em andamento</li>
+                        <li th:classappend="${atendimento.concluidoEm != null} ? 'step-done' : ''">Concluído</li>
+                    </ol>
+
+                    <div class="tracking-notes">
+                        <p th:if="${atendimento.status.name() == 'CONTATO_SOLICITADO'}">Aguardando o profissional confirmar a contratação.</p>
+                        <p th:if="${atendimento.confirmadoEm != null}" th:text="${'Contratação confirmada em ' + #temporals.format(atendimento.confirmadoEm, 'dd/MM/yyyy HH:mm')}"></p>
+                        <p th:if="${atendimento.dataAgendada != null}" class="appointment-info" th:text="${'Agendado para ' + #temporals.format(atendimento.dataAgendada,'dd/MM/yyyy') + ' às ' + #temporals.format(atendimento.horarioAgendado,'HH:mm')}"></p>
+                        <p th:if="${atendimento.concluidoEm != null}" th:text="${'Concluído em ' + #temporals.format(atendimento.concluidoEm, 'dd/MM/yyyy HH:mm')}"></p>
+                    </div>
+
+                    <div class="tracking-actions"
+                         th:if="${atendimento.status.name() == 'CONCLUIDO' or (atendimento.prestadorUsuarioId == usuarioAtualId and atendimento.status.name() != 'CONCLUIDO')}">
+                        <a th:if="${atendimento.clienteUsuarioId == usuarioAtualId and atendimento.status.name() == 'CONCLUIDO'}"
+                           th:href="@{/prestadores/{id}(id=${atendimento.prestadorId})} + '#avaliacoes'" class="btn btn-primary btn-sm">Avaliar profissional</a>
+                        <a th:if="${atendimento.clienteUsuarioId == usuarioAtualId and atendimento.status.name() == 'CONCLUIDO'}"
+                           th:href="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" class="btn btn-outline btn-sm">Ver avaliação recebida</a>
+
+                        <th:block th:if="${atendimento.prestadorUsuarioId == usuarioAtualId}">
+                            <a th:if="${atendimento.status.name() == 'CONCLUIDO'}" th:href="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" class="btn btn-outline btn-sm">Avaliar cliente / ver avaliação</a>
+                            <form th:if="${atendimento.status.name() == 'CONTATO_SOLICITADO'}" th:action="@{/notificacoes/atendimentos/{id}/confirmar-fechamento(id=${atendimento.id})}" method="post" class="appointment-form">
+                                <label>Data combinada<input type="date" name="dataAgendada" th:attr="min=${hoje}" required></label>
+                                <label>Horário combinado<input type="time" name="horarioAgendado" required></label>
+                                <button class="btn btn-primary" type="submit">Confirmar contratação</button>
+                            </form>
+                            <form th:if="${atendimento.status.name() == 'EM_ANDAMENTO'}" th:action="@{/notificacoes/atendimentos/{id}/concluir(id=${atendimento.id})}" method="post"
+                                  onsubmit="return confirm('Marcar este serviço como concluído? O cliente será avisado.');">
+                                <button class="btn btn-primary btn-sm" type="submit">Marcar como concluído</button>
+                            </form>
+                        </th:block>
+                    </div>
+                </article>
+
+                <div class="empty-state" data-filter-empty hidden>
+                    <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+                    <h3>Nenhum atendimento neste filtro</h3>
+                    <p>Escolha outra situação ou limpe a busca.</p>
+                </div>
+            </section>
+
+            <aside>
+                <section class="card notifications-card" aria-labelledby="notifications-title" data-reveal>
+                    <h2 id="notifications-title">Notificações recentes</h2>
+                    <a th:each="notificacao : ${notificacoes}" th:href="${notificacao.link}" class="notification-item">
+                        <span class="notification-dot" th:classappend="${notificacao.lida} ? ' notification-read' : ''" aria-hidden="true"></span>
+                        <span><strong th:text="${notificacao.mensagem}">Você recebeu uma nova avaliação.</strong><small th:text="${#temporals.format(notificacao.criadoEm, 'dd/MM/yyyy HH:mm')}">21/08/2026 10:30</small></span>
+                    </a>
+                    <div th:if="${#lists.isEmpty(notificacoes)}" class="notifications-empty">Você ainda não possui notificações.</div>
+                </section>
+            </aside>
+        </div>
+    </div>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>

@@ -18,8 +18,12 @@ public interface PrestadorRepository extends JpaRepository<Prestador, Long> {
     boolean documentoEmUso(@Param("documento") String documento, @Param("id") Long id);
     
     List<Prestador> findByAtivoTrue();
+
+    /** Listagem pública: endereço e categoria na mesma consulta (evita N+1) e só contas ativas. */
+    @Query("select p from Prestador p left join fetch p.endereco left join fetch p.categoria where p.ativo = true and exists (select u.id from Usuario u where u.id = p.usuarioId and u.ativo = true) order by p.nome")
+    List<Prestador> findAtivosParaListagem();
     
-    @Query("select distinct p from Prestador p left join p.categorias categoria where (p.categoria.id = :categoriaId or categoria.id = :categoriaId) and p.ativo = true and exists (select u.id from Usuario u where u.id = p.usuarioId and u.ativo = true)")
+    @Query("select distinct p from Prestador p left join fetch p.endereco left join fetch p.categoria left join p.categorias categoria where (p.categoria.id = :categoriaId or categoria.id = :categoriaId) and p.ativo = true and exists (select u.id from Usuario u where u.id = p.usuarioId and u.ativo = true)")
     List<Prestador> findByCategoriaIdAndAtivoTrue(@Param("categoriaId") Long categoriaId);
 
     Optional<Prestador> findByUsuarioId(Long usuarioId);

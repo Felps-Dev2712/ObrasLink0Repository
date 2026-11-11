@@ -26,6 +26,10 @@ public class RegistroUsuarioForm {
     private String clienteBairro;
     private String clienteCidade;
     private String clienteEstado;
+    // Endereço da conta (vale para cliente e prestador). Coordenadas vêm do mapa ou da busca de endereço.
+    private Double clienteLatitude;
+    private Double clienteLongitude;
+    private Integer prestadorRaioKm;
 
     @Deprecated
     private String prestadorNome;

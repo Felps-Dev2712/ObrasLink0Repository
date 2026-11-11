@@ -81,6 +81,21 @@ public class Prestador {
     @Builder.Default
     private Boolean ativo = true;
 
+    // Chaves dos arquivos em <upload-dir>/imagens (nome aleatório, nunca caminho). Só o ImagemService altera.
+    @Column(length = 64)
+    private String fotoPerfilChave;
+
+    @Column(length = 64)
+    private String bannerChave;
+
+    // Distância máxima (km), a partir do endereço do prestador, em que ele aceita atender.
+    private Integer raioAtendimentoKm;
+
+    @Transient
+    public int getRaioEfetivoKm() {
+        return raioAtendimentoKm == null ? com.obraslink.service.LocalizacaoService.RAIO_PADRAO_KM : raioAtendimentoKm;
+    }
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime criadoEm;

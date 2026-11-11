@@ -30,6 +30,14 @@ public class ClienteController {
     private final ContaService contaService;
     @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.PerfilAtivoService perfilAtivo;
     private boolean podeGerenciarCliente(Long id){return acessoService.isAdmin()||(perfilAtivo==null||perfilAtivo.atual()==com.obraslink.model.PapelUsuario.CLIENTE)&&acessoService.podeGerenciarCliente(id);}
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.LocalizacaoService localizacao;
+
+    /** Endereço obrigatório: completa as coordenadas (busca externa fora de transação) e valida antes de salvar. */
+    private void prepararEndereco(Cliente cliente) {
+        if (cliente.getEndereco() == null) throw new IllegalArgumentException("Informe o endereço.");
+        if (localizacao != null) localizacao.completarCoordenadas(cliente.getEndereco());
+        com.obraslink.service.LocalizacaoService.validarEndereco(cliente.getEndereco());
+    }
 
     @PostMapping("/minha-conta/excluir")
     public String deleteOwnAccount(HttpServletRequest request,
@@ -71,6 +79,13 @@ public class ClienteController {
         cliente.setNome(dados.getNome());
         cliente.setCpfCnpj(dados.getCpfCnpj());
         cliente.setTelefone(dados.getTelefone());
+        // Endereço editado na própria conta: atualiza o existente (ou cria) e confere/obtém as coordenadas
+        if (dados.getEndereco() != null) {
+            com.obraslink.model.Endereco atual = cliente.getEndereco() == null ? new com.obraslink.model.Endereco() : cliente.getEndereco();
+            atual.atualizarCom(dados.getEndereco());
+            cliente.setEndereco(atual);
+        }
+        prepararEndereco(cliente);
         clienteService.save(cliente);
         redirectAttributes.addFlashAttribute("mensagem", "Dados de cliente atualizados com sucesso!");
         return "redirect:/clientes";
@@ -95,6 +110,8 @@ public class ClienteController {
             return "redirect:/clientes";
         }
 
+        cliente.setFotoPerfilChave(null); // cadastro pelo admin não define foto
+        prepararEndereco(cliente);
         clienteService.save(cliente);
         redirectAttributes.addFlashAttribute("mensagem", "Cliente salvo com sucesso!");
         return "redirect:/clientes";
@@ -131,10 +148,13 @@ public class ClienteController {
 
         cliente.setId(id);
         cliente.setUsuarioId(existente.getUsuarioId());
+        cliente.setFotoPerfilChave(existente.getFotoPerfilChave()); // foto só muda pela rota de imagem
         if (!acessoService.isAdmin()) {
             cliente.setEmail(existente.getEmail());
         }
 
+        if (cliente.getEndereco() == null) cliente.setEndereco(existente.getEndereco());
+        prepararEndereco(cliente);
         clienteService.save(cliente);
         redirectAttributes.addFlashAttribute("mensagem", "Cliente atualizado com sucesso!");
         return "redirect:/clientes";
