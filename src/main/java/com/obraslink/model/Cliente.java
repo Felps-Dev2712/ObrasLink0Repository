@@ -47,6 +47,10 @@ public class Cliente {
     @JoinColumn(name = "endereco_id")
     private Endereco endereco;
 
+    // Chave da foto em <upload-dir>/imagens. Só o ImagemService altera.
+    @Column(length = 64)
+    private String fotoPerfilChave;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime criadoEm;

@@ -1,80 +1,109 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-
-<head th:replace="~{fragments/layout :: head('Cadastro de Serviço - ObraLink')}"></head>
-
+<head th:replace="~{fragments/layout :: head(${servico.id == null ? 'Novo serviço - ObraLink' : 'Editar serviço - ObraLink'})}"></head>
 <body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo" class="container container-narrow page workspace-page">
+    <a href="/servicos" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar para serviços</a>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Catálogo</p>
+            <h1 th:text="${servico.id == null ? 'Novo serviço' : 'Editar serviço'}">Novo serviço</h1>
+            <p>Descreva com clareza o que está incluso. Serviços disponíveis aparecem na vitrine e no seu perfil.</p>
+        </div>
+    </header>
 
-    <nav th:replace="~{fragments/layout :: navbar}"></nav>
-
-    <div class="container workspace-page" style="padding-top: 100px; min-height: 80vh; max-width: 800px;">
-        <h2 th:text="${servico.id == null ? 'Novo Serviço' : 'Editar Serviço'}" style="margin-bottom: 24px;">Novo
-            Serviço</h2>
-
-        <div class="workspace-card" style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
-            <form class="pure-form pure-form-stacked"
-                th:action="@{${servico.id == null ? '/servicos' : '/servicos/' + servico.id}}" th:object="${servico}"
-                method="post">
-
-                <fieldset>
-                    <div class="pure-g">
-                        <div class="pure-u-1" style="margin-bottom: 16px;">
-                            <label for="titulo">Título do Serviço</label>
-                            <input id="titulo" type="text" th:field="*{titulo}" class="pure-u-1"
-                                placeholder="Ex: Construção de muro de arrimo" required>
-                        </div>
-
-                        <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px; margin-bottom: 16px;">
-                            <label for="prestador">Profissional / Responsável</label>
-                            <select th:if="${isAdmin}" id="prestador" th:field="*{prestador}" class="pure-u-1" required>
-                                <option value="">Selecione...</option>
-                                <option th:each="p : ${prestadores}" th:value="${p.id}" th:text="${p.nome}"></option>
-                            </select>
-                            <input th:if="${not isAdmin}" type="text" class="pure-u-1"
-                                   th:value="${prestadorAtual.nome}"
-                                   readonly>
-                        </div>
-                        <div class="pure-u-1 pure-u-md-1-2" style="margin-bottom: 16px;">
-                            <label for="categoria">Categoria do Serviço</label>
-                            <select id="categoria" th:field="*{categoria}" class="pure-u-1" required>
-                                <option value="">Selecione...</option>
-                                <option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}">
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px; margin-bottom: 16px;">
-                            <label for="preco">Preço / Orçamento Inicial (R$)</label>
-                            <input id="preco" type="number" step="0.01" th:field="*{preco}" class="pure-u-1">
-                        </div>
-                        <div class="pure-u-1 pure-u-md-1-2"
-                            style="margin-bottom: 16px; display: flex; align-items: flex-end;">
-                            <label for="disponivel" class="pure-checkbox" style="padding-bottom: 10px;">
-                                <input id="disponivel" type="checkbox" th:field="*{disponivel}"> Serviço Ativo
-                                (Disponível Vitrine)
-                            </label>
-                        </div>
-
-                        <div class="pure-u-1" style="margin-bottom: 16px;">
-                            <label for="descricao">Descrição Detalhada do Serviço</label>
-                            <textarea id="descricao" th:field="*{descricao}" class="pure-u-1" rows="5" required
-                                placeholder="Descreva o que está incluso no pacote de serviço..."></textarea>
-                        </div>
+    <div class="card" data-reveal>
+        <div class="card-body">
+            <p th:if="${mensagem}" class="alert alert-success" role="status" th:text="${mensagem}"></p>
+            <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+            <form th:action="@{${servico.id == null ? '/servicos' : '/servicos/' + servico.id}}" th:object="${servico}" method="post"
+                  enctype="multipart/form-data" data-submit-once>
+                <div class="form-grid">
+                    <div class="field span-all">
+                        <label for="titulo">Título do serviço</label>
+                        <input id="titulo" type="text" th:field="*{titulo}" placeholder="Ex.: Construção de muro de arrimo" maxlength="180" required>
                     </div>
-                </fieldset>
-
-                <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: flex-end;">
-                    <a href="javascript:history.back()" class="btn btn-outline"
-                        style="border: 1px solid var(--color-border); color: var(--color-text);">Cancelar</a>
-                    <button type="submit" class="btn btn-primary" style="border: none;">Salvar Serviço</button>
+                    <div class="field">
+                        <label for="prestador">Profissional responsável</label>
+                        <select th:if="${isAdmin}" id="prestador" th:field="*{prestador}" required>
+                            <option value="">Selecione...</option>
+                            <option th:each="p : ${prestadores}" th:value="${p.id}" th:text="${p.nome}"></option>
+                        </select>
+                        <input th:if="${not isAdmin}" id="prestador" type="text" th:value="${prestadorAtual.nome}" readonly>
+                    </div>
+                    <div class="field">
+                        <label for="categoria">Categoria</label>
+                        <select id="categoria" th:field="*{categoria}" required>
+                            <option value="">Selecione...</option>
+                            <option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="preco">Preço inicial (R$) <span class="text-subtle">(opcional)</span></label>
+                        <input id="preco" type="number" step="0.01" min="0" inputmode="decimal" th:field="*{preco}" placeholder="0,00">
+                        <small>Deixe em branco para mostrar "Sob consulta".</small>
+                    </div>
+                    <div class="field">
+                        <span class="sr-only">Situação</span>
+                        <label for="disponivel1" class="switch-field">
+                            <input id="disponivel1" type="checkbox" th:field="*{disponivel}">
+                            <span>Disponível para contratação<small>Desmarque para pausar sem apagar o serviço.</small></span>
+                        </label>
+                    </div>
+                    <div class="field span-all">
+                        <label for="descricao">Descrição detalhada</label>
+                        <textarea id="descricao" th:field="*{descricao}" rows="5" required placeholder="Descreva o que está incluso, materiais, prazo estimado e condições."></textarea>
+                    </div>
+                    <!-- Fotos novas: prévia antes de enviar -->
+                    <div class="field span-all" th:with="restantes=${(maxFotos ?: 6) - (fotosServico != null ? #lists.size(fotosServico) : 0)}">
+                        <span class="label-text">Fotos do serviço <span class="text-subtle" th:text="${'(até ' + restantes + (restantes == 1 ? ' foto' : ' fotos') + ', JPG/PNG/WebP de até 5 MB)'}">(até 6 fotos)</span></span>
+                        <label class="dropzone" th:classappend="${restantes <= 0} ? ' is-disabled'" data-dropzone th:attr="data-max=${restantes}">
+                            <input type="file" name="fotos" accept="image/jpeg,image/png,image/webp" multiple class="sr-only" th:disabled="${restantes <= 0}">
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 7"/></svg>
+                            <strong th:text="${restantes <= 0 ? 'Limite de fotos atingido' : 'Clique ou arraste fotos aqui'}">Clique ou arraste fotos aqui</strong>
+                            <small>Fotos reais do trabalho ajudam o cliente a decidir.</small>
+                        </label>
+                        <div class="photo-preview" data-photo-preview></div>
+                        <small class="photo-error" data-photo-error hidden></small>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <a href="/servicos" class="btn btn-ghost">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar serviço</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
-    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
-
+    <!-- Fotos já enviadas (só na edição) -->
+    <section class="card mt-24" data-reveal th:if="${servico.id != null}" aria-labelledby="fotos-title">
+        <div class="card-header">
+            <div>
+                <h2 id="fotos-title">Fotos publicadas</h2>
+                <p th:text="${#lists.size(fotosServico) + ' de ' + maxFotos + ' fotos. A primeira é usada como capa na vitrine.'}">0 de 6 fotos</p>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="photo-grid" th:unless="${#lists.isEmpty(fotosServico)}">
+                <figure class="photo-item" th:each="foto, fs : ${fotosServico}">
+                    <a th:href="@{/imagens/{c}(c=${foto.chave})}" data-lightbox data-lightbox-group="servico">
+                        <img th:src="@{/imagens/{c}(c=${foto.chave})}" th:alt="${'Foto ' + (fs.index + 1) + ' do serviço'}" loading="lazy">
+                    </a>
+                    <span class="photo-badge" th:if="${fs.index == 0}">Capa</span>
+                    <form th:action="@{/servicos/{id}/fotos/{f}/excluir(id=${servico.id},f=${foto.id})}" method="post"
+                          onsubmit="return confirm('Remover esta foto do serviço?');">
+                        <button type="submit" class="photo-remove" th:attr="aria-label=${'Remover foto ' + (fs.index + 1)}">
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                    </form>
+                </figure>
+            </div>
+            <p th:if="${#lists.isEmpty(fotosServico)}" class="empty-inline">Nenhuma foto publicada ainda. Use o campo acima e salve o serviço.</p>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
-
 </html>

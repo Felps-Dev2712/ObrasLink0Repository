@@ -3,17 +3,18 @@
 <head th:replace="~{fragments/layout :: head('Cadastro - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="container auth-page register-page">
+<main id="conteudo" class="container auth-page register-page">
     <section class="auth-card register-card">
         <header class="auth-heading">
-            <span class="eyebrow">Cadastro</span>
+            <span class="eyebrow">Cadastro gratuito</span>
             <h1>Crie sua conta</h1>
             <p>Escolha como deseja usar a plataforma. Você pode atuar nos dois perfis com o mesmo acesso.</p>
+            <p class="help">Já tem conta? <a th:href="@{/login}">Entrar</a></p>
         </header>
 
-        <div th:if="${erro}" class="alert alert-danger" role="alert" th:text="${erro}"></div>
+        <div th:if="${erro}" class="alert alert-error" role="alert"><span th:text="${erro}"></span></div>
 
-        <form class="pure-form pure-form-stacked register-form" th:action="@{/register}" th:object="${form}" method="post" enctype="multipart/form-data">
+        <form class="register-form" th:action="@{/register}" th:object="${form}" method="post" enctype="multipart/form-data">
             <section class="register-section">
                 <h2>Dados de acesso</h2>
                 <div class="register-grid register-grid-access">
@@ -30,8 +31,8 @@
             <fieldset class="register-section profile-section">
                 <legend>Como você vai usar o ObraLink?</legend>
                 <div class="profile-choice" role="group" aria-label="Escolha seus perfis">
-                    <label class="profile-option" for="cadastroCliente"><input id="cadastroCliente" type="checkbox" th:field="*{cadastroCliente}"><span class="profile-option-icon" aria-hidden="true">C</span><span><strong>Sou cliente</strong><small>Quero encontrar profissionais.</small></span></label>
-                    <label class="profile-option" for="cadastroPrestador"><input id="cadastroPrestador" type="checkbox" th:field="*{cadastroPrestador}"><span class="profile-option-icon" aria-hidden="true">P</span><span><strong>Sou prestador</strong><small>Quero oferecer meus serviços.</small></span></label>
+                    <label class="profile-option" for="cadastroCliente"><input id="cadastroCliente" type="checkbox" th:field="*{cadastroCliente}"><span class="profile-option-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg></span><span><strong>Sou cliente</strong><small>Quero encontrar profissionais para minha obra.</small></span></label>
+                    <label class="profile-option" for="cadastroPrestador"><input id="cadastroPrestador" type="checkbox" th:field="*{cadastroPrestador}"><span class="profile-option-icon" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span><span><strong>Sou profissional</strong><small>Quero divulgar meus serviços e receber contatos.</small></span></label>
                 </div>
             </fieldset>
 
@@ -40,18 +41,42 @@
                 <p class="profile-fields-description">Informe os dados para solicitar serviços e acompanhar sua obra.</p>
                 <div class="register-grid">
                     <label for="clienteCpfCnpj">CPF<input data-mask="documento" inputmode="numeric" autocomplete="off" id="clienteCpfCnpj" type="text" th:field="*{clienteCpfCnpj}" placeholder="000.000.000-00" data-profile-required></label>
-                    <label for="clienteTelefone">Telefone (opcional)<input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="clienteTelefone" type="tel" th:field="*{clienteTelefone}" placeholder="(11) 99999-9999"></label>
+                    <label for="clienteTelefone">Telefone <span class="text-subtle">(opcional)</span><input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="clienteTelefone" type="tel" th:field="*{clienteTelefone}" placeholder="(11) 99999-9999"></label>
                 </div>
-                <h3 class="register-subheading">Endereço</h3>
+            </fieldset>
+
+            <!-- Endereço da conta: obrigatório para cliente e prestador (busca por proximidade e raio de atendimento) -->
+            <fieldset id="enderecoFields" class="register-section profile-fields" data-address-picker hidden>
+                <legend>Endereço e localização</legend>
+                <p class="profile-fields-description">Digite o CEP para preencher o endereço automaticamente e confirme o ponto no mapa. Clientes veem profissionais perto de casa; profissionais definem a região que atendem.</p>
                 <div class="register-grid register-grid-address">
-                    <label for="clienteCep">CEP<input id="clienteCep" th:field="*{clienteCep}" maxlength="9" inputmode="numeric" placeholder="00000-000" data-profile-required></label>
-                    <label for="clienteLogradouro">Logradouro<input id="clienteLogradouro" th:field="*{clienteLogradouro}" placeholder="Rua, avenida..." data-profile-required></label>
-                    <label for="clienteNumero">Número<input id="clienteNumero" th:field="*{clienteNumero}" placeholder="Número" data-profile-required></label>
-                    <label for="clienteComplemento">Complemento (opcional)<input id="clienteComplemento" th:field="*{clienteComplemento}" placeholder="Apto, bloco, referência"></label>
-                    <label for="clienteBairro">Bairro<input id="clienteBairro" th:field="*{clienteBairro}" placeholder="Seu bairro" data-profile-required></label>
-                    <label for="clienteCidade">Cidade<input id="clienteCidade" th:field="*{clienteCidade}" placeholder="Sua cidade" data-profile-required></label>
-                    <label for="clienteEstado">Estado<input id="clienteEstado" th:field="*{clienteEstado}" maxlength="2" placeholder="UF" autocomplete="address-level1" data-profile-required></label>
+                    <label class="col-2" for="clienteCep">CEP<input id="clienteCep" th:field="*{clienteCep}" maxlength="9" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" data-geo="cep" data-profile-required></label>
+                    <label class="col-4" for="clienteLogradouro">Rua ou avenida<input id="clienteLogradouro" th:field="*{clienteLogradouro}" autocomplete="address-line1" placeholder="Rua, avenida..." data-geo="logradouro" data-profile-required></label>
+                    <label class="col-2" for="clienteNumero">Número<input id="clienteNumero" th:field="*{clienteNumero}" placeholder="Nº" data-geo="numero" data-profile-required></label>
+                    <label class="col-4" for="clienteComplemento">Complemento <span class="text-subtle">(opcional)</span><input id="clienteComplemento" th:field="*{clienteComplemento}" autocomplete="address-line2" placeholder="Apto, bloco, referência"></label>
+                    <label class="col-2" for="clienteBairro">Bairro<input id="clienteBairro" th:field="*{clienteBairro}" placeholder="Seu bairro" data-geo="bairro" data-profile-required></label>
+                    <label class="col-3" for="clienteCidade">Cidade<input id="clienteCidade" th:field="*{clienteCidade}" autocomplete="address-level2" placeholder="Sua cidade" data-geo="cidade" data-profile-required></label>
+                    <label class="col-1" for="clienteEstado">UF<input id="clienteEstado" th:field="*{clienteEstado}" maxlength="2" placeholder="SP" autocomplete="address-level1" data-geo="estado" data-profile-required></label>
                 </div>
+                <input type="hidden" th:field="*{clienteLatitude}" data-geo="lat">
+                <input type="hidden" th:field="*{clienteLongitude}" data-geo="lng">
+                <div class="geo-picker">
+                    <div class="geo-toolbar">
+                        <span class="geo-status" data-geo-status aria-live="polite">Digite o CEP para começar.</span>
+                        <span class="cluster">
+                            <button type="button" class="btn btn-outline btn-sm" data-geo-buscar>Localizar no mapa</button>
+                            <button type="button" class="btn btn-ghost btn-sm" data-geo-gps>Usar minha localização</button>
+                        </span>
+                    </div>
+                    <div class="geo-map" data-geo-map role="application" aria-label="Mapa para confirmar o endereço. Clique ou arraste o marcador para ajustar."></div>
+                </div>
+                <label class="geo-raio" for="prestadorRaioKm" data-raio-prestador hidden>
+                    <span>Raio de atendimento (para o perfil profissional): <strong data-raio-valor th:text="${(form.prestadorRaioKm ?: 15) + ' km'}">15 km</strong></span>
+                    <input id="prestadorRaioKm" type="range" min="1" max="100" step="1" th:field="*{prestadorRaioKm}"
+                           data-geo="raio"
+                           oninput="this.closest('label').querySelector('[data-raio-valor]').textContent = this.value + ' km'">
+                    <small>Até que distância você aceita ir para atender. Aparece no mapa como um círculo.</small>
+                </label>
             </fieldset>
 
             <fieldset id="prestadorFields" class="register-section profile-fields" hidden>
@@ -60,12 +85,12 @@
                 <div class="register-grid register-grid-provider">
                     <label for="prestadorCpfCnpj">CNPJ (MEI ou EI)<input data-mask="documento" inputmode="numeric" autocomplete="off" id="prestadorCpfCnpj" type="text" th:field="*{prestadorCpfCnpj}" placeholder="00.000.000/0000-00" data-profile-required></label>
                     <label for="prestadorWhatsapp">WhatsApp<input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="prestadorWhatsapp" type="tel" th:field="*{prestadorWhatsapp}" placeholder="(11) 99999-9999" data-profile-required></label>
-                    <label class="register-span-all" for="categoriasIds">Categorias profissionais<select id="categoriasIds" th:field="*{categoriasIds}" multiple size="3" data-profile-required><option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option></select><small>Para escolher mais de uma categoria, use Ctrl (Windows) ou Command (Mac).</small></label>
+                    <label class="register-span-all" for="categoriasIds">Categorias profissionais<select id="categoriasIds" th:field="*{categoriasIds}" multiple size="3" data-profile-required><option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option></select><small>Você pode escolher mais de uma categoria.</small></label>
                     <label class="register-span-all" for="prestadorDescricao">Apresentação profissional (opcional)<textarea id="prestadorDescricao" th:field="*{prestadorDescricao}" rows="4" maxlength="1000" placeholder="Conte brevemente sobre sua experiência e os serviços que oferece."></textarea></label>
                 </div>
 
                 <section class="signup-certifications" aria-labelledby="signup-certifications-title">
-                    <div class="signup-certifications-heading"><div><h3 id="signup-certifications-title">Certificações profissionais</h3><p>Opcional. Informe os dados e anexe o comprovante para cada certificação. Elas serão enviadas para análise.</p></div><button id="add-signup-certification" class="btn btn-outline" type="button">Adicionar certificação</button></div>
+                    <div class="signup-certifications-heading"><div><h3 id="signup-certifications-title">Certificações profissionais</h3><p>Opcional. Informe os dados e anexe o comprovante para cada certificação. Elas serão enviadas para análise.</p></div><button id="add-signup-certification" class="btn btn-outline btn-sm" type="button">+ Adicionar certificação</button></div>
                     <div id="signup-certifications-list">
                         <article class="signup-certification" th:each="cert,stat : ${form.certificacoes}" data-certification-row>
                             <div class="signup-certification-heading"><strong th:text="${'Certificação ' + (stat.index + 1)}">Certificação 1</strong><button type="button" class="remove-signup-certification">Remover</button></div>
@@ -82,7 +107,7 @@
                 </section>
             </fieldset>
 
-            <div class="register-actions"><a th:href="@{/login}" class="btn btn-outline">Já tenho conta</a><button type="submit" class="btn btn-primary">Criar conta</button></div>
+            <div class="register-actions"><a th:href="@{/login}" class="btn btn-ghost">Já tenho conta</a><button type="submit" class="btn btn-primary btn-lg">Criar conta</button></div>
             <p class="register-legal">Antes de cadastrar seus dados, consulte os <a th:href="@{/termos}">Termos de Uso</a> e o <a th:href="@{/privacidade}">Aviso de Privacidade</a>. A confirmação será solicitada no primeiro acesso à conta.</p>
         </form>
     </section>
@@ -109,6 +134,8 @@
     const clienteFields = document.getElementById('clienteFields');
     const prestadorFields = document.getElementById('prestadorFields');
     const sharedFields = document.getElementById('sharedFields');
+    const enderecoFields = document.getElementById('enderecoFields');
+    const raioPrestador = document.querySelector('[data-raio-prestador]');
     const sharedName = document.getElementById('nome');
     const certList = document.getElementById('signup-certifications-list');
 
@@ -123,6 +150,10 @@
         sharedName.required = cliente.checked || prestador.checked;
         setRequired(clienteFields, cliente.checked);
         setRequired(prestadorFields, prestador.checked);
+        // Endereço vale para os dois perfis; o raio só aparece para quem marcou prestador
+        enderecoFields.hidden = !cliente.checked && !prestador.checked;
+        setRequired(enderecoFields, cliente.checked || prestador.checked);
+        raioPrestador.hidden = !prestador.checked;
         updateCertificationRequirements();
     }
     function updateCertificationRequirements() {

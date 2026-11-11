@@ -10,7 +10,7 @@
     <input type="hidden" name="adicionar" th:value="${!favoritado}">
     <button type="submit" class="favorite-heart-button"
             th:classappend="${favoritado} ? ' is-favorite' : ''"
-            th:attr="aria-label=${favoritado} ? 'Remover dos favoritos' : 'Adicionar aos favoritos', title=${favoritado} ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+            th:attr="aria-label=${favoritado} ? 'Remover dos favoritos' : 'Adicionar aos favoritos', title=${favoritado} ? 'Remover dos favoritos' : 'Adicionar aos favoritos', aria-pressed=${favoritado} ? 'true' : 'false'">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg>
     </button>
     <span class="sr-only" data-favorite-feedback role="status" aria-live="polite"></span>

@@ -4,62 +4,118 @@
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ObraLink — Conecte-se com os melhores profissionais da construção civil.">
+    <meta name="description" content="ObraLink — encontre profissionais da construção civil e fale direto com quem entende.">
+    <meta name="theme-color" content="#0B1120">
     <title th:text="${title}">ObraLink</title>
-
-    <!-- Pure CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/grids-responsive-min.css">
-
-    <!-- Custom Styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap">
     <link rel="stylesheet" th:href="@{/css/style.css}" href="/css/style.css">
-
-    <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Com JS ativo, elementos [data-reveal] começam ocultos e entram ao rolar; sem JS ficam visíveis -->
+    <script>document.documentElement.classList.add('js');</script>
 </head>
 
 <body>
 
-    <!-- ========== NAVBAR ========== -->
-    <nav class="navbar" id="navbar" th:fragment="navbar">
-        <div class="container">
-            <a href="/" class="navbar-brand">
-                ObraLink
-            </a>
+    <!-- ========== MARCA (reutilizada no header, login e painel) ========== -->
+    <a th:fragment="brand(extraClass)" href="/" th:class="${'brand ' + extraClass}" aria-label="ObraLink, página inicial">
+        <span>ObraLink</span>
+    </a>
 
-            <button class="navbar-toggle" id="navbar-toggle" aria-label="Menu">
-                <span></span>
-                <span></span>
-                <span></span>
+    <!-- ========== NAVBAR ========== -->
+    <nav class="navbar" id="navbar" aria-label="Navegação principal" th:fragment="navbar" th:with="path=${currentPath ?: ''}">
+        <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+        <div class="container">
+            <a th:replace="~{fragments/layout :: brand('')}" href="/">ObraLink</a>
+
+            <button class="navbar-toggle" id="navbar-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="navbar-collapse">
+                <svg class="icon icon-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <svg class="icon icon-close" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
 
-            <ul class="navbar-nav" id="navbar-nav">
-                <li th:if="${not auth.authenticated or auth.perfilAtivo == 'CLIENTE'}"><a href="/">Início</a></li>
-                <li th:if="${not auth.authenticated or auth.perfilAtivo == 'CLIENTE'}"><a href="/categorias">Categorias</a></li>
-                <li th:if="${not auth.authenticated or auth.perfilAtivo == 'CLIENTE'}"><a href="/vitrine">Serviços</a></li>
-                <li th:if="${auth.authenticated and (auth.hasCliente or auth.hasPrestador) and auth.perfilAtivo != 'CLIENTE'}"><a href="/dashboard">Dashboard</a></li>
-                <li th:if="${auth.authenticated and (auth.isAdmin or auth.perfilAtivo == 'PRESTADOR')}"><a href="/servicos">Meus serviços</a></li>
-                <li th:if="${auth.authenticated and auth.perfilAtivo == 'CLIENTE'}"><a href="/favoritos">Favoritos</a></li>
-                <li th:if="${auth.authenticated and auth.isAdmin}"><a href="/admin/certificacoes">Revisar certificações</a></li>
-                <li th:if="${auth.authenticated}"><a href="/notificacoes" class="notification-link">Notificações <span th:if="${auth.notificacoesNaoLidas > 0}" class="notification-badge" th:text="${auth.notificacoesNaoLidas}">1</span></a></li>
-            </ul>
+            <div class="navbar-collapse" id="navbar-collapse">
+                <ul class="navbar-nav" id="navbar-nav">
+                    <!-- Visitante e cliente: descoberta -->
+                    <!-- Visitante não vê links internos: todas essas telas exigem login -->
+                    <th:block th:if="${auth['authenticated'] and (auth['perfilAtivo'] == 'CLIENTE' or auth['perfilAtivo'] == 'ADMIN')}">
+                        <li><a href="/" th:aria-current="${path == '/' ? 'page' : null}">Início</a></li>
+                        <li><a href="/prestadores" th:aria-current="${path.startsWith('/prestadores') and !path.startsWith('/prestadores/minha') ? 'page' : null}">Profissionais</a></li>
+                        <li><a href="/vitrine" th:aria-current="${path.startsWith('/vitrine') ? 'page' : null}">Serviços</a></li>
+                        <li><a href="/categorias" th:aria-current="${path.startsWith('/categorias') ? 'page' : null}">Categorias</a></li>
+                    </th:block>
+                    <li th:if="${auth['authenticated'] and auth['perfilAtivo'] == 'CLIENTE'}"><a href="/favoritos" th:aria-current="${path.startsWith('/favoritos') ? 'page' : null}">Favoritos</a></li>
 
-            <div class="navbar-cta">
-                <a th:if="${not auth.authenticated}" href="/login" class="btn btn-outline"
-                   style="border-color: var(--color-primary); color: var(--color-primary);">Entrar</a>
-                <a th:if="${not auth.authenticated}" href="/register?perfil=ambos" class="btn btn-primary">Criar Conta</a>
+                    <!-- Prestador: área de trabalho -->
+                    <th:block th:if="${auth['authenticated'] and auth['perfilAtivo'] == 'PRESTADOR'}">
+                        <li><a href="/dashboard" th:aria-current="${path.startsWith('/dashboard') ? 'page' : null}">Painel</a></li>
+                        <li><a href="/servicos" th:aria-current="${path.startsWith('/servicos') ? 'page' : null}">Meus serviços</a></li>
+                        <li><a href="/prestadores/minha-disponibilidade" th:aria-current="${path.startsWith('/prestadores/minha-disponibilidade') ? 'page' : null}">Agenda</a></li>
+                        <li><a href="/prestadores/minhas-certificacoes" th:aria-current="${path.startsWith('/prestadores/minhas-certificacoes') ? 'page' : null}">Certificações</a></li>
+                    </th:block>
 
-                <a th:if="${auth.authenticated}" href="/clientes" class="account-name" aria-label="Abrir minha conta" th:text="${auth['nome'] ?: 'Minha conta'}">Minha conta</a>
-                <form th:if="${auth.authenticated and auth.hasCliente and auth.hasPrestador}" th:action="@{/perfil/alternar}" method="post" class="profile-switch">
-                    <input type="hidden" name="retorno" th:value="${#httpServletRequest.requestURI}">
-                    <select name="papel" aria-label="Alternar perfil" onchange="this.form.submit()">
-                        <option value="CLIENTE" th:selected="${auth.perfilAtivo == 'CLIENTE'}">Cliente</option>
-                        <option value="PRESTADOR" th:selected="${auth.perfilAtivo == 'PRESTADOR'}">Prestador</option>
-                    </select>
-                </form>
-                <form th:if="${auth.authenticated}" th:action="@{/logout}" method="post" style="display: inline;">
-                    <button type="submit" class="btn btn-primary" style="border: none;">Sair</button>
-                </form>
+                    <!-- Administrador -->
+                    <th:block th:if="${auth['authenticated'] and auth['isAdmin']}">
+                        <li><a href="/servicos" th:aria-current="${path.startsWith('/servicos') ? 'page' : null}">Gerenciar serviços</a></li>
+                        <li><a href="/admin/certificacoes" th:aria-current="${path.startsWith('/admin') ? 'page' : null}">Revisar certificações</a></li>
+                    </th:block>
+
+                    <li th:if="${auth['authenticated']}">
+                        <a href="/notificacoes" class="notification-link" th:aria-current="${path.startsWith('/notificacoes') ? 'page' : null}">
+                            Notificações
+                            <span th:if="${auth['notificacoesNaoLidas'] > 0}" class="notification-badge" th:text="${auth['notificacoesNaoLidas']}">1</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="navbar-cta">
+                    <th:block th:unless="${auth['authenticated']}">
+                        <a href="/login" class="btn btn-ghost">Entrar</a>
+                        <a href="/register?perfil=ambos" class="btn btn-primary">Criar conta</a>
+                    </th:block>
+
+                    <details th:if="${auth['authenticated']}" class="account-menu" id="account-menu">
+                        <summary aria-label="Abrir menu da conta">
+                            <span class="avatar avatar-sm" aria-hidden="true"><img th:if="${auth['fotoPerfil'] != null}" th:src="@{/imagens/{c}(c=${auth['fotoPerfil']})}" alt=""><th:block th:unless="${auth['fotoPerfil'] != null}" th:text="${#strings.isEmpty(auth['nome']) ? 'C' : #strings.substring(auth['nome'], 0, 1)}">C</th:block></span>
+                            <span class="account-name" th:text="${auth['nome'] ?: 'Minha conta'}">Minha conta</span>
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <div class="account-dropdown">
+                            <div class="account-dropdown-head">
+                                <strong th:text="${auth['nome'] ?: 'Minha conta'}">Minha conta</strong>
+                                <small th:text="${auth['email']}">conta@exemplo.com</small>
+                            </div>
+                            <form th:if="${auth['hasCliente'] and auth['hasPrestador']}" th:action="@{/perfil/alternar}" method="post" class="profile-switch">
+                                <!-- Cliente → prestador abre o painel; prestador → cliente volta ao início -->
+                                <input type="hidden" name="retorno" th:value="${auth['perfilAtivo'] == 'CLIENTE' ? '/dashboard' : '/'}">
+                                <label for="perfil-ativo">Usando a plataforma como</label>
+                                <select id="perfil-ativo" name="papel" onchange="this.form.submit()">
+                                    <option value="CLIENTE" th:selected="${auth['perfilAtivo'] == 'CLIENTE'}">Cliente</option>
+                                    <option value="PRESTADOR" th:selected="${auth['perfilAtivo'] == 'PRESTADOR'}">Prestador</option>
+                                </select>
+                                <noscript><button type="submit" class="btn btn-sm btn-outline mt-16">Trocar perfil</button></noscript>
+                            </form>
+                            <a th:if="${auth['hasPrestador'] and auth['perfilAtivo'] == 'PRESTADOR'}" href="/dashboard">
+                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                                Meu painel
+                            </a>
+                            <a href="/clientes">
+                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                                Minha conta
+                            </a>
+                            <a th:if="${auth['prestadorId'] != null}" th:href="@{/prestadores/{id}(id=${auth['prestadorId']})}">
+                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Ver meu perfil público
+                            </a>
+                            <hr>
+                            <form th:action="@{/logout}" method="post">
+                                <button type="submit">
+                                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+                                    Sair
+                                </button>
+                            </form>
+                        </div>
+                    </details>
+                </div>
             </div>
         </div>
     </nav>
@@ -69,41 +125,38 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-about">
-                    <div class="footer-brand">
-                    ObraLink
-                    </div>
-                    <p class="footer-whatsapp"><svg class="footer-whatsapp-icon" role="img" aria-label="WhatsApp" viewBox="0 0 24 24" focusable="false"><path d="M20.52 3.48A11.85 11.85 0 0 0 12.08 0C5.5 0 .15 5.34.15 11.92c0 2.1.55 4.16 1.6 5.97L0 24l6.27-1.64a11.9 11.9 0 0 0 5.8 1.48h.01c6.58 0 11.93-5.35 11.93-11.92a11.85 11.85 0 0 0-3.49-8.44ZM12.08 21.8a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.72.98.99-3.63-.24-.37a9.85 9.85 0 1 1 8.37 4.61Zm5.41-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.48-1.76-1.66-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.21 5.08 4.5.71.31 1.27.5 1.7.64.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.42.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35Z"/></svg><span>Encontre profissionais para sua reforma e fale diretamente pelo WhatsApp.</span></p>
+                    <a th:replace="~{fragments/layout :: brand('brand-light')}" href="/">ObraLink</a>
+                    <p>Encontre profissionais para sua obra ou reforma e fale direto com eles pelo WhatsApp, sem intermediários.</p>
                 </div>
-
-                <div class="footer-col">
+                <div th:if="${auth['authenticated']}">
                     <h4>Plataforma</h4>
                     <ul>
-                        <li><a href="/categorias">Ver categorias</a></li>
                         <li><a href="/prestadores">Profissionais</a></li>
-                        <li><a href="/clientes">Clientes</a></li>
+                        <li><a href="/vitrine">Serviços</a></li>
+                        <li><a href="/categorias">Categorias</a></li>
                     </ul>
                 </div>
-
-                <div class="footer-col">
-                    <h4>Cadastro</h4>
+                <div>
+                    <h4>Cadastre-se</h4>
                     <ul>
-                        <li><a href="/register?perfil=cliente">Sou Cliente</a></li>
+                        <li><a href="/register?perfil=cliente">Sou cliente</a></li>
+                        <li><a href="/register?perfil=prestador">Sou profissional</a></li>
+                        <li><a href="/login">Entrar</a></li>
                     </ul>
                 </div>
-
-                <div class="footer-col">
+                <div>
                     <h4>Contato</h4>
                     <ul>
                         <li><a href="mailto:contato@obraslink.com.br">contato@obraslink.com.br</a></li>
-                        <li><a href="#">Suporte</a></li>
-                        <li><a th:href="@{/termos}">Termos de Uso</a></li>
-                        <li><a th:href="@{/privacidade}">Aviso de Privacidade</a></li>
                     </ul>
                 </div>
             </div>
-
             <div class="footer-bottom">
-                &copy; 2026 ObraLink. Todos os direitos reservados.
+                <span>&copy; 2026 ObraLink. Todos os direitos reservados.</span>
+                <nav aria-label="Documentos legais">
+                    <a th:href="@{/termos}" href="/termos">Termos de Uso</a>
+                    <a th:href="@{/privacidade}" href="/privacidade">Aviso de Privacidade</a>
+                </nav>
             </div>
         </div>
     </footer>
@@ -115,87 +168,147 @@
         </button>
         <script th:src="@{/js/dados-cadastrais.js}" defer></script>
         <script th:src="@{/js/favoritos.js}" defer></script>
-        <script>
-            // Atualiza o aviso sem marcar mensagens como lidas fora da aba.
-            const notificationLink = document.querySelector('.notification-link');
-            if (notificationLink) {
-                let checkingNotifications = false;
-                async function checkNotifications() {
-                    if (document.hidden || checkingNotifications) return;
-                    checkingNotifications = true;
-                    try {
-                        const response = await fetch('/notificacoes/contador', {headers: {'Accept': 'application/json'}, cache: 'no-store'});
-                        if (!response.ok || response.redirected) return;
-                        const {total} = await response.json();
-                        let badge = notificationLink.querySelector('.notification-badge');
-                        if (total > 0) {
-                            if (!badge) {
-                                badge = document.createElement('span');
-                                badge.className = 'notification-badge';
-                                notificationLink.appendChild(badge);
-                            }
-                            badge.textContent = total;
-                            if (location.pathname === '/notificacoes' && !document.querySelector('form:focus-within')) location.reload();
-                        } else if (badge) badge.remove();
-                    } catch (error) {
-                        // Uma falha temporária de rede será tentada novamente no próximo intervalo.
-                    } finally { checkingNotifications = false; }
+        <script th:src="@{/js/selects.js}" defer></script>
+        <script th:src="@{/js/midia.js}" defer></script>
+        <script th:src="@{/js/localizacao.js}" defer></script>
+        <script th:src="@{/js/painel.js}" defer></script>
+        <script data-layout>
+            (() => {
+                // Contador de notificações: atualiza sem marcar mensagens como lidas fora da aba.
+                const notificationLink = document.querySelector('.notification-link');
+                if (notificationLink) {
+                    let checking = false;
+                    async function checkNotifications() {
+                        if (document.hidden || checking) return;
+                        checking = true;
+                        try {
+                            const response = await fetch('/notificacoes/contador', {headers: {'Accept': 'application/json'}, cache: 'no-store'});
+                            if (!response.ok || response.redirected) return;
+                            const {total} = await response.json();
+                            let badge = notificationLink.querySelector('.notification-badge');
+                            if (total > 0) {
+                                if (!badge) {
+                                    badge = document.createElement('span');
+                                    badge.className = 'notification-badge';
+                                    notificationLink.appendChild(badge);
+                                }
+                                badge.textContent = total;
+                                if (location.pathname === '/notificacoes' && !document.querySelector('.app-shell') && !document.querySelector('form:focus-within')) location.reload();
+                            } else if (badge) badge.remove();
+                        } catch (error) {
+                            // Falha temporária de rede: tenta de novo no próximo intervalo.
+                        } finally { checking = false; }
+                    }
+                    setInterval(checkNotifications, 15000);
+                    document.addEventListener('visibilitychange', checkNotifications);
                 }
-                setInterval(checkNotifications, 15000);
-                document.addEventListener('visibilitychange', checkNotifications);
-            }
-            // Navbar scroll effect
-            const navbar = document.getElementById('navbar');
-            if (navbar) {
-                window.addEventListener('scroll', () => {
-                    navbar.classList.toggle('scrolled', window.scrollY > 20);
-                });
-            }
 
-            const backToTop = document.getElementById('back-to-top');
-            if (backToTop) {
-                const updateBackToTop = () => {
-                    const visible = window.scrollY > 360;
-                    backToTop.classList.toggle('is-visible', visible);
-                    backToTop.setAttribute('aria-hidden', String(!visible));
-                    backToTop.tabIndex = visible ? 0 : -1;
-                };
-                window.addEventListener('scroll', updateBackToTop, {passive: true});
-                updateBackToTop();
-                backToTop.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
-            }
+                // Sombra no header ao rolar
+                const navbar = document.getElementById('navbar');
+                if (navbar) {
+                    const onScroll = () => navbar.classList.toggle('scrolled', window.scrollY > 8);
+                    window.addEventListener('scroll', onScroll, {passive: true});
+                    onScroll();
+                }
 
-            // Mobile menu toggle
-            const navToggle = document.getElementById('navbar-toggle');
-            const navMenu = document.getElementById('navbar-nav');
-            if (navToggle && navMenu) {
-                navToggle.addEventListener('click', () => {
-                    navMenu.classList.toggle('open');
-                });
+                // Menu mobile
+                const toggle = document.getElementById('navbar-toggle');
+                const collapse = document.getElementById('navbar-collapse');
+                if (toggle && collapse) {
+                    const setOpen = open => {
+                        collapse.classList.toggle('open', open);
+                        toggle.setAttribute('aria-expanded', String(open));
+                        toggle.setAttribute('aria-label', open ? 'Fechar menu' : 'Abrir menu');
+                    };
+                    toggle.addEventListener('click', () => setOpen(!collapse.classList.contains('open')));
+                    collapse.querySelectorAll('a').forEach(link => link.addEventListener('click', () => setOpen(false)));
+                    document.addEventListener('keydown', event => { if (event.key === 'Escape') setOpen(false); });
+                }
 
-                // Close menu on link click
-                navMenu.querySelectorAll('a').forEach(link => {
-                    link.addEventListener('click', () => {
-                        navMenu.classList.remove('open');
+                // Menu da conta: no celular fica sempre aberto dentro do menu; no desktop fecha ao clicar fora ou com Esc
+                const accountMenu = document.getElementById('account-menu');
+                if (accountMenu) {
+                    const mobile = window.matchMedia('(max-width: 1023px)');
+                    const syncAccountMenu = () => { accountMenu.open = mobile.matches; };
+                    syncAccountMenu();
+                    mobile.addEventListener('change', syncAccountMenu);
+                    document.addEventListener('click', event => {
+                        if (!mobile.matches && !accountMenu.contains(event.target) && !event.target.closest('.cselect-list')) accountMenu.open = false;
                     });
-                });
-            }
-
-            // Scroll-reveal (fade-in) with IntersectionObserver
-            const fadeEls = document.querySelectorAll('.fade-in');
-            if (fadeEls.length > 0) {
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add('visible');
-                            observer.unobserve(entry.target);
-                        }
+                    document.addEventListener('keydown', event => {
+                        if (event.key === 'Escape' && accountMenu.open) { accountMenu.open = false; accountMenu.querySelector('summary').focus(); }
                     });
-                }, { threshold: 0.15 });
+                }
 
-                fadeEls.forEach(el => observer.observe(el));
-            }
+                // Comportamentos que valem para o conteúdo da página e para o que o painel carrega depois.
+                // ObraLink.iniciar(raiz) liga: busca e filtros, entrada animada e envio único dos formulários.
+                const normalizar = t => (t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+                const io = 'IntersectionObserver' in window ? new IntersectionObserver(entries => entries.forEach(entry => {
+                    if (entry.isIntersecting) { entry.target.classList.add('is-visible'); io.unobserve(entry.target); }
+                }), {threshold: 0.15, rootMargin: '0px 0px -40px 0px'}) : null;
 
+                function iniciar(raiz) {
+                    // Filtros: busca [data-filter-input] + etiquetas [data-filter-chip] sobre [data-filter-item]
+                    const itens = [...raiz.querySelectorAll('[data-filter-item]')];
+                    const busca = raiz.querySelector('[data-filter-input]');
+                    const chips = [...raiz.querySelectorAll('[data-filter-chip]')];
+                    if (itens.length) {
+                        const contador = raiz.querySelector('[data-filter-count]');
+                        const vazio = raiz.querySelector('[data-filter-empty]');
+                        let grupo = 'todos';
+                        const aplicar = () => {
+                            const termo = busca ? normalizar(busca.value) : '';
+                            let visiveis = 0;
+                            itens.forEach(item => {
+                                const ok = (!termo || normalizar(item.dataset.filterText).includes(termo))
+                                    && (grupo === 'todos' || item.dataset.filterGroup === grupo);
+                                item.hidden = !ok;
+                                if (ok) { visiveis++; item.classList.add('is-visible'); }
+                            });
+                            if (contador) contador.textContent = termo ? visiveis + (visiveis === 1 ? ' encontrado' : ' encontrados') : '';
+                            if (vazio) vazio.hidden = visiveis > 0;
+                        };
+                        if (busca) busca.addEventListener('input', aplicar);
+                        chips.forEach(chip => chip.addEventListener('click', () => {
+                            grupo = chip.dataset.filterChip;
+                            chips.forEach(c => c.setAttribute('aria-pressed', String(c === chip)));
+                            aplicar();
+                        }));
+                    } else if (busca) {
+                        const caixa = busca.closest('.dir-search');
+                        if (caixa) caixa.hidden = true;
+                    }
+
+                    // Mapas (cadastro, perfil, lista) também no conteúdo carregado pelo painel
+                    if (window.ObraLinkMapas && raiz !== document) window.ObraLinkMapas.iniciar(raiz);
+
+                    // Entrada animada ao rolar
+                    raiz.querySelectorAll('[data-reveal]:not(.is-visible)').forEach(el => io ? io.observe(el) : el.classList.add('is-visible'));
+
+                    // Evita envio duplo em formulários com upload ou ações demoradas
+                    raiz.querySelectorAll('form[data-submit-once]').forEach(form => form.addEventListener('submit', event => {
+                        if (event.defaultPrevented) return;
+                        const button = form.querySelector('button[type="submit"]');
+                        if (button) { button.disabled = true; button.textContent = 'Enviando…'; }
+                    }));
+                }
+                window.ObraLink = {iniciar};
+                iniciar(document);
+
+                // Botão voltar ao topo
+                const backToTop = document.getElementById('back-to-top');
+                if (backToTop) {
+                    const update = () => {
+                        const visible = window.scrollY > 480;
+                        backToTop.classList.toggle('is-visible', visible);
+                        backToTop.setAttribute('aria-hidden', String(!visible));
+                        backToTop.tabIndex = visible ? 0 : -1;
+                    };
+                    window.addEventListener('scroll', update, {passive: true});
+                    update();
+                    backToTop.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+                }
+            })();
         </script>
     </th:block>
 

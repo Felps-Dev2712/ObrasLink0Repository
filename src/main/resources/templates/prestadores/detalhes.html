@@ -1,235 +1,212 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-
 <head th:replace="~{fragments/layout :: head(${prestador.nome} + ' - ObraLink')}"></head>
-
 <body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div class="profile-page">
+    <div class="profile-cover" th:classappend="${prestador.bannerChave != null} ? ' has-image'"
+         th:style="${prestador.bannerChave != null ? 'background-image:url(/imagens/' + prestador.bannerChave + ')' : ''}">
+        <!-- Dono do perfil troca a capa direto daqui -->
+        <div class="container profile-cover-actions" th:if="${podeGerenciarPrestador and perfilAtivo == 'PRESTADOR'}">
+            <form th:action="@{/prestadores/minha-conta/banner}" method="post" enctype="multipart/form-data" data-auto-upload>
+                <input type="hidden" name="retorno" th:value="${'/prestadores/' + prestador.id}">
+                <label class="btn btn-on-dark btn-sm">
+                    <input type="file" name="arquivo" accept="image/jpeg,image/png,image/webp" class="sr-only" required>
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 7"/></svg>
+                    <span th:text="${prestador.bannerChave == null ? 'Adicionar capa' : 'Trocar capa'}">Trocar capa</span>
+                </label>
+            </form>
+        </div>
+    </div>
+    <main id="conteudo" class="container profile-content">
+        <div class="layout-profile">
 
-    <nav th:replace="~{fragments/layout :: navbar}"></nav>
+            <!-- Resumo do profissional -->
+            <aside class="card provider-summary" aria-label="Resumo do profissional">
+                <div class="profile-avatar-wrap">
+                    <span class="avatar avatar-lg" aria-hidden="true">
+                        <img th:if="${prestador.fotoPerfilChave != null}" th:src="@{/imagens/{c}(c=${prestador.fotoPerfilChave})}" alt="">
+                        <th:block th:unless="${prestador.fotoPerfilChave != null}" th:text="${#strings.substring(prestador.nome, 0, 1)}">P</th:block>
+                    </span>
+                    <form th:if="${podeGerenciarPrestador and perfilAtivo == 'PRESTADOR'}" th:action="@{/prestadores/minha-conta/foto}" method="post"
+                          enctype="multipart/form-data" data-auto-upload class="avatar-edit">
+                        <input type="hidden" name="retorno" th:value="${'/prestadores/' + prestador.id}">
+                        <label title="Trocar foto de perfil">
+                            <input type="file" name="arquivo" accept="image/jpeg,image/png,image/webp" class="sr-only" required aria-label="Trocar foto de perfil">
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg>
+                        </label>
+                    </form>
+                </div>
+                <h1 th:text="${prestador.nome}">Nome do profissional</h1>
+                <span class="badge badge-brand" th:text="${prestador.categoria != null ? prestador.categoria.icone + ' ' + prestador.categoria.nome : 'Especialidade não informada'}">🧱 Pedreiro</span>
+                <p th:if="${prestador.categorias != null and #lists.size(prestador.categorias) > 1}" class="provider-categories"><span th:each="cat,stat : ${prestador.categorias}" th:text="${(stat.index > 0 ? ' · ' : '') + cat.nome}">Especialidade</span></p>
 
-    <div class="profile-page">
-        <div class="profile-cover" aria-hidden="true"></div>
-        <div class="container profile-content" style="padding-top: 36px; padding-bottom: 60px; min-height: 80vh;">
-        <div class="pure-g">
-            <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 24px;">
-                <!-- Profile Sidebar -->
-                <div class="provider-summary"
-                    style="background: #fff; border-radius: var(--radius-md); padding: 32px 24px; box-shadow: var(--shadow-sm); text-align: center;">
-                    <div class="profile-avatar"
-                        style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary)); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 20px; font-family: 'Outfit', sans-serif; font-weight: 700;">
-                        <span th:text="${#strings.substring(prestador.nome, 0, 1)}">P</span>
+                <div class="rating-summary">
+                    <div>
+                        <strong>Avaliação média</strong>
+                        <small th:text="${totalAvaliacoes == 0 ? 'Ainda sem avaliações' : (totalAvaliacoes == 1 ? '1 avaliação' : totalAvaliacoes + ' avaliações')}">0 avaliações</small>
                     </div>
-
-                    <h2 th:text="${prestador.nome}" style="margin-bottom: 8px; font-size: 1.4rem;">Nome do Profissional
-                    </h2>
-                    <div
-                        style="display: inline-block; background: rgba(230,126,34,.1); color: var(--color-primary-dark); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-bottom: 16px;">
-                        <span th:text="${prestador.categoria != null ? prestador.categoria.icone + ' ' + prestador.categoria.nome : 'Categoria nao informada'}">🧱
-                            Pedreiro</span>
-                    </div>
-                    <p th:if="${prestador.categorias != null and #lists.size(prestador.categorias) > 1}" class="provider-categories"><span th:each="cat,stat : ${prestador.categorias}" th:text="${(stat.index > 0 ? ' · ' : '') + cat.nome}">Especialidade</span></p>
-
-                    <div
-                        style="text-align: left; margin-top: 24px; border-top: 1px solid var(--color-border); padding-top: 20px;">
-                        <div
-                            style="margin-bottom: 16px; padding: 14px; background: var(--color-surface-alt); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                            <div>
-                                <strong style="display: block; font-size: 0.9rem;">Avaliação média</strong>
-                                <span style="color: var(--color-text-light); font-size: 0.8rem;"
-                                    th:text="${totalAvaliacoes == 1 ? '1 avaliação' : totalAvaliacoes + ' avaliações'}">0 avaliações</span>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--color-primary-dark);"
-                                    th:text="${mediaAvaliacoes}">0.0</div>
-                                <div style="color: var(--color-primary); letter-spacing: 1px;">★★★★★</div>
-                            </div>
-                        </div>
-                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
-                            <strong>Experiência:</strong> <span th:text="${prestador.anosExperiencia != null ? prestador.anosExperiencia + ' anos' : 'Nao informado'}">5
-                                anos</span>
-                        </p>
-                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
-                            <strong>Email:</strong> <span th:text="${prestador.email}">email@exemplo.com</span>
-                        </p>
-                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
-                            <strong>WhatsApp:</strong> <span th:text="${prestador.whatsappFormatado ?: 'Não informado'}">(11) 99999-9999</span>
-                        </p>
-                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
-                            <strong>Local:</strong> <span th:text="${prestador.endereco != null ? prestador.endereco.cidade + ' - ' + prestador.endereco.estado : 'Nao informado'}">São Paulo
-                                - SP</span>
-                        </p>
-                    </div>
-
-                    <div style="margin-top: 32px;">
-                        <form th:if="${auth.authenticated and auth.perfilAtivo == 'CLIENTE' and auth.hasCliente and prestador.whatsapp != null and !#strings.isEmpty(prestador.whatsapp)}"
-                              th:action="@{/prestadores/{id}/contato(id=${prestador.id})}" method="post">
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">Contato pelo WhatsApp</button>
-                        </form>
-                        <span th:if="${prestador.whatsapp == null or #strings.isEmpty(prestador.whatsapp)}"
-                            class="btn btn-outline" style="width: 100%; cursor: default;">WhatsApp nao informado</span>
-                        <form th:if="${auth.authenticated and auth.perfilAtivo == 'CLIENTE' and auth.hasCliente}" th:action="@{/favoritos/{id}(id=${prestador.id})}" method="post" style="margin-top:10px">
-                            <input type="hidden" name="adicionar" th:value="${!favorito}">
-                            <button class="btn btn-outline" style="width:100%" th:text="${favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">Favorito</button>
-                        </form>
-                    </div>
+                    <div class="rating-value"><th:block th:text="${totalAvaliacoes == 0 ? '—' : mediaAvaliacoes}">0.0</th:block><span aria-hidden="true">★</span></div>
                 </div>
 
-                <div th:if="${mensagem}" class="alert alert-success"
-                    style="padding: 12px; background: #d4edda; color: #155724; border-radius: var(--radius-sm); margin: 20px 0 0;">
-                    <span th:text="${mensagem}"></span>
-                </div>
-                <div th:if="${mensagemErro}" class="alert alert-danger"
-                    style="padding: 12px; background: #f8d7da; color: #721c24; border-radius: var(--radius-sm); margin: 20px 0 0;">
-                    <span th:text="${mensagemErro}"></span>
-                </div>
-            </div>
+                <dl class="meta-list">
+                    <div><dt>Experiência</dt><dd th:text="${prestador.anosExperiencia != null ? prestador.anosExperiencia + (prestador.anosExperiencia == 1 ? ' ano' : ' anos') : 'Não informada'}">5 anos</dd></div>
+                    <div><dt>Região</dt><dd th:text="${prestador.endereco != null ? prestador.endereco.bairro + ', ' + prestador.endereco.cidade + ' - ' + prestador.endereco.estado : 'Não informada'}">Pinheiros, São Paulo - SP</dd></div>
+                    <div><dt>Atende até</dt><dd th:text="${prestador.raioEfetivoKm + ' km'}">15 km</dd></div>
+                    <div th:if="${distanciaKm != null}"><dt>Distância de você</dt><dd th:text="${#numbers.formatDecimal(distanciaKm, 1, 'POINT', 1, 'COMMA') + ' km'}">3,2 km</dd></div>
+                    <div><dt>WhatsApp</dt><dd th:text="${prestador.whatsappFormatado ?: 'Não informado'}">(11) 99999-9999</dd></div>
+                    <div><dt>E-mail</dt><dd th:text="${prestador.email}">email@exemplo.com</dd></div>
+                </dl>
 
-            <div class="pure-u-1 pure-u-md-2-3">
-                <!-- Main Content -->
-                <div class="provider-panel"
-                    style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
-                    <h3
-                        style="margin-bottom: 16px; border-bottom: 2px solid var(--color-surface-alt); padding-bottom: 12px;">
-                        Sobre</h3>
-                    <p style="line-height: 1.8; color: var(--color-text-light);"
-                        th:text="${prestador.descricao ?: 'O profissional ainda não adicionou uma descrição.'}">
-                        Descrição do perfil do profissional.
-                    </p>
+                <div class="provider-summary-actions">
+                    <form th:if="${auth['authenticated'] and auth['perfilAtivo'] == 'CLIENTE' and auth['hasCliente'] and prestador.whatsapp != null and !#strings.isEmpty(prestador.whatsapp)}"
+                          th:action="@{/prestadores/{id}/contato(id=${prestador.id})}" method="post">
+                        <button type="submit" class="btn btn-whatsapp btn-lg">
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5Z"/></svg>
+                            Contato pelo WhatsApp
+                        </button>
+                    </form>
+                    <a th:if="${not auth['authenticated']}" href="/login" class="btn btn-primary btn-lg">Entre para entrar em contato</a>
+                    <span th:if="${prestador.whatsapp == null or #strings.isEmpty(prestador.whatsapp)}" class="btn btn-outline" aria-disabled="true">WhatsApp não informado</span>
+                    <form th:if="${auth['authenticated'] and auth['perfilAtivo'] == 'CLIENTE' and auth['hasCliente']}" th:action="@{/favoritos/{id}(id=${prestador.id})}" method="post">
+                        <input type="hidden" name="adicionar" th:value="${!favorito}">
+                        <button type="submit" class="btn btn-outline" th:text="${favorito ? '♥ Remover dos favoritos' : '♡ Adicionar aos favoritos'}">Favorito</button>
+                    </form>
+                    <a th:if="${podeGerenciarPrestador}" th:href="@{/prestadores/{id}/editar(id=${prestador.id})}" class="btn btn-ghost">Editar perfil</a>
                 </div>
 
-                <div class="provider-panel"
-                    style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--color-surface-alt); padding-bottom: 12px; margin-bottom: 24px;">
-                        <h3 style="margin: 0;">Serviços Oferecidos</h3>
-                        <a th:if="${podeGerenciarPrestador}" th:href="@{/servicos/novo}" class="btn btn-outline"
-                            style="padding: 6px 12px; font-size: 0.8rem;">+ Adicionar Serviço</a>
+                <div th:if="${mensagem}" class="alert alert-success" role="status"><span th:text="${mensagem}"></span></div>
+                <div th:if="${mensagemErro}" class="alert alert-error" role="alert"><span th:text="${mensagemErro}"></span></div>
+            </aside>
+
+            <!-- Conteúdo principal -->
+            <section>
+                <div class="card provider-panel" data-reveal>
+                    <h2>Sobre</h2>
+                    <p th:text="${prestador.descricao ?: 'O profissional ainda não adicionou uma descrição.'}">Descrição do perfil.</p>
+                </div>
+
+                <div class="card provider-panel" data-reveal>
+                    <div class="provider-panel-head">
+                        <div><h2>Serviços oferecidos</h2><p>Solicite um serviço específico ou fale direto com o profissional.</p></div>
+                        <a th:if="${podeGerenciarPrestador}" th:href="@{/servicos/novo}" class="btn btn-outline btn-sm">+ Adicionar serviço</a>
                     </div>
-
-                    <div th:if="${#lists.isEmpty(servicos)}"
-                        style="padding: 24px; text-align: center; color: var(--color-text-muted); background: var(--color-surface-alt); border-radius: var(--radius-sm);">
-                        Este profissional ainda não adicionou serviços específicos.
-                    </div>
-
-                    <div th:unless="${#lists.isEmpty(servicos)}" class="pure-g">
-                        <div th:each="servico : ${servicos}" class="pure-u-1 pure-u-md-1-2"
-                            style="padding: 12px;">
-                            <div
-                                style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 20px;">
-                                <h4 th:text="${servico.titulo}" style="margin-bottom: 8px;">Título do Serviço</h4>
-                                <p th:text="${servico.descricao}"
-                                    style="font-size: 0.9rem; color: var(--color-text-light); margin-bottom: 16px; min-height: 48px;">
-                                    Descrição do serviço em detalhes.</p>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 700; color: var(--color-primary-dark);"
-                                        th:text="${servico.preco != null ? 'A partir de R$ ' + servico.preco : 'Sob consulta'}">A partir de R$ 100.00</span>
-                                    <span class="service-availability" th:classappend="${servico.disponivel} ? ' is-available' : ' is-unavailable'" th:text="${servico.disponivel} ? 'Disponível' : 'Indisponível'">Disponível</span>
+                    <div th:if="${#lists.isEmpty(servicos)}" class="empty-inline">Este profissional ainda não adicionou serviços específicos.</div>
+                    <div th:unless="${#lists.isEmpty(servicos)}" class="profile-services">
+                        <article th:each="servico, stat : ${servicos}" class="profile-service" data-reveal th:style="${'--i:' + (stat.index % 6)}"
+                                 th:with="fotosDoServico=${fotosServicos[servico.id]}">
+                            <!-- Galeria: foto principal + miniaturas; clique abre a foto ampliada -->
+                            <div class="service-gallery" th:if="${fotosDoServico != null and !#lists.isEmpty(fotosDoServico)}">
+                                <a class="service-gallery-main" th:href="@{/imagens/{c}(c=${fotosDoServico[0].chave})}" data-lightbox
+                                   th:attr="data-lightbox-group=${'servico-' + servico.id},aria-label=${'Ampliar foto de ' + servico.titulo}">
+                                    <img th:src="@{/imagens/{c}(c=${fotosDoServico[0].chave})}" th:alt="${'Foto do serviço ' + servico.titulo}" loading="lazy">
+                                    <span class="service-gallery-count" th:if="${#lists.size(fotosDoServico) > 1}" th:text="${#lists.size(fotosDoServico) + ' fotos'}">3 fotos</span>
+                                </a>
+                                <div class="service-gallery-thumbs" th:if="${#lists.size(fotosDoServico) > 1}">
+                                    <a th:each="foto, fs : ${fotosDoServico}" th:if="${fs.index > 0 and fs.index < 5}" th:href="@{/imagens/{c}(c=${foto.chave})}" data-lightbox
+                                       th:attr="data-lightbox-group=${'servico-' + servico.id},aria-label=${'Ampliar foto ' + (fs.index + 1)}">
+                                        <img th:src="@{/imagens/{c}(c=${foto.chave})}" alt="" loading="lazy">
+                                    </a>
                                 </div>
-                                <p th:if="${servico.categoria != null}" class="service-category" th:text="${servico.categoria.nome}">Categoria</p>
-                                <form th:if="${servico.disponivel and auth.authenticated and auth.perfilAtivo == 'CLIENTE' and auth.hasCliente and servico.prestador.usuarioId != auth.usuarioId}" th:action="@{/prestadores/{pid}/servicos/{sid}/contato(pid=${prestador.id},sid=${servico.id})}" method="post" style="margin-top:14px"><button class="btn btn-primary" type="submit">Solicitar este serviço</button></form>
-                                <p th:if="${!servico.disponivel}" class="service-unavailable-note">Este serviço não está aceitando novas solicitações.</p>
                             </div>
-                        </div>
+                            <h3 th:text="${servico.titulo}">Título do serviço</h3>
+                            <p th:text="${servico.descricao}">Descrição do serviço.</p>
+                            <div class="profile-service-meta">
+                                <span class="profile-service-price" th:text="${servico.preco != null ? 'A partir de R$ ' + #numbers.formatDecimal(servico.preco, 1, 'POINT', 2, 'COMMA') : 'Sob consulta'}">A partir de R$ 100,00</span>
+                                <span class="service-availability" th:classappend="${servico.disponivel} ? ' is-available' : ' is-unavailable'" th:text="${servico.disponivel} ? 'Disponível' : 'Indisponível'">Disponível</span>
+                            </div>
+                            <p th:if="${servico.categoria != null}" class="service-category" th:text="${servico.categoria.nome}">Categoria</p>
+                            <form th:if="${servico.disponivel and auth['authenticated'] and auth['perfilAtivo'] == 'CLIENTE' and auth['hasCliente'] and servico.prestador.usuarioId != auth['usuarioId']}"
+                                  th:action="@{/prestadores/{pid}/servicos/{sid}/contato(pid=${prestador.id},sid=${servico.id})}" method="post">
+                                <button class="btn btn-primary btn-sm" type="submit">Solicitar este serviço</button>
+                            </form>
+                            <p th:if="${!servico.disponivel}" class="service-unavailable-note">Este serviço não está aceitando novas solicitações.</p>
+                        </article>
                     </div>
                 </div>
 
-                <section class="provider-panel" aria-labelledby="availability-title"><h3 id="availability-title">Disponibilidade semanal</h3><ul><li th:each="d : ${disponibilidades}" th:text="${d.dia + ' · ' + #temporals.format(d.inicio,'HH:mm') + '–' + #temporals.format(d.fim,'HH:mm')}">SEGUNDA · 08:00–17:00</li></ul><p th:if="${#lists.isEmpty(disponibilidades)}">Horários ainda não informados.</p></section>
-
-                <section class="provider-panel portfolio-panel" aria-labelledby="portfolio-title">
-                    <h3 id="portfolio-title">Galeria de trabalhos</h3>
-                    <p class="portfolio-empty">Este perfil ainda não possui imagens de trabalhos cadastradas.</p>
+                <!-- Área de atendimento: centro aproximado do prestador + raio; mostra o cliente se ele tiver endereço -->
+                <section class="card provider-panel" data-reveal aria-labelledby="area-title" th:if="${mapaLat != null}">
+                    <div class="provider-panel-head">
+                        <div>
+                            <h2 id="area-title">Área de atendimento</h2>
+                            <p th:text="${'Atende até ' + prestador.raioEfetivoKm + ' km a partir de ' + prestador.endereco.bairro + ', ' + prestador.endereco.cidade + '.'}">Atende até 15 km.</p>
+                        </div>
+                        <span th:if="${distanciaKm != null}" class="badge" th:classappend="${atendeVoce} ? ' badge-success' : ' badge-warn'"
+                              th:text="${atendeVoce ? 'Atende sua região · ' + #numbers.formatDecimal(distanciaKm, 1, 'POINT', 1, 'COMMA') + ' km' : 'Fora do raio · ' + #numbers.formatDecimal(distanciaKm, 1, 'POINT', 1, 'COMMA') + ' km de você'}">Atende sua região</span>
+                    </div>
+                    <div class="geo-map geo-map-perfil" data-mapa-perfil
+                         th:attr="data-lat=${mapaLat},data-lng=${mapaLng},data-raio=${prestador.raioEfetivoKm},data-origem-lat=${origemLat},data-origem-lng=${origemLng}"
+                         role="img" th:aria-label="${'Mapa da área de atendimento de ' + prestador.nome}"></div>
+                    <p class="geo-note">Localização aproximada da região do profissional. O endereço exato não é exibido.</p>
                 </section>
 
-                <div class="reviews-card" id="avaliacoes"
-                    style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm); margin-top: 24px;">
-                    <div class="reviews-header"
-                        style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--color-surface-alt); padding-bottom: 12px; margin-bottom: 24px;">
+                <section class="card provider-panel" data-reveal aria-labelledby="availability-title">
+                    <h2 id="availability-title">Disponibilidade semanal</h2>
+                    <ul class="availability-list" th:unless="${#lists.isEmpty(disponibilidades)}">
+                        <li th:each="d : ${disponibilidades}"><strong th:text="${#strings.capitalize(#strings.toLowerCase(d.dia))}">Segunda</strong><span th:text="${#temporals.format(d.inicio,'HH:mm') + ' – ' + #temporals.format(d.fim,'HH:mm')}">08:00 – 17:00</span></li>
+                    </ul>
+                    <p th:if="${#lists.isEmpty(disponibilidades)}" class="empty-inline">Horários ainda não informados.</p>
+                </section>
+
+                <section class="card provider-panel" data-reveal id="avaliacoes" aria-labelledby="reviews-title">
+                    <div class="provider-panel-head">
                         <div>
-                            <h3 style="margin: 0;">Avaliações de Clientes</h3>
-                            <p style="margin: 6px 0 0; color: var(--color-text-light); font-size: 0.9rem;"
-                               th:text="${totalAvaliacoes == 0 ? 'Ainda sem avaliações registradas.' : (totalAvaliacoes == 1 ? '1 avaliação registrada' : totalAvaliacoes + ' avaliações registradas')}">
-                                Avaliações registradas
-                            </p>
+                            <h2 id="reviews-title">Avaliações de clientes</h2>
+                            <p th:text="${totalAvaliacoes == 0 ? 'Ainda sem avaliações registradas.' : (totalAvaliacoes == 1 ? '1 avaliação registrada' : totalAvaliacoes + ' avaliações registradas')}">Avaliações registradas</p>
                         </div>
-                        <div style="text-align: right;">
-                            <strong style="display: block; color: var(--color-secondary); font-size: 1.4rem;"
-                                th:text="${mediaAvaliacoes}">0.0</strong>
-                            <span style="color: var(--color-primary); font-size: 0.85rem;">média geral</span>
-                        </div>
+                        <span th:if="${totalAvaliacoes > 0}" class="review-score" th:text="${'★ ' + mediaAvaliacoes + ' média geral'}">★ 5.0</span>
                     </div>
 
-                    <div th:each="contratado : ${atendimentosParaAvaliar}" class="rating-form-card"
-                        style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 24px; margin-bottom: 28px; background: var(--color-surface-alt);">
-                        <h4 style="margin-bottom: 16px;">Registrar avaliação</h4>
-                        <form class="pure-form pure-form-stacked"
-                            th:action="@{/prestadores/{id}/atendimentos/{atendimentoId}/avaliacoes(id=${prestador.id},atendimentoId=${contratado.id})}"
-                            th:object="${avaliacaoForm}" method="post" data-rating-form>
-                            <p>Escolha um atendimento concluído e dê uma nota de 1 a 5 para cada critério. A avaliação só será registrada ao enviar.</p><p>Atendimento <strong th:text="${'#' + contratado.id}">#1</strong> concluído. Ele será associado automaticamente à avaliação.</p>
+                    <div th:each="contratado : ${atendimentosParaAvaliar}" class="rating-form-card">
+                        <h3>Avaliar atendimento</h3>
+                        <form th:action="@{/prestadores/{id}/atendimentos/{atendimentoId}/avaliacoes(id=${prestador.id},atendimentoId=${contratado.id})}"
+                              th:object="${avaliacaoForm}" method="post" data-rating-form>
+                            <p><strong th:text="${'Atendimento #' + contratado.id}">Atendimento #1</strong> concluído. Dê uma nota de 1 a 5 para cada critério; a avaliação só é registrada ao enviar.</p>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('qualidade', 'Qualidade')}"></fieldset>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('prazo', 'Prazo')}"></fieldset>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('preco', 'Preço')}"></fieldset>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('organizacao', 'Organização')}"></fieldset>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('atendimento', 'Atendimento')}"></fieldset>
                             <label th:for="${'comentario-' + contratado.id}">Comentário (opcional)</label>
-                            <textarea th:id="${'comentario-' + contratado.id}" th:field="*{comentario}" maxlength="2000" class="pure-u-1" rows="4"
+                            <textarea th:id="${'comentario-' + contratado.id}" th:field="*{comentario}" maxlength="2000" rows="4"
                                       placeholder="Conte como foi a experiência com este profissional."></textarea>
-                            <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Enviar avaliação</button>
+                            <button type="submit" class="btn btn-primary">Enviar avaliação</button>
                         </form>
                     </div>
 
-                    <p th:if="${auth.authenticated and not podeAvaliarPrestador}" class="rating-eligibility">
+                    <p th:if="${auth['authenticated'] and not podeAvaliarPrestador}" class="rating-eligibility">
                         Você pode avaliar este prestador depois que ele concluir um serviço contratado por você. Cada atendimento pode ser avaliado uma vez.
                     </p>
-                    <div th:if="${not auth.authenticated}"
-                        style="padding: 20px; border-radius: var(--radius-sm); background: var(--color-surface-alt); margin-bottom: 24px;">
-                        <span style="color: var(--color-text-light);">Entre como cliente para registrar uma avaliação.</span>
-                        <a href="/login" style="font-weight: 700; margin-left: 8px;">Fazer login</a>
-                    </div>
+                    <p th:if="${not auth['authenticated']}" class="rating-eligibility">Entre como cliente para registrar uma avaliação. <a href="/login">Fazer login</a></p>
 
-                    <div th:if="${#lists.isEmpty(avaliacoes)}"
-                        style="padding: 28px; text-align: center; color: var(--color-text-muted); border: 1px dashed var(--color-border); border-radius: var(--radius-sm);">
-                        Nenhuma avaliação foi registrada para este prestador.
-                    </div>
+                    <div th:if="${#lists.isEmpty(avaliacoes)}" class="empty-inline">Nenhuma avaliação foi registrada para este profissional.</div>
 
-                    <div th:unless="${#lists.isEmpty(avaliacoes)}">
-                        <div th:each="avaliacao : ${avaliacoes}" class="review-card"
-                            style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 20px; margin-bottom: 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px;">
-                                <div>
-                                    <strong th:text="${avaliacao.cliente.nome}">Cliente</strong>
-                                    <p style="margin: 4px 0 0; color: var(--color-text-light); font-size: 0.85rem;"
-                                        th:text="${#temporals.format(avaliacao.criadoEm, 'dd/MM/yyyy HH:mm')}">25/05/2026</p>
-                                </div>
-                                <div style="text-align: right;">
-                                    <span style="display: block; color: var(--color-text-light);">Média dos critérios</span>
-                                    <strong th:text="${#numbers.formatDecimal((avaliacao.qualidade + avaliacao.prazo + avaliacao.preco + avaliacao.organizacao + avaliacao.atendimento) / 5.0, 1, 1)}">5.0</strong>
-                                </div>
+                    <article th:each="avaliacao : ${avaliacoes}" class="review-card" data-reveal>
+                        <div class="review-card-head">
+                            <div>
+                                <span class="avatar avatar-sm" aria-hidden="true" th:text="${#strings.substring(avaliacao.cliente.nome, 0, 1)}">C</span>
+                                <span><strong th:text="${avaliacao.cliente.nome}">Cliente</strong><small th:text="${#temporals.format(avaliacao.criadoEm, 'dd/MM/yyyy')}">25/05/2026</small></span>
                             </div>
-                            <div class="pure-g" style="font-size: 0.85rem; color: var(--color-text-light); margin-bottom: 12px;">
-                                <div class="pure-u-1" style="margin-bottom: 8px;">
-                                    Serviço avaliado: <strong th:text="${avaliacao.atendimentoId != null ? 'Atendimento #' + avaliacao.atendimentoId : (avaliacao.servico != null ? avaliacao.servico.titulo : 'Avaliação anterior ao acompanhamento de serviços')}">Serviço</strong>
-                                </div>
-                                <div class="pure-u-1 pure-u-md-1-5">Qualidade: <strong th:text="${avaliacao.qualidade}">5</strong></div>
-                                <div class="pure-u-1 pure-u-md-1-5">Prazo: <strong th:text="${avaliacao.prazo}">5</strong></div>
-                                <div class="pure-u-1 pure-u-md-1-5">Preço: <strong th:text="${avaliacao.preco}">5</strong></div>
-                                <div class="pure-u-1 pure-u-md-1-5">Organização: <strong th:text="${avaliacao.organizacao}">5</strong></div>
-                                <div class="pure-u-1 pure-u-md-1-5">Atendimento: <strong th:text="${avaliacao.atendimento}">5</strong></div>
-                            </div>
-                            <p th:if="${avaliacao.comentario != null and !#strings.isEmpty(avaliacao.comentario)}"
-                                th:text="${avaliacao.comentario}"
-                                style="margin: 0; color: var(--color-text); line-height: 1.7;">Comentário</p>
+                            <span class="review-score" th:text="${'★ ' + #numbers.formatDecimal((avaliacao.qualidade + avaliacao.prazo + avaliacao.preco + avaliacao.organizacao + avaliacao.atendimento) / 5.0, 1, 1)}">★ 5.0</span>
                         </div>
-                    </div>
-                </div>
-            </div>
+                        <ul class="review-criteria" aria-label="Notas por critério">
+                            <li>Qualidade <strong th:text="${avaliacao.qualidade}">5</strong></li>
+                            <li>Prazo <strong th:text="${avaliacao.prazo}">5</strong></li>
+                            <li>Preço <strong th:text="${avaliacao.preco}">5</strong></li>
+                            <li>Organização <strong th:text="${avaliacao.organizacao}">5</strong></li>
+                            <li>Atendimento <strong th:text="${avaliacao.atendimento}">5</strong></li>
+                        </ul>
+                        <p th:if="${avaliacao.comentario != null and !#strings.isEmpty(avaliacao.comentario)}" th:text="${avaliacao.comentario}">Comentário</p>
+                        <p class="review-ref" th:text="${avaliacao.atendimentoId != null ? 'Atendimento #' + avaliacao.atendimentoId : (avaliacao.servico != null ? avaliacao.servico.titulo : 'Avaliação anterior ao acompanhamento de serviços')}">Atendimento</p>
+                    </article>
+                </section>
+            </section>
         </div>
-        </div>
-    </div>
-
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
-    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
-    <script th:src="@{/js/avaliacoes.js}" defer></script>
-
+    </main>
+</div>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/avaliacoes.js}" defer></script>
 </body>
-
 </html>

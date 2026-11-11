@@ -3,18 +3,23 @@
 <head th:replace="~{fragments/layout :: head('Recuperar senha - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="container auth-page" style="padding-bottom: 60px; min-height: 80vh; max-width: 520px;">
-    <section class="auth-card" style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
-        <p class="eyebrow">Acesso à conta</p>
-        <h1 style="font-size: 1.75rem; margin: 0 0 8px;">Recuperar senha</h1>
-        <p style="color: var(--color-text-light); line-height: 1.55; margin-bottom: 24px;">Informe o e-mail usado no seu cadastro para receber as instruções de recuperação.</p>
-        <div th:if="${mensagem}" class="alert alert-success"><span th:text="${mensagem}"></span></div>
-        <form class="pure-form pure-form-stacked" th:action="@{/recuperar-senha}" method="post">
-            <label for="email">E-mail cadastrado</label>
-            <input id="email" name="email" type="email" class="pure-u-1" required autocomplete="email" placeholder="voce@exemplo.com">
-            <button type="submit" class="btn btn-primary" style="border: none; width: 100%; margin-top: 24px;">Enviar instruções</button>
+<main id="conteudo" class="container container-tight auth-page">
+    <a href="/login" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar para o login</a>
+    <section class="auth-card" aria-labelledby="recover-title">
+        <header class="auth-heading">
+            <p class="eyebrow">Acesso à conta</p>
+            <h1 id="recover-title">Recuperar senha</h1>
+            <p>Informe o e-mail usado no cadastro. Se ele estiver associado a uma conta, você receberá as instruções.</p>
+        </header>
+        <div th:if="${mensagem}" class="alert alert-success" role="status"><span th:text="${mensagem}"></span></div>
+        <form th:action="@{/recuperar-senha}" method="post" class="stack" data-submit-once>
+            <div class="field">
+                <label for="email">E-mail cadastrado</label>
+                <input id="email" name="email" type="email" required autocomplete="email" placeholder="voce@exemplo.com">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Enviar instruções</button>
         </form>
-        <p style="margin: 20px 0 0; text-align: center; color: var(--color-text-light);"><a href="/login" style="font-weight: 600;">Voltar para o login</a></p>
+        <p class="auth-footer-link">Lembrou a senha? <a href="/login">Entrar</a></p>
     </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>

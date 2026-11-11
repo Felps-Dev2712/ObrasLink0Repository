@@ -2,9 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head('Entrar - ObraLink')}"></head>
 <body class="login-body">
-<main class="login-layout">
+<main class="login-layout" id="conteudo">
     <section class="login-welcome" aria-label="Boas-vindas">
-        <a href="/" class="login-wordmark" aria-label="ObraLink, página inicial">ObraLink</a>
+        <a th:replace="~{fragments/layout :: brand('brand-light login-wordmark')}" href="/">ObraLink</a>
         <h1>O marketplace que conecta você aos melhores profissionais.</h1>
         <p class="login-lead">Encontre profissionais para sua reforma, compare avaliações e acompanhe seus atendimentos com mais segurança.</p>
         <section class="login-platform-stats" aria-label="Indicadores reais da plataforma">
@@ -18,7 +18,7 @@
         </section>
         <p class="login-testimonial-empty" th:if="${indicadores == null or indicadores.depoimento == null}">Avaliações reais de clientes ajudam você a escolher com mais confiança.</p>
         <section class="best-rated-providers" aria-label="Profissionais mais bem avaliados">
-            <h2>Profissionais mais bem avaliados</h2>
+            <h2>Mais bem avaliados</h2>
             <div class="best-rated-carousel" data-best-rated-carousel th:if="${indicadores != null and !#lists.isEmpty(indicadores.melhores)}">
                 <div class="best-rated-slides" aria-live="off">
                     <a th:each="p : ${indicadores.melhores}" th:href="@{/prestadores/{id}(id=${p.id})}" class="best-rated-row">
@@ -36,26 +36,36 @@
             <p th:if="${indicadores == null or #lists.isEmpty(indicadores.melhores)}">Ainda não há profissionais com três ou mais avaliações para este destaque.</p>
         </section>
     </section>
-    <section class="auth-card login-card">
-        <a href="/" class="auth-mobile-brand">ObraLink</a>
-        <span class="eyebrow">Acesso à plataforma</span><h2>Bem-vindo de volta</h2>
+
+    <section class="login-card" aria-labelledby="login-title">
+        <a th:replace="~{fragments/layout :: brand('auth-mobile-brand')}" href="/">ObraLink</a>
+        <span class="eyebrow">Acesso à plataforma</span>
+        <h2 id="login-title">Bem-vindo de volta</h2>
         <p class="login-card-intro">Entre com o e-mail e a senha da sua conta.</p>
-        <div th:if="${mensagem}" class="alert alert-success"><span th:text="${mensagem}"></span></div>
-        <div th:if="${param.contaExcluida}" class="alert alert-success">Sua conta foi excluída com sucesso.</div>
-        <div th:if="${param.required}" class="alert alert-error">Para acessar esta área, entre na sua conta ou crie um cadastro.</div>
-        <div th:if="${param.error}" class="alert alert-error">E-mail ou senha inválidos.</div>
-        <div th:if="${param.logout}" class="alert alert-success">Sessão encerrada com sucesso.</div>
-        <form class="login-form" th:action="@{/login}" method="post" autocomplete="on">
-            <label for="username">E-mail</label><input id="username" name="username" type="email" required autocomplete="username" placeholder="voce@exemplo.com">
+
+        <div th:if="${mensagem}" class="alert alert-success" role="status"><span th:text="${mensagem}"></span></div>
+        <div th:if="${param.contaExcluida}" class="alert alert-success" role="status"><span>Sua conta foi excluída com sucesso.</span></div>
+        <div th:if="${param.required}" class="alert alert-warning" role="alert"><span>Para acessar esta área, entre na sua conta ou crie um cadastro.</span></div>
+        <div th:if="${param.error}" class="alert alert-error" role="alert"><span>E-mail ou senha inválidos. Confira os dados e tente de novo.</span></div>
+        <div th:if="${param.logout}" class="alert alert-success" role="status"><span>Sessão encerrada com sucesso.</span></div>
+
+        <form class="login-form" th:action="@{/login}" method="post" autocomplete="on" data-submit-once>
+            <label for="username">E-mail</label>
+            <input id="username" name="username" type="email" required autocomplete="username" placeholder="voce@exemplo.com" autofocus>
             <div class="password-label"><label for="password">Senha</label><a href="/recuperar-senha">Esqueci minha senha</a></div>
-            <div class="password-field"><input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Digite sua senha"><button type="button" data-password-toggle aria-label="Mostrar senha" aria-pressed="false">Mostrar</button></div>
+            <div class="password-field">
+                <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Digite sua senha">
+                <button type="button" data-password-toggle aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+            </div>
             <button type="submit" class="btn btn-primary login-submit">Entrar</button>
         </form>
-        <p class="login-register">Ainda não tem conta? <a th:href="@{/register}">Criar cadastro</a></p>
-        <div class="login-role-links"><span>Cadastre-se como</span><a th:href="@{/register(perfil='cliente')}">Cliente</a><a th:href="@{/register(perfil='prestador')}">Prestador</a></div>
+
+        <p class="login-register">Ainda não tem conta? <a th:href="@{/register}">Criar cadastro grátis</a></p>
+        <div class="login-role-links"><span>Cadastre-se como</span><a th:href="@{/register(perfil='cliente')}">Cliente</a><a th:href="@{/register(perfil='prestador')}">Profissional</a></div>
         <p class="login-legal">Ao entrar pela primeira vez, você poderá ler os <a th:href="@{/termos}">Termos de Uso</a> e o <a th:href="@{/privacidade}">Aviso de Privacidade</a>.</p>
     </section>
 </main>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 <script th:src="@{/js/login.js}" defer></script>
 </body>
 </html>

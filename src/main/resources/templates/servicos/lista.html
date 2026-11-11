@@ -1,86 +1,99 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-
 <head th:replace="~{fragments/layout :: head('Serviços - ObraLink')}"></head>
-
 <body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo" class="workspace-page">
+    <section class="dir-hero">
+        <div class="container">
+            <div class="dir-hero-top">
+                <div>
+                    <p class="eyebrow" th:text="${isAdmin ? 'Administração' : 'Catálogo'}">Catálogo</p>
+                    <h1 th:text="${isAdmin ? 'Gerenciar serviços' : (podeGerenciarServicos ? 'Meus serviços' : 'Serviços')}">Meus serviços</h1>
+                    <p class="dir-hero-lead" th:if="${podeGerenciarServicos}">Cadastre, edite e pause os serviços exibidos na vitrine e no seu perfil.</p>
+                </div>
+                <a th:if="${podeGerenciarServicos}" href="/servicos/novo" class="btn btn-primary">+ Novo serviço</a>
+            </div>
 
-    <nav th:replace="~{fragments/layout :: navbar}"></nav>
+            <div class="dir-search" role="search" th:unless="${#lists.isEmpty(servicos)}">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <label class="sr-only" for="busca-servicos">Buscar serviço</label>
+                <input id="busca-servicos" type="search" placeholder="Buscar por título, categoria ou profissional…" autocomplete="off" data-filter-input>
+                <span class="dir-search-count" data-filter-count aria-live="polite"></span>
+            </div>
 
-    <div class="container workspace-page" style="padding-top: 100px; min-height: 80vh;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <h2>Gerenciar Serviços</h2>
-            <a th:if="${podeGerenciarServicos}" href="/servicos/novo" class="btn btn-primary">Novo Serviço</a>
+            <nav th:if="${podeGerenciarServicos and not isAdmin and auth['perfilAtivo'] == 'PRESTADOR'}" class="chip-row" aria-label="Filtrar por disponibilidade">
+                <a th:href="@{/servicos(disponibilidade='todos')}" class="chip" th:aria-current="${filtroDisponibilidade == 'todos' ? 'page' : null}"><span class="chip-icon" aria-hidden="true">✦</span>Todos</a>
+                <a th:href="@{/servicos(disponibilidade='disponiveis')}" class="chip" th:aria-current="${filtroDisponibilidade == 'disponiveis' ? 'page' : null}"><span class="chip-icon" aria-hidden="true">●</span>Disponíveis</a>
+                <a th:href="@{/servicos(disponibilidade='indisponiveis')}" class="chip" th:aria-current="${filtroDisponibilidade == 'indisponiveis' ? 'page' : null}"><span class="chip-icon" aria-hidden="true">◌</span>Pausados</a>
+            </nav>
+        </div>
+    </section>
+
+    <section class="container dir-body" aria-labelledby="results-title">
+        <div th:if="${mensagem}" class="alert alert-success" role="status"><span th:text="${mensagem}"></span></div>
+        <div th:if="${mensagemErro}" class="alert alert-error" role="alert"><span th:text="${mensagemErro}"></span></div>
+
+        <div class="results-heading">
+            <h2 id="results-title">Serviços cadastrados</h2>
+            <span th:text="${#lists.size(servicos) + (#lists.size(servicos) == 1 ? ' serviço' : ' serviços')}">0 serviços</span>
         </div>
 
-        <div th:if="${mensagem}" class="alert alert-success"
-            style="padding: 12px; background: #d4edda; color: #155724; border-radius: var(--radius-sm); margin-bottom: 20px;">
-            <span th:text="${mensagem}"></span>
-        </div>
-        <div th:if="${mensagemErro}" class="alert alert-danger"
-            style="padding: 12px; background: #f8d7da; color: #721c24; border-radius: var(--radius-sm); margin-bottom: 20px;">
-            <span th:text="${mensagemErro}"></span>
-        </div>
-
-        <form th:if="${podeGerenciarServicos and not isAdmin and auth.perfilAtivo == 'PRESTADOR'}" action="/servicos" method="get" class="service-availability-filter" style="display:flex;gap:12px;align-items:end;margin-bottom:18px;flex-wrap:wrap">
-            <label for="disponibilidade">Disponibilidade</label><select id="disponibilidade" name="disponibilidade" onchange="this.form.submit()"><option value="todos" th:selected="${filtroDisponibilidade == 'todos'}">Todos</option><option value="disponiveis" th:selected="${filtroDisponibilidade == 'disponiveis'}">Disponíveis</option><option value="indisponiveis" th:selected="${filtroDisponibilidade == 'indisponiveis'}">Indisponíveis</option></select><button class="btn btn-outline" type="submit">Aplicar</button>
-        </form>
-
-        <div class="table-responsive workspace-card"
-            style="background: #fff; border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
-            <table class="pure-table pure-table-horizontal" style="width: 100%;">
+        <div class="table-wrap" data-reveal th:unless="${#lists.isEmpty(servicos)}">
+            <table class="table">
                 <thead>
-                    <tr>
-                        <th>Título / Descrição</th>
-                        <th>Categoria</th>
-                        <th>Profissional</th>
-                        <th>Preço (R$)</th>
-                        <th>Disponibilidade</th>
-                        <th>Ações</th>
-                    </tr>
+                <tr>
+                    <th scope="col">Serviço</th>
+                    <th scope="col">Categoria</th>
+                    <th scope="col">Profissional</th>
+                    <th scope="col" class="num">Preço</th>
+                    <th scope="col">Situação</th>
+                    <th scope="col"><span class="sr-only">Ações</span></th>
+                </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="servico : ${servicos}">
-                        <td>
-                            <strong th:text="${servico.titulo}">Construção Muro</strong><br>
-                            <span style="font-size: 0.85em; color: var(--color-text-light);"
-                                th:text="${#strings.abbreviate(servico.descricao, 50)}">Resumo</span>
-                        </td>
-                        <td th:text="${servico.categoria.nome}">Pedreiro</td>
-                        <td>
-                            <a th:href="@{/prestadores/{id}(id=${servico.prestador.id})}"
-                                th:text="${servico.prestador.nome}"
-                                style="color: var(--color-primary-dark); text-decoration: none; font-weight: 500;">
-                                Profissional
-                            </a>
-                        </td>
-                        <td th:text="${servico.preco}">100.00</td>
-                        <td><span th:text="${servico.disponivel} ? 'Disponível' : 'Indisponível'"></span></td>
-                        <td>
-                            <a th:if="${isAdmin or (prestadorAtualId != null and prestadorAtualId == servico.prestador.id)}"
-                                th:href="@{/servicos/{id}/editar(id=${servico.id})}" class="btn btn-secondary"
-                                style="color: var(--color-primary); border-color: var(--color-primary); padding: 6px 12px; font-size: 0.8rem;">Editar</a>
-                            <form th:if="${isAdmin or (prestadorAtualId != null and prestadorAtualId == servico.prestador.id)}"
-                                th:action="@{/servicos/{id}/excluir(id=${servico.id})}" method="post"
-                                style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir?');">
-                                <button type="submit" class="btn"
-                                    style="background: transparent; color: #e74c3c; border: 1px solid #e74c3c; padding: 6px 12px; font-size: 0.8rem;">Excluir</button>
+                <tr th:each="servico : ${servicos}" data-filter-item
+                    th:attr="data-filter-text=${servico.titulo + ' ' + servico.categoria.nome + ' ' + servico.prestador.nome}">
+                    <td>
+                        <div class="cell-person">
+                            <span class="svc-icon svc-icon-sm" aria-hidden="true"><img th:if="${capasServicos != null and capasServicos[servico.id] != null}" th:src="@{/imagens/{c}(c=${capasServicos[servico.id]})}" alt="" loading="lazy"><th:block th:unless="${capasServicos != null and capasServicos[servico.id] != null}" th:text="${servico.categoria.icone ?: '+'}">🧱</th:block></span>
+                            <span><strong th:text="${servico.titulo}">Construção de muro</strong><span class="cell-sub" th:text="${#strings.abbreviate(servico.descricao, 70)}">Resumo</span></span>
+                        </div>
+                    </td>
+                    <td th:text="${servico.categoria.nome}">Pedreiro</td>
+                    <td><a th:href="@{/prestadores/{id}(id=${servico.prestador.id})}" th:text="${servico.prestador.nome}">Profissional</a></td>
+                    <td class="num" th:text="${servico.preco != null ? 'R$ ' + #numbers.formatDecimal(servico.preco, 1, 'POINT', 2, 'COMMA') : 'Sob consulta'}">R$ 100,00</td>
+                    <td><span class="service-availability" th:classappend="${servico.disponivel} ? ' is-available' : ' is-unavailable'" th:text="${servico.disponivel} ? 'Disponível' : 'Pausado'">Disponível</span></td>
+                    <td>
+                        <div class="cell-actions" th:if="${isAdmin or (prestadorAtualId != null and prestadorAtualId == servico.prestador.id)}">
+                            <a th:href="@{/servicos/{id}/editar(id=${servico.id})}" class="btn btn-outline btn-sm">Editar</a>
+                            <form th:action="@{/servicos/{id}/excluir(id=${servico.id})}" method="post"
+                                  onsubmit="return confirm('Tornar este serviço indisponível? Ele deixará de aparecer na vitrine.');">
+                                <button type="submit" class="btn btn-danger-outline btn-sm">Excluir</button>
                             </form>
-                            <span th:if="${not (isAdmin or (prestadorAtualId != null and prestadorAtualId == servico.prestador.id))}"
-                                  style="color: var(--color-text-muted); font-size: 0.85rem;">Somente leitura</span>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(servicos)}">
-                        <td colspan="6" style="text-align: center; padding: 40px;" th:text="${filtroDisponibilidade == 'todos' ? 'Nenhum serviço cadastrado.' : 'Nenhum serviço corresponde ao filtro selecionado.'}">Nenhum serviço.</td>
-                    </tr>
+                        </div>
+                        <span th:unless="${isAdmin or (prestadorAtualId != null and prestadorAtualId == servico.prestador.id)}" class="text-subtle">Somente leitura</span>
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
-    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+        <div class="empty-state" data-filter-empty hidden>
+            <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <h3>Nenhum serviço encontrado</h3>
+            <p>Confira a grafia ou limpe a busca.</p>
+        </div>
 
+        <div th:if="${#lists.isEmpty(servicos)}" class="empty-state">
+            <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+            <h3 th:text="${filtroDisponibilidade == 'todos' ? 'Nenhum serviço cadastrado ainda' : 'Nenhum serviço neste filtro'}">Nenhum serviço</h3>
+            <p>Serviços com título, descrição e preço claros recebem mais contatos.</p>
+            <a th:if="${podeGerenciarServicos}" href="/servicos/novo" class="btn btn-primary">Cadastrar serviço</a>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
-
 </html>

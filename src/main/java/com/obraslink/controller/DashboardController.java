@@ -18,11 +18,13 @@ public class DashboardController {
     public String dashboard(@RequestParam(required=false) String inicio, @RequestParam(required=false) String fim, Model model, RedirectAttributes redirect) {
         boolean hasCliente=service.usuarioTemPerfilCliente();
         boolean hasPrestador=service.usuarioTemPerfilPrestador();
-        boolean cliente=hasCliente&&(!hasPrestador||perfilAtivo==null||perfilAtivo.atual()==com.obraslink.model.PapelUsuario.CLIENTE);
-        if (cliente) {
-            model.addAttribute("dashboardCliente", service.carregarCliente());
+        // O painel existe só para o prestador. Cliente (ou conta dupla usando o perfil de cliente) volta para o início.
+        boolean prestador=hasPrestador&&(!hasCliente||perfilAtivo==null||perfilAtivo.atual()==com.obraslink.model.PapelUsuario.PRESTADOR);
+        if (!prestador) {
+            if (hasPrestador) redirect.addFlashAttribute("mensagemErro","Troque para o perfil de prestador para ver o painel.");
+            return "redirect:/";
         }
-        if (!cliente && hasPrestador) {
+        {
             boolean submitted=inicio!=null||fim!=null;
             if(submitted&&(inicio==null||inicio.isBlank()||fim==null||fim.isBlank())){redirect.addFlashAttribute("mensagemErro","Informe as duas datas para aplicar o filtro.");return "redirect:/dashboard?inicio="+service.dataInicioPadrao()+"&fim="+service.dataFimPadrao();}
             LocalDate de,ate;

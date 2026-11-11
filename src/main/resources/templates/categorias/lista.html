@@ -1,35 +1,57 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head('Categorias profissionais - ObraLink')}"></head>
-<body>
+<body class="directory-page">
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="category-directory">
-    <header class="category-directory-heading">
-        <p class="eyebrow">Explore por especialidade</p>
-        <h1>Categorias profissionais</h1>
-        <p>Escolha uma categoria para encontrar profissionais que atendem à sua obra.</p>
-    </header>
-
-    <section class="category-directory-grid" aria-label="Categorias disponíveis">
-        <a class="category-directory-card"
-           th:each="categoria : ${categorias}"
-           th:href="@{/prestadores(categoriaId=${categoria.id})}"
-           th:attr="aria-label=${'Ver profissionais da categoria ' + categoria.nome}">
-            <span class="category-directory-icon" aria-hidden="true" th:text="${categoria.icone ?: '+'}">+</span>
-            <span class="category-directory-content">
-                <strong th:text="${categoria.nome}">Categoria</strong>
-                <small th:if="${categoria.descricao != null and !#strings.isEmpty(categoria.descricao)}" th:text="${categoria.descricao}">Descrição da categoria</small>
-                <small th:unless="${categoria.descricao != null and !#strings.isEmpty(categoria.descricao)}">Veja profissionais desta especialidade</small>
-            </span>
-            <span class="category-directory-arrow" aria-hidden="true">→</span>
-        </a>
+<main id="conteudo">
+    <section class="dir-hero">
+        <div class="container">
+            <div class="dir-hero-top">
+                <div>
+                    <p class="eyebrow">Explore por especialidade</p>
+                    <h1>Categorias profissionais</h1>
+                    <p class="dir-hero-lead">Escolha uma especialidade para ver os profissionais que atendem à sua obra.</p>
+                </div>
+            </div>
+            <div class="dir-search" role="search">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <label class="sr-only" for="busca-categoria">Buscar categoria</label>
+                <input id="busca-categoria" type="search" placeholder="Buscar especialidade…" autocomplete="off" data-filter-input>
+                <span class="dir-search-count" data-filter-count aria-live="polite"></span>
+            </div>
+        </div>
     </section>
 
-    <div th:if="${#lists.isEmpty(categorias)}" class="category-directory-empty">
-        <span aria-hidden="true">⌕</span>
-        <h2>Nenhuma categoria disponível</h2>
-        <p>As categorias profissionais aparecerão aqui quando forem cadastradas.</p>
-    </div>
+    <section class="container dir-body" aria-labelledby="results-title">
+        <div class="results-heading">
+            <h2 id="results-title">Todas as especialidades</h2>
+            <span th:text="${#lists.size(categorias) + (#lists.size(categorias) == 1 ? ' categoria' : ' categorias')}">0 categorias</span>
+        </div>
+
+        <div class="category-grid">
+            <a th:each="categoria, stat : ${categorias}" th:href="@{/prestadores(categoriaId=${categoria.id})}" class="category-card"
+               data-filter-item th:attr="data-filter-text=${categoria.nome + ' ' + (categoria.descricao ?: '')},aria-label=${'Ver profissionais da categoria ' + categoria.nome}"
+               th:style="${'--i:' + stat.index}">
+                <span class="category-icon" aria-hidden="true" th:text="${categoria.icone ?: '+'}">+</span>
+                <span class="category-text">
+                    <strong th:text="${categoria.nome}">Categoria</strong>
+                    <small th:text="${categoria.descricao != null and !#strings.isEmpty(categoria.descricao) ? categoria.descricao : 'Veja profissionais desta especialidade'}">Descrição</small>
+                </span>
+                <span class="category-go" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </a>
+        </div>
+
+        <div class="empty-state" data-filter-empty hidden>
+            <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <h3>Nenhuma especialidade encontrada</h3>
+            <p>Confira a grafia ou limpe a busca.</p>
+        </div>
+        <div th:if="${#lists.isEmpty(categorias)}" class="empty-state">
+            <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <h2>Nenhuma categoria disponível</h2>
+            <p>As categorias profissionais aparecerão aqui quando forem cadastradas.</p>
+        </div>
+    </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>

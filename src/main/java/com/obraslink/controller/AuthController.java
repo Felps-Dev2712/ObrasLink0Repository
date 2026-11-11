@@ -22,6 +22,8 @@ public class AuthController {
     private final CategoriaService categoriaService;
     @org.springframework.beans.factory.annotation.Autowired(required=false)
     private com.obraslink.service.IndicadoresPlataformaService indicadores;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private com.obraslink.service.LocalizacaoService localizacao;
 
     @GetMapping("/login")
     public String login(Model model) {
@@ -48,6 +50,7 @@ public class AuthController {
         if (!model.containsAttribute("form")) {
             RegistroUsuarioForm form = new RegistroUsuarioForm();
             form.getCertificacoes().add(new CadastroCertificacaoForm());
+            form.setPrestadorRaioKm(com.obraslink.service.LocalizacaoService.RAIO_PADRAO_KM);
             if ("cliente".equalsIgnoreCase(perfil)) {
                 form.setCadastroCliente(true);
             } else if ("prestador".equalsIgnoreCase(perfil)) {
@@ -67,6 +70,13 @@ public class AuthController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
         try {
+            // Sem coordenadas do mapa (ex.: JavaScript desligado): busca pelo endereço antes de gravar, fora da transação.
+            if (localizacao != null) {
+                var endereco = AuthService.enderecoDoFormulario(form);
+                localizacao.completarCoordenadas(endereco);
+                form.setClienteLatitude(endereco.getLatitude());
+                form.setClienteLongitude(endereco.getLongitude());
+            }
             authService.registrar(form);
             boolean enviouCertificacao = Boolean.TRUE.equals(form.getCadastroPrestador())
                     && form.getCertificacoes() != null

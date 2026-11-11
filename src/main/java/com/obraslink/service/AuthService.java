@@ -31,9 +31,21 @@ public class AuthService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private CertificacaoService certificacaoService;
 
+    /** Endereço da conta a partir do formulário de cadastro (cliente e prestador usam o mesmo). */
+    public static com.obraslink.model.Endereco enderecoDoFormulario(RegistroUsuarioForm f) {
+        return com.obraslink.model.Endereco.builder()
+                .cep(f.getClienteCep()).logradouro(f.getClienteLogradouro()).numero(f.getClienteNumero())
+                .complemento(f.getClienteComplemento()).bairro(f.getClienteBairro()).cidade(f.getClienteCidade())
+                .estado(f.getClienteEstado()).latitude(f.getClienteLatitude()).longitude(f.getClienteLongitude()).build();
+    }
+
     @Transactional
     public void registrar(RegistroUsuarioForm form) {
         validarFormulario(form);
+        // Endereço obrigatório para qualquer perfil: é ele que permite buscar prestadores por proximidade.
+        com.obraslink.model.Endereco endereco = enderecoDoFormulario(form);
+        LocalizacaoService.validarEndereco(endereco);
+        int raio = LocalizacaoService.validarRaio(form.getPrestadorRaioKm());
 
         Set<PapelUsuario> papeis = new HashSet<>();
         if (Boolean.TRUE.equals(form.getCadastroCliente())) {
@@ -59,7 +71,7 @@ public class AuthService {
                     .cpfCnpj(form.getClienteCpfCnpj().trim())
                     .telefone(form.getClienteTelefone())
                     .usuarioId(usuario.getId())
-                    .endereco(enderecoCliente(form))
+                    .endereco(endereco)
                     .build();
             clienteRepository.save(cliente);
         }
@@ -82,6 +94,9 @@ public class AuthService {
                     .categorias(categorias)
                     .usuarioId(usuario.getId())
                     .ativo(true)
+                    // Conta com os dois perfis: cada perfil tem sua cópia do endereço (podem ser editados separadamente)
+                    .endereco(papeis.contains(PapelUsuario.CLIENTE) ? endereco.copia() : endereco)
+                    .raioAtendimentoKm(raio)
                     .build();
             prestador = prestadorRepository.save(prestador);
             if (certificacaoService != null && form.getCertificacoes() != null) {
@@ -98,6 +113,9 @@ public class AuthService {
         }
         if (form.getSenha() == null || form.getSenha().isBlank()) {
             throw new IllegalArgumentException("Informe uma senha.");
+        }
+        if (form.getSenha().length() < 8) {
+            throw new IllegalArgumentException("A senha deve ter pelo menos 8 caracteres.");
         }
         if (!form.getSenha().equals(form.getConfirmarSenha())) {
             throw new IllegalArgumentException("As senhas nao conferem.");
@@ -156,8 +174,4 @@ public class AuthService {
         return value == null || value.isBlank();
     }
 
-    private com.obraslink.model.Endereco enderecoCliente(RegistroUsuarioForm f){
-        if(isBlank(f.getClienteCep())||isBlank(f.getClienteLogradouro())||isBlank(f.getClienteNumero())||isBlank(f.getClienteBairro())||isBlank(f.getClienteCidade())||isBlank(f.getClienteEstado()))throw new IllegalArgumentException("Preencha o endereço completo ou deixe todos os campos em branco.");
-        return com.obraslink.model.Endereco.builder().cep(f.getClienteCep().trim()).logradouro(f.getClienteLogradouro().trim()).numero(f.getClienteNumero().trim()).complemento(f.getClienteComplemento()).bairro(f.getClienteBairro().trim()).cidade(f.getClienteCidade().trim()).estado(f.getClienteEstado().trim()).build();
-    }
 }

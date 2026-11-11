@@ -1,68 +1,55 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-
 <head th:replace="~{fragments/layout :: head('Clientes - ObraLink')}"></head>
-
 <body>
-
-    <nav th:replace="~{fragments/layout :: navbar}"></nav>
-
-    <div class="container" style="padding-top: 100px; min-height: 80vh;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <h2>Clientes Cadastrados</h2>
-            <a th:if="${isAdmin}" href="/clientes/novo" class="btn btn-primary">Novo Cliente</a>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo" class="container page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Administração</p>
+            <h1>Clientes cadastrados</h1>
         </div>
+        <div class="page-header-actions" th:if="${isAdmin}">
+            <a href="/clientes/novo" class="btn btn-primary">+ Novo cliente</a>
+        </div>
+    </header>
 
-        <div th:if="${mensagem}" class="alert alert-success"
-            style="padding: 12px; background: #d4edda; color: #155724; border-radius: var(--radius-sm); margin-bottom: 20px;">
-            <span th:text="${mensagem}"></span>
-        </div>
-        <div th:if="${mensagemErro}" class="alert alert-danger"
-            style="padding: 12px; background: #f8d7da; color: #721c24; border-radius: var(--radius-sm); margin-bottom: 20px;">
-            <span th:text="${mensagemErro}"></span>
-        </div>
+    <div th:if="${mensagem}" class="alert alert-success" role="status"><span th:text="${mensagem}"></span></div>
+    <div th:if="${mensagemErro}" class="alert alert-error" role="alert"><span th:text="${mensagemErro}"></span></div>
 
-        <div class="table-responsive"
-            style="background: #fff; border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
-            <table class="pure-table pure-table-horizontal" style="width: 100%;">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Telefone</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="cliente : ${clientes}">
-                        <td th:text="${cliente.nome}">Maria Santos</td>
-                        <td th:text="${cliente.email}">maria@email.com</td>
-                        <td th:text="${cliente.telefoneFormatado}">(11) 99999-9999</td>
-                        <td>
-                            <a th:if="${isAdmin or (auth.authenticated and auth.usuarioId == cliente.usuarioId)}"
-                                th:href="@{/clientes/{id}/editar(id=${cliente.id})}" class="btn btn-secondary"
-                                style="color: var(--color-primary); border-color: var(--color-primary); padding: 6px 12px; font-size: 0.8rem;">Editar</a>
-                            <form th:if="${isAdmin or (auth.authenticated and auth.usuarioId == cliente.usuarioId)}"
-                                th:action="@{/clientes/{id}/excluir(id=${cliente.id})}" method="post"
-                                style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir?');">
-                                <button type="submit" class="btn"
-                                    style="background: transparent; color: #e74c3c; border: 1px solid #e74c3c; padding: 6px 12px; font-size: 0.8rem;">Excluir</button>
-                            </form>
-                            <span th:if="${not (isAdmin or (auth.authenticated and auth.usuarioId == cliente.usuarioId))}"
-                                  style="color: var(--color-text-muted); font-size: 0.85rem;">Somente leitura</span>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(clientes)}">
-                        <td colspan="4" style="text-align: center; padding: 40px;">Nenhum cliente cadastrado.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Nome</th>
+                <th scope="col">E-mail</th>
+                <th scope="col">Telefone</th>
+                <th scope="col"><span class="sr-only">Ações</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="cliente : ${clientes}">
+                <td><strong th:text="${cliente.nome}">Maria Santos</strong></td>
+                <td th:text="${cliente.email}">maria@email.com</td>
+                <td th:text="${cliente.telefoneFormatado}">(11) 99999-9999</td>
+                <td>
+                    <div class="cell-actions" th:if="${isAdmin or (auth['authenticated'] and auth['usuarioId'] == cliente.usuarioId)}">
+                        <a th:href="@{/clientes/{id}/editar(id=${cliente.id})}" class="btn btn-outline btn-sm">Editar</a>
+                        <form th:action="@{/clientes/{id}/excluir(id=${cliente.id})}" method="post" onsubmit="return confirm('Tem certeza que deseja excluir este cliente?');">
+                            <button type="submit" class="btn btn-danger-outline btn-sm">Excluir</button>
+                        </form>
+                    </div>
+                    <span th:unless="${isAdmin or (auth['authenticated'] and auth['usuarioId'] == cliente.usuarioId)}" class="text-subtle">Somente leitura</span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(clientes)}">
+                <td colspan="4" class="table-empty">Nenhum cliente cadastrado.</td>
+            </tr>
+            </tbody>
+        </table>
     </div>
-
-    <footer th:replace="~{fragments/layout :: footer}"></footer>
-    <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
-
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
-
 </html>
