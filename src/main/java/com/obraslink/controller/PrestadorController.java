@@ -27,22 +27,25 @@ public class PrestadorController {
     private final CategoriaService categoriaService;
     private final AcessoService acessoService;
     private final AvaliacaoPrestadorService avaliacaoPrestadorService;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private com.obraslink.service.ServicoService servicoService;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private com.obraslink.service.RelacionamentosService relacionamentosService;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private com.obraslink.service.PerfilAtivoService perfilAtivoService;
+
+    private boolean podeGerenciarPrestador(Long id){return acessoService.isAdmin()||(perfilAtivoService==null||perfilAtivoService.atual()==PapelUsuario.PRESTADOR)&&acessoService.podeGerenciarPrestador(id);}
 
     @GetMapping
-    public String list(Model model) {
+    public String list(@RequestParam(required = false) Long categoriaId, Model model) {
         Optional<Usuario> usuarioOpt = acessoService.getUsuarioAtual();
         boolean admin = usuarioOpt.map(acessoService::isAdmin).orElse(false);
-        boolean somenteCliente = usuarioOpt
-                .map(usuario -> usuario.getPapeis().contains(PapelUsuario.CLIENTE)
-                        && !usuario.getPapeis().contains(PapelUsuario.PRESTADOR)
-                        && !acessoService.isAdmin(usuario))
-                .orElse(false);
-        if (somenteCliente) {
-            return "redirect:/";
-        }
         Long usuarioAtualId = usuarioOpt.map(Usuario::getId).orElse(null);
 
-        model.addAttribute("prestadores", prestadorService.findAllActive());
+        model.addAttribute("prestadores", categoriaId == null
+                ? prestadorService.findAllActive() : prestadorService.findByCategoria(categoriaId));
+        model.addAttribute("categorias", categoriaService.findAll());
+        model.addAttribute("categoriaAtiva", categoriaId);
         model.addAttribute("isAdmin", admin);
         model.addAttribute("usuarioAtualId", usuarioAtualId);
         return "prestadores/lista";
@@ -75,39 +78,38 @@ public class PrestadorController {
 
     @GetMapping("/{id}")
     public String view(@PathVariable Long id, Model model) {
-        return prestadorService.findById(id).map(prestador -> {
+        return prestadorService.findPerfilPublico(id).map(prestador -> {
             List<AvaliacaoPrestador> avaliacoes = avaliacaoPrestadorService.findByPrestador(prestador.getId());
             var atendimentosParaAvaliar = avaliacaoPrestadorService.atendimentosDisponiveis(prestador.getId());
 
             model.addAttribute("prestador", prestador);
-            model.addAttribute("podeGerenciarPrestador", acessoService.podeGerenciarPrestador(prestador.getId()));
+            model.addAttribute("podeGerenciarPrestador", podeGerenciarPrestador(prestador.getId()));
             model.addAttribute("podeAvaliarPrestador", !atendimentosParaAvaliar.isEmpty());
             model.addAttribute("atendimentosParaAvaliar", atendimentosParaAvaliar);
             if (!model.containsAttribute("avaliacaoForm")) model.addAttribute("avaliacaoForm", new AvaliacaoPrestadorForm());
             model.addAttribute("avaliacoes", avaliacoes);
             model.addAttribute("mediaAvaliacoes", avaliacaoPrestadorService.calcularMediaGeral(avaliacoes));
             model.addAttribute("totalAvaliacoes", avaliacoes.size());
+            model.addAttribute("servicos",servicoService==null?List.of():servicoService.findByPrestador(prestador.getId()));
+            model.addAttribute("disponibilidades",relacionamentosService==null?List.of():relacionamentosService.disponibilidade(prestador.getId()));
+            Long clienteId=acessoService.getUsuarioAtual().flatMap(u->u.getPapeis().contains(PapelUsuario.CLIENTE)?java.util.Optional.ofNullable(u.getId()):java.util.Optional.<Long>empty()).orElse(null);
+            model.addAttribute("favorito",clienteId!=null&&relacionamentosService!=null&&relacionamentosService.ehFavorito(clienteId,prestador.getId()));
+            model.addAttribute("perfilAtivo",perfilAtivoService==null||perfilAtivoService.atual()==null?"ADMIN":perfilAtivoService.atual().name());
             return "prestadores/detalhes";
         }).orElse("redirect:/prestadores");
     }
 
-    @PostMapping("/{id}/avaliacoes")
-    public String avaliar(@PathVariable Long id,
-                          @ModelAttribute AvaliacaoPrestadorForm avaliacaoForm,
-                          RedirectAttributes redirectAttributes) {
-        try {
-            avaliacaoPrestadorService.avaliar(id, avaliacaoForm);
-            redirectAttributes.addFlashAttribute("mensagem", "Avaliacao registrada com sucesso!");
-        } catch (IllegalArgumentException ex) {
-            redirectAttributes.addFlashAttribute("mensagemErro", ex.getMessage());
-            redirectAttributes.addFlashAttribute("avaliacaoForm", avaliacaoForm);
-        }
-        return "redirect:/prestadores/" + id;
+    @PostMapping("/{id}/atendimentos/{atendimentoId}/avaliacoes")
+    public String avaliarAtendimento(@PathVariable Long id,@PathVariable Long atendimentoId,
+            @ModelAttribute AvaliacaoPrestadorForm form,RedirectAttributes redirectAttributes){
+        try{avaliacaoPrestadorService.avaliar(id,atendimentoId,form);redirectAttributes.addFlashAttribute("mensagem","Avaliação registrada com sucesso!");}
+        catch(IllegalArgumentException ex){redirectAttributes.addFlashAttribute("mensagemErro",ex.getMessage());redirectAttributes.addFlashAttribute("avaliacaoForm",form);}
+        return "redirect:/prestadores/"+id+"#avaliacoes";
     }
 
     @GetMapping("/{id}/editar")
     public String editForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        if (!acessoService.podeGerenciarPrestador(id)) {
+        if (!podeGerenciarPrestador(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para editar este prestador.");
             return "redirect:/prestadores";
         }
@@ -123,6 +125,7 @@ public class PrestadorController {
     @PostMapping("/minha-conta")
     public String updateOwnProfile(@ModelAttribute Prestador dados,
                                    RedirectAttributes redirectAttributes) {
+        if(perfilAtivoService!=null&&perfilAtivoService.atual()!=PapelUsuario.PRESTADOR){redirectAttributes.addFlashAttribute("mensagemErro","Ative o perfil de prestador para editar esses dados.");return "redirect:/clientes";}
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
         Prestador prestador = prestadorService.findByUsuarioId(usuario.getId()).orElse(null);
         if (prestador == null) {
@@ -146,7 +149,7 @@ public class PrestadorController {
     public String update(@PathVariable Long id,
                          @ModelAttribute Prestador prestador,
                          RedirectAttributes redirectAttributes) {
-        if (!acessoService.podeGerenciarPrestador(id)) {
+        if (!podeGerenciarPrestador(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para editar este prestador.");
             return "redirect:/prestadores";
         }
@@ -159,6 +162,9 @@ public class PrestadorController {
 
         prestador.setId(id);
         prestador.setUsuarioId(existente.getUsuarioId());
+        prestador.setCategorias(existente.getCategorias() == null
+                ? new java.util.ArrayList<>()
+                : new java.util.ArrayList<>(existente.getCategorias()));
         if (!acessoService.isAdmin()) {
             prestador.setEmail(existente.getEmail());
         }
@@ -170,7 +176,7 @@ public class PrestadorController {
 
     @PostMapping("/{id}/excluir")
     public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        if (!acessoService.podeGerenciarPrestador(id)) {
+        if (!podeGerenciarPrestador(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para excluir este prestador.");
             return "redirect:/prestadores";
         }

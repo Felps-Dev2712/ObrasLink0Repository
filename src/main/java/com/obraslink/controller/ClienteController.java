@@ -28,6 +28,8 @@ public class ClienteController {
     private final CategoriaService categoriaService;
     private final AcessoService acessoService;
     private final ContaService contaService;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.PerfilAtivoService perfilAtivo;
+    private boolean podeGerenciarCliente(Long id){return acessoService.isAdmin()||(perfilAtivo==null||perfilAtivo.atual()==com.obraslink.model.PapelUsuario.CLIENTE)&&acessoService.podeGerenciarCliente(id);}
 
     @PostMapping("/minha-conta/excluir")
     public String deleteOwnAccount(HttpServletRequest request,
@@ -58,6 +60,7 @@ public class ClienteController {
     @PostMapping("/minha-conta")
     public String updateOwnProfile(@ModelAttribute Cliente dados,
                                    RedirectAttributes redirectAttributes) {
+        if(perfilAtivo!=null&&perfilAtivo.atual()!=com.obraslink.model.PapelUsuario.CLIENTE){redirectAttributes.addFlashAttribute("mensagemErro","Ative o perfil de cliente para editar esses dados.");return "redirect:/clientes";}
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
         Cliente cliente = clienteService.findByUsuarioId(usuario.getId()).orElse(null);
         if (cliente == null) {
@@ -99,7 +102,7 @@ public class ClienteController {
 
     @GetMapping("/{id}/editar")
     public String editForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        if (!acessoService.podeGerenciarCliente(id)) {
+        if (!podeGerenciarCliente(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para editar este cliente.");
             return "redirect:/clientes";
         }
@@ -115,7 +118,7 @@ public class ClienteController {
     public String update(@PathVariable Long id,
                          @ModelAttribute Cliente cliente,
                          RedirectAttributes redirectAttributes) {
-        if (!acessoService.podeGerenciarCliente(id)) {
+        if (!podeGerenciarCliente(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para editar este cliente.");
             return "redirect:/clientes";
         }
@@ -139,7 +142,7 @@ public class ClienteController {
 
     @PostMapping("/{id}/excluir")
     public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        if (!acessoService.podeGerenciarCliente(id)) {
+        if (!podeGerenciarCliente(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para excluir este cliente.");
             return "redirect:/clientes";
         }

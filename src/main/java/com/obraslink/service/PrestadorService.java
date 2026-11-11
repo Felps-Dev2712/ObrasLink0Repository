@@ -34,6 +34,7 @@ public class PrestadorService {
     public Optional<Prestador> findById(Long id) {
         return prestadorRepository.findById(id);
     }
+    public Optional<Prestador> findPerfilPublico(Long id){return prestadorRepository.findPerfilPublico(id);}
 
     public Optional<Prestador> findByUsuarioId(Long usuarioId) {
         return prestadorRepository.findByUsuarioId(usuarioId);
@@ -51,6 +52,9 @@ public class PrestadorService {
         }
         prestador.setCpfCnpj(documento);
         prestador.setWhatsapp(whatsapp);
+        if(prestador.getCategorias()==null)prestador.setCategorias(new java.util.ArrayList<>());
+        if(prestador.getCategorias().isEmpty()&&prestador.getCategoria()!=null)prestador.setCategorias(new java.util.ArrayList<>(List.of(prestador.getCategoria())));
+        else if(prestador.getCategoria()!=null&&prestador.getCategorias().stream().noneMatch(c->java.util.Objects.equals(c.getId(),prestador.getCategoria().getId())))prestador.getCategorias().add(prestador.getCategoria());
         if (prestador.getTelefones() != null) {
             prestador.getTelefones().forEach(t -> {
                 t.setNumero(DadosCadastrais.telefone(t.getNumero(), true));

@@ -59,6 +59,13 @@ public class Prestador {
     @EqualsAndHashCode.Exclude
     private Categoria categoria;
 
+    @ManyToMany
+    @JoinTable(name="prestador_categorias", joinColumns=@JoinColumn(name="prestador_id"), inverseJoinColumns=@JoinColumn(name="categoria_id"), uniqueConstraints=@UniqueConstraint(columnNames={"prestador_id","categoria_id"}))
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Categoria> categorias = new ArrayList<>();
+
     @OneToMany(mappedBy = "prestador", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @ToString.Exclude

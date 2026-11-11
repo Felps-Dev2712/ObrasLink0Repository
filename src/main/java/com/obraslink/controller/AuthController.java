@@ -1,6 +1,7 @@
 package com.obraslink.controller;
 
 import com.obraslink.dto.RegistroUsuarioForm;
+import com.obraslink.dto.CadastroCertificacaoForm;
 import com.obraslink.service.CategoriaService;
 import com.obraslink.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,12 @@ public class AuthController {
 
     private final AuthService authService;
     private final CategoriaService categoriaService;
-    private final com.obraslink.service.DestaquesService destaquesService;
+    @org.springframework.beans.factory.annotation.Autowired(required=false)
+    private com.obraslink.service.IndicadoresPlataformaService indicadores;
 
     @GetMapping("/login")
     public String login(Model model) {
-        model.addAttribute("destaques", destaquesService.listar());
+        if(indicadores!=null)model.addAttribute("indicadores",indicadores.carregar());
         return "auth/login";
     }
 
@@ -45,6 +47,7 @@ public class AuthController {
     public String registerForm(@RequestParam(required = false) String perfil, Model model) {
         if (!model.containsAttribute("form")) {
             RegistroUsuarioForm form = new RegistroUsuarioForm();
+            form.getCertificacoes().add(new CadastroCertificacaoForm());
             if ("cliente".equalsIgnoreCase(perfil)) {
                 form.setCadastroCliente(true);
             } else if ("prestador".equalsIgnoreCase(perfil)) {
@@ -65,15 +68,26 @@ public class AuthController {
                            RedirectAttributes redirectAttributes) {
         try {
             authService.registrar(form);
-            redirectAttributes.addFlashAttribute("mensagem", "Conta criada com sucesso. Faça login para continuar.");
+            boolean enviouCertificacao = Boolean.TRUE.equals(form.getCadastroPrestador())
+                    && form.getCertificacoes() != null
+                    && form.getCertificacoes().stream().anyMatch(certificacao -> !certificacao.isVazio());
+            redirectAttributes.addFlashAttribute("mensagem", enviouCertificacao
+                    ? "Conta criada. Suas certificações foram enviadas para análise. Faça login para continuar."
+                    : "Conta criada com sucesso. Faça login para continuar.");
             return "redirect:/login";
         } catch (IllegalArgumentException ex) {
             model.addAttribute("erro", ex.getMessage());
             model.addAttribute("categorias", categoriaService.findAll());
+            if (form.getCertificacoes() == null || form.getCertificacoes().isEmpty()) {
+                form.setCertificacoes(new java.util.ArrayList<>(java.util.List.of(new CadastroCertificacaoForm())));
+            }
             return "auth/register";
         } catch (DataIntegrityViolationException ex) {
             model.addAttribute("erro", "Não foi possível cadastrar: confira se e-mail ou CPF/CNPJ já estão em uso.");
             model.addAttribute("categorias", categoriaService.findAll());
+            if (form.getCertificacoes() == null || form.getCertificacoes().isEmpty()) {
+                form.setCertificacoes(new java.util.ArrayList<>(java.util.List.of(new CadastroCertificacaoForm())));
+            }
             return "auth/register";
         }
     }

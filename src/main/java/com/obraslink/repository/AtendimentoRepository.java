@@ -8,9 +8,11 @@ import org.springframework.data.repository.query.Param;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 public interface AtendimentoRepository extends JpaRepository<Atendimento, Long> {
     List<Atendimento> findByPrestadorUsuarioIdOrderByIdDesc(Long usuarioId);
+    List<Atendimento> findByPrestadorUsuarioIdAndCriadoEmGreaterThanEqualAndCriadoEmLessThanOrderByIdDesc(Long usuarioId, LocalDateTime inicio, LocalDateTime fimExclusivo);
     @Query("""
             select a from Atendimento a
             where a.clienteUsuarioId = :usuarioId and a.prestadorId = :prestadorId
@@ -26,6 +28,8 @@ public interface AtendimentoRepository extends JpaRepository<Atendimento, Long> 
     Optional<Atendimento> findByIdParaAvaliar(@Param("id") Long id);
     Optional<Atendimento> findFirstByClienteUsuarioIdAndPrestadorIdAndStatusNotOrderByIdDesc(
             Long clienteId, Long prestadorId, Atendimento.Status status);
+    Optional<Atendimento> findFirstByClienteUsuarioIdAndPrestadorIdAndServicoIdAndStatusNotOrderByIdDesc(
+            Long clienteId, Long prestadorId, Long servicoId, Atendimento.Status status);
     List<Atendimento> findByClienteUsuarioIdOrPrestadorUsuarioIdOrderByIdDesc(Long clienteId, Long fornecedorId);
     void deleteByClienteUsuarioIdOrPrestadorUsuarioId(Long clienteId, Long fornecedorId);
 }

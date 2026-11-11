@@ -78,9 +78,11 @@ class AtendimentoServiceTest {
         Atendimento atendimento = atendimento();
         usuario.setId(2L);
         assertThrows(IllegalArgumentException.class, () -> service.atualizar(20L, true));
-        service.atualizar(20L, false);
-        service.atualizar(20L, false);
+        var data = java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")).plusDays(1);
+        service.atualizar(20L, false, data, java.time.LocalTime.of(14, 30));
+        service.atualizar(20L, false, data, java.time.LocalTime.of(14, 30));
         assertNotNull(atendimento.getConfirmadoEm());
+        assertEquals(data,atendimento.getDataAgendada());assertEquals(java.time.LocalTime.of(14,30),atendimento.getHorarioAgendado());
         assertEquals(Atendimento.Status.EM_ANDAMENTO, atendimento.getStatus());
         service.atualizar(20L, true);
         service.atualizar(20L, true);

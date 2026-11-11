@@ -38,7 +38,7 @@ class AvaliacaoPrestadorServiceTest {
         contratado.setPrestadorUsuarioId(40L);
         contratado.setStatus(Atendimento.Status.CONCLUIDO);
         when(atendimentos.findByIdParaAvaliar(50L)).thenReturn(Optional.of(contratado));
-        form.setAtendimentoId(50L);
+
         form.setQualidade(5);
         form.setPrazo(4);
         form.setPreco(3);
@@ -48,7 +48,7 @@ class AvaliacaoPrestadorServiceTest {
 
     @Test
     void registraNotasIndependentesVinculadasAoAtendimentoConcluido() {
-        service.avaliar(30L, form);
+        service.avaliar(30L, 50L, form);
         verify(avaliacoes).save(argThat(a -> a.getAtendimentoId().equals(50L)
                 && a.getQualidade() == 5 && a.getPrazo() == 4 && a.getPreco() == 3
                 && a.getOrganizacao() == 2 && a.getAtendimento() == 1 && a.getServico() == null));
@@ -66,7 +66,7 @@ class AvaliacaoPrestadorServiceTest {
     @Test void naoPermiteAtendimentoDeOutroPrestador() { contratado.setPrestadorId(99L); rejeitar(); }
     @Test void naoPermiteContaDeFornecedorDiferente() { contratado.setPrestadorUsuarioId(99L); rejeitar(); }
     @Test void naoPermiteSemContratacao() { when(atendimentos.findByIdParaAvaliar(50L)).thenReturn(Optional.empty()); rejeitar(); }
-    @Test void naoPermiteSemSelecionarAtendimento() { form.setAtendimentoId(null); rejeitar(); }
+    @Test void recusaAtendimentoInexistenteRecebidoPeloContexto() { when(atendimentos.findByIdParaAvaliar(999L)).thenReturn(Optional.empty()); assertThrows(IllegalArgumentException.class, () -> service.avaliar(30L,999L,form)); }
     @Test void naoPermiteRepetirAvaliacao() { when(avaliacoes.existsByAtendimentoId(50L)).thenReturn(true); rejeitar(); }
     @Test void exigeNotaEmTodosOsCriterios() { form.setPrazo(null); rejeitar(); }
     @Test void rejeitaNotaForaDaEscala() { form.setOrganizacao(6); rejeitar(); }
@@ -99,7 +99,7 @@ class AvaliacaoPrestadorServiceTest {
     }
 
     private void rejeitar() {
-        assertThrows(IllegalArgumentException.class, () -> service.avaliar(30L, form));
+        assertThrows(IllegalArgumentException.class, () -> service.avaliar(30L,50L,form));
         verify(avaliacoes, never()).save(any());
         verifyNoInteractions(notificacoes);
     }

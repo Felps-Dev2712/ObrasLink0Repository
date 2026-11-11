@@ -42,7 +42,7 @@ class AvaliacaoTelaTest {
     void preparar() {
         reset(prestadores, avaliacoes);
         mvc = MockMvcBuilders.webAppContextSetup(context).build();
-        when(prestadores.findById(30L)).thenReturn(Optional.of(Prestador.builder().id(30L).nome("Fornecedor").build()));
+        when(prestadores.findPerfilPublico(30L)).thenReturn(Optional.of(Prestador.builder().id(30L).nome("Fornecedor").build()));
         Atendimento contratado = new Atendimento();
         contratado.setId(50L);
         contratado.setConcluidoEm(LocalDateTime.of(2026, 9, 10, 12, 0));
@@ -64,7 +64,7 @@ class AvaliacaoTelaTest {
         }
         assertTrue(html.contains("Enviar avaliação"));
         assertTrue(html.contains("Atendimento #50"));
-        assertFalse(html.contains("name=\"servicoId\""));
+        assertFalse(html.contains("name=\"atendimentoId\"")); assertTrue(html.contains("/atendimentos/50/avaliacoes"));
         assertFalse(html.contains("requestSubmit"));
     }
 
@@ -78,10 +78,10 @@ class AvaliacaoTelaTest {
 
     @Test
     void falhaDeValidacaoPreservaNotasEComentario() throws Exception {
-        doThrow(new IllegalArgumentException("Selecione todas as notas.")).when(avaliacoes).avaliar(eq(30L), any());
-        var result = mvc.perform(post("/prestadores/30/avaliacoes").param("atendimentoId", "50")
+        doThrow(new IllegalArgumentException("Selecione todas as notas.")).when(avaliacoes).avaliar(eq(30L),eq(50L),any());
+        var result = mvc.perform(post("/prestadores/30/atendimentos/50/avaliacoes")
                         .param("qualidade", "5").param("preco", "2").param("comentario", "Minha experiência"))
-                .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/prestadores/30"))
+                .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/prestadores/30#avaliacoes"))
                 .andExpect(flash().attributeExists("mensagemErro", "avaliacaoForm")).andReturn();
         var form = (AvaliacaoPrestadorForm) result.getFlashMap().get("avaliacaoForm");
         assertEquals(5, form.getQualidade());

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 
-<head th:replace="~{fragments/layout :: head('Vitrine de Serviços - Obras Link')}"></head>
+<head th:replace="~{fragments/layout :: head('Vitrine de Serviços - ObraLink')}"></head>
 
 <body>
 
@@ -63,9 +63,10 @@
                                 th:text="${servico.categoria.nome}">Categoria</span>
                         </span>
                         <span style="font-weight: 700; color: var(--color-secondary); font-size: 1.1rem;"
-                            th:if="${servico.preco != null}" th:text="'R$ ' + ${servico.preco}">
+                            th:if="${servico.preco != null and not (auth.authenticated and auth.hasCliente and auth.perfilAtivo == 'CLIENTE')}" th:text="'R$ ' + ${servico.preco}">
                             R$ 150.00
                         </span>
+                        <div class="service-card-favorite" th:if="${auth.authenticated and auth.hasCliente and auth.perfilAtivo == 'CLIENTE'}" th:insert="~{fragments/favorito :: botao(${servico.prestador.id}, ${favoritosPrestadores.contains(servico.prestador.id)})}"></div>
                     </div>
 
                     <h3 th:text="${servico.titulo}" style="margin-top: 0; margin-bottom: 12px; font-size: 1.2rem;">

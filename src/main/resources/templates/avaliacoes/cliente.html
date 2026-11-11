@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-<head th:replace="~{fragments/layout :: head('Avaliação do cliente - Obras Link')}"></head>
+<head th:replace="~{fragments/layout :: head('Avaliação do cliente - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 <main class="container notifications-page">
@@ -10,14 +10,12 @@
         <p th:text="${'Atendimento #' + atendimento.id + ' · Cliente: ' + atendimento.clienteNome + ' · Prestador: ' + atendimento.prestadorNome}"></p>
         <p th:if="${mensagem}" class="alert alert-success" th:text="${mensagem}"></p>
         <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
-        <form th:if="${podeAvaliar}" th:action="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" th:object="${avaliacaoForm}" method="post">
+        <form th:if="${podeAvaliar}" th:action="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" th:object="${avaliacaoForm}" method="post" class="client-review-form">
             <p>Avalie sua experiência com o cliente. A avaliação ficará disponível para vocês dois.</p>
             <th:block th:replace="~{fragments/avaliacao :: criterio('comunicacao', 'Comunicação')}"></th:block>
             <th:block th:replace="~{fragments/avaliacao :: criterio('pontualidade', 'Pontualidade e disponibilidade')}"></th:block>
             <th:block th:replace="~{fragments/avaliacao :: criterio('cumprimentoCombinado', 'Cumprimento do combinado')}"></th:block>
-            <label for="comentario">Comentário (opcional)</label>
-            <textarea id="comentario" th:field="*{comentario}" maxlength="2000" rows="4" class="form-control"></textarea>
-            <button type="submit" class="btn btn-primary">Enviar avaliação</button>
+            <div class="client-review-comment"><label for="comentario">Comentário (opcional)</label><textarea id="comentario" th:field="*{comentario}" maxlength="2000" rows="4" class="form-control"></textarea><button type="submit" class="btn btn-primary">Enviar avaliação</button></div>
         </form>
         <div th:if="${avaliacao != null}">
             <p th:text="${'Enviada em ' + #temporals.format(avaliacao.criadoEm, 'dd/MM/yyyy HH:mm')}"></p>

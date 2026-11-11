@@ -27,6 +27,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: obras-link-app
+    volumes:
+      - uploads_data:/app/uploads
     ports:
       - "8080:8080"
     environment:
@@ -43,6 +45,7 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:
 
 networks:
   obras-link-network:

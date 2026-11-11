@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AvaliacaoClienteService {
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private PerfilAtivoService perfilAtivo;
     private final AtendimentoRepository atendimentos;
     private final AvaliacaoClienteRepository avaliacoes;
     private final PrestadorRepository prestadores;
@@ -67,12 +68,14 @@ public class AvaliacaoClienteService {
                 && !usuario.getId().equals(atendimento.getPrestadorUsuarioId()))) {
             throw new IllegalArgumentException("Você não tem acesso à avaliação deste atendimento.");
         }
+        if(perfilAtivo!=null){var role=perfilAtivo.atual();if(usuario.getId().equals(atendimento.getClienteUsuarioId())&&role!=PapelUsuario.CLIENTE||usuario.getId().equals(atendimento.getPrestadorUsuarioId())&&role!=PapelUsuario.PRESTADOR)throw new IllegalArgumentException("Ative o perfil correspondente a este atendimento.");}
     }
 
     private boolean podeAvaliar(Atendimento atendimento, Usuario usuario) {
         return atendimento.getStatus() == Atendimento.Status.CONCLUIDO
                 && usuario.getPapeis().contains(PapelUsuario.PRESTADOR)
                 && usuario.getId().equals(atendimento.getPrestadorUsuarioId())
+                && (perfilAtivo==null||perfilAtivo.atual()==PapelUsuario.PRESTADOR)
                 && !usuario.getId().equals(atendimento.getClienteUsuarioId())
                 && prestadores.findById(atendimento.getPrestadorId())
                     .map(p -> usuario.getId().equals(p.getUsuarioId())).orElse(false);

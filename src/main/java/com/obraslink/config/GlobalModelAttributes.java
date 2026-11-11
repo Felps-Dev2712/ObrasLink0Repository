@@ -22,6 +22,7 @@ public class GlobalModelAttributes {
     private final ClienteService clienteService;
     private final PrestadorService prestadorService;
     private final NotificacaoService notificacaoService;
+    private final com.obraslink.service.PerfilAtivoService perfilAtivoService;
 
     @ModelAttribute("auth")
     public Map<String, Object> auth() {
@@ -53,6 +54,8 @@ public class GlobalModelAttributes {
         auth.put("clienteId", clienteId);
         auth.put("prestadorId", prestadorId);
         auth.put("notificacoesNaoLidas", notificacaoService.contarNaoLidas(usuario.getId()));
+        var perfilAtivo=perfilAtivoService.atual();
+        auth.put("perfilAtivo",perfilAtivo==null?"ADMIN":perfilAtivo.name());
         return auth;
     }
 }

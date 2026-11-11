@@ -1,0 +1,37 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Categorias profissionais - ObraLink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="category-directory">
+    <header class="category-directory-heading">
+        <p class="eyebrow">Explore por especialidade</p>
+        <h1>Categorias profissionais</h1>
+        <p>Escolha uma categoria para encontrar profissionais que atendem à sua obra.</p>
+    </header>
+
+    <section class="category-directory-grid" aria-label="Categorias disponíveis">
+        <a class="category-directory-card"
+           th:each="categoria : ${categorias}"
+           th:href="@{/prestadores(categoriaId=${categoria.id})}"
+           th:attr="aria-label=${'Ver profissionais da categoria ' + categoria.nome}">
+            <span class="category-directory-icon" aria-hidden="true" th:text="${categoria.icone ?: '+'}">+</span>
+            <span class="category-directory-content">
+                <strong th:text="${categoria.nome}">Categoria</strong>
+                <small th:if="${categoria.descricao != null and !#strings.isEmpty(categoria.descricao)}" th:text="${categoria.descricao}">Descrição da categoria</small>
+                <small th:unless="${categoria.descricao != null and !#strings.isEmpty(categoria.descricao)}">Veja profissionais desta especialidade</small>
+            </span>
+            <span class="category-directory-arrow" aria-hidden="true">→</span>
+        </a>
+    </section>
+
+    <div th:if="${#lists.isEmpty(categorias)}" class="category-directory-empty">
+        <span aria-hidden="true">⌕</span>
+        <h2>Nenhuma categoria disponível</h2>
+        <p>As categorias profissionais aparecerão aqui quando forem cadastradas.</p>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

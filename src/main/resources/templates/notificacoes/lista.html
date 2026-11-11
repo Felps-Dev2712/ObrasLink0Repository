@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-<head th:replace="~{fragments/layout :: head('Notificações - Obras Link')}"></head>
+<head th:replace="~{fragments/layout :: head('Notificações - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
 <main class="container notifications-page">
@@ -13,6 +13,7 @@
         <p th:if="${#lists.isEmpty(atendimentos)}">Você ainda não possui atendimentos.</p>
         <article th:each="atendimento : ${atendimentos}" class="service-tracking-card">
             <h3 th:text="${atendimento.clienteUsuarioId == usuarioAtualId ? atendimento.prestadorNome : atendimento.clienteNome}"></h3>
+            <p th:if="${atendimento.servicoTitulo != null}" th:text="${'Serviço solicitado: ' + atendimento.servicoTitulo}"></p>
             <small th:text="${'Atendimento #' + atendimento.id + ' - ' + #temporals.format(atendimento.criadoEm, 'dd/MM/yyyy HH:mm')}"></small>
             <ol class="service-steps" aria-label="Etapas do serviço">
                 <li class="step-done">Contato solicitado</li>
@@ -21,13 +22,16 @@
             </ol>
             <p th:if="${atendimento.status.name() == 'CONTATO_SOLICITADO'}">Aguardando o fornecedor confirmar a contratação.</p>
             <p th:if="${atendimento.confirmadoEm != null}" th:text="${'Contratação confirmada em ' + #temporals.format(atendimento.confirmadoEm, 'dd/MM/yyyy HH:mm')}"></p>
+            <p th:if="${atendimento.dataAgendada != null}" class="appointment-info" th:text="${'Agendado para ' + #temporals.format(atendimento.dataAgendada,'dd/MM/yyyy') + ' às ' + #temporals.format(atendimento.horarioAgendado,'HH:mm')}"></p>
             <p th:if="${atendimento.concluidoEm != null}" th:text="${'Concluído em ' + #temporals.format(atendimento.concluidoEm, 'dd/MM/yyyy HH:mm')}"></p>
             <a th:if="${atendimento.clienteUsuarioId == usuarioAtualId and atendimento.status.name() == 'CONCLUIDO'}"
                th:href="@{/prestadores/{id}(id=${atendimento.prestadorId})} + '#avaliacoes'" class="btn btn-outline">Avaliar prestador</a>
             <th:block th:if="${atendimento.prestadorUsuarioId == usuarioAtualId}">
                 <a th:if="${atendimento.status.name() == 'CONCLUIDO'}" th:href="@{/atendimentos/{id}/avaliacao-cliente(id=${atendimento.id})}" class="btn btn-outline">Avaliar cliente / ver avaliação</a>
-                <form th:if="${atendimento.status.name() == 'CONTATO_SOLICITADO'}" th:action="@{/notificacoes/atendimentos/{id}/confirmar(id=${atendimento.id})}" method="post">
-                    <button class="btn btn-primary" type="submit">Confirmar que fechou o serviço</button>
+                <form th:if="${atendimento.status.name() == 'CONTATO_SOLICITADO'}" th:action="@{/notificacoes/atendimentos/{id}/confirmar-fechamento(id=${atendimento.id})}" method="post" class="appointment-form">
+                    <label>Data combinada<input type="date" name="dataAgendada" th:attr="min=${hoje}" required></label>
+                    <label>Horário combinado<input type="time" name="horarioAgendado" required></label>
+                    <button class="btn btn-primary" type="submit">Confirmar fechamento e agendamento</button>
                 </form>
                 <form th:if="${atendimento.status.name() == 'EM_ANDAMENTO'}" th:action="@{/notificacoes/atendimentos/{id}/concluir(id=${atendimento.id})}" method="post">
                     <button class="btn btn-primary" type="submit">Marcar serviço como concluído</button>

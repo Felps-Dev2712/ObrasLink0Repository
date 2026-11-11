@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 
-<head th:replace="~{fragments/layout :: head('Serviços - Obras Link')}"></head>
+<head th:replace="~{fragments/layout :: head('Serviços - ObraLink')}"></head>
 
 <body>
 
@@ -22,6 +22,10 @@
             <span th:text="${mensagemErro}"></span>
         </div>
 
+        <form th:if="${podeGerenciarServicos and not isAdmin and auth.perfilAtivo == 'PRESTADOR'}" action="/servicos" method="get" class="service-availability-filter" style="display:flex;gap:12px;align-items:end;margin-bottom:18px;flex-wrap:wrap">
+            <label for="disponibilidade">Disponibilidade</label><select id="disponibilidade" name="disponibilidade" onchange="this.form.submit()"><option value="todos" th:selected="${filtroDisponibilidade == 'todos'}">Todos</option><option value="disponiveis" th:selected="${filtroDisponibilidade == 'disponiveis'}">Disponíveis</option><option value="indisponiveis" th:selected="${filtroDisponibilidade == 'indisponiveis'}">Indisponíveis</option></select><button class="btn btn-outline" type="submit">Aplicar</button>
+        </form>
+
         <div class="table-responsive workspace-card"
             style="background: #fff; border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm);">
             <table class="pure-table pure-table-horizontal" style="width: 100%;">
@@ -31,6 +35,7 @@
                         <th>Categoria</th>
                         <th>Profissional</th>
                         <th>Preço (R$)</th>
+                        <th>Disponibilidade</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -50,6 +55,7 @@
                             </a>
                         </td>
                         <td th:text="${servico.preco}">100.00</td>
+                        <td><span th:text="${servico.disponivel} ? 'Disponível' : 'Indisponível'"></span></td>
                         <td>
                             <a th:if="${isAdmin or (prestadorAtualId != null and prestadorAtualId == servico.prestador.id)}"
                                 th:href="@{/servicos/{id}/editar(id=${servico.id})}" class="btn btn-secondary"
@@ -65,7 +71,7 @@
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(servicos)}">
-                        <td colspan="5" style="text-align: center; padding: 40px;">Nenhum serviço cadastrado.</td>
+                        <td colspan="6" style="text-align: center; padding: 40px;" th:text="${filtroDisponibilidade == 'todos' ? 'Nenhum serviço cadastrado.' : 'Nenhum serviço corresponde ao filtro selecionado.'}">Nenhum serviço.</td>
                     </tr>
                 </tbody>
             </table>

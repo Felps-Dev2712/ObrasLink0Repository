@@ -3,6 +3,8 @@ package com.obraslink.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "atendimentos", indexes = {
@@ -17,6 +19,8 @@ public class Atendimento {
     @Column(name = "cliente_usuario_id", nullable = false) private Long clienteUsuarioId;
     @Column(name = "prestador_usuario_id", nullable = false) private Long prestadorUsuarioId;
     @Column(nullable = false) private Long prestadorId;
+    private Long servicoId;
+    @Column(length=180) private String servicoTitulo;
     @Column(nullable = false) private String clienteNome;
     @Column(nullable = false) private String prestadorNome;
     @Enumerated(EnumType.STRING) @Column(nullable = false)
@@ -24,4 +28,6 @@ public class Atendimento {
     @Column(nullable = false) private LocalDateTime criadoEm = LocalDateTime.now();
     private LocalDateTime confirmadoEm;
     private LocalDateTime concluidoEm;
+    private LocalDate dataAgendada;
+    private LocalTime horarioAgendado;
 }

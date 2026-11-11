@@ -22,6 +22,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AvaliacaoPrestadorService {
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private PerfilAtivoService perfilAtivo;
 
     private final AvaliacaoPrestadorRepository avaliacaoRepository;
     private final ClienteRepository clienteRepository;
@@ -33,7 +34,7 @@ public class AvaliacaoPrestadorService {
     @Transactional(readOnly = true)
     public List<Atendimento> atendimentosDisponiveis(Long prestadorId) {
         return acessoService.getUsuarioAtual()
-                .filter(usuario -> Boolean.TRUE.equals(usuario.getAtivo()) && usuario.getPapeis().contains(PapelUsuario.CLIENTE))
+                .filter(usuario -> Boolean.TRUE.equals(usuario.getAtivo()) && usuario.getPapeis().contains(PapelUsuario.CLIENTE)&&(perfilAtivo==null||perfilAtivo.atual()==PapelUsuario.CLIENTE))
                 .map(usuario -> atendimentoRepository.findDisponiveisParaAvaliar(usuario.getId(), prestadorId, Atendimento.Status.CONCLUIDO))
                 .orElseGet(List::of);
     }
@@ -67,16 +68,14 @@ public class AvaliacaoPrestadorService {
     }
 
     @Transactional
-    public void avaliar(Long prestadorId, AvaliacaoPrestadorForm form) {
+    public void avaliar(Long prestadorId, Long atendimentoId, AvaliacaoPrestadorForm form) {
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
-        if (!Boolean.TRUE.equals(usuario.getAtivo()) || !usuario.getPapeis().contains(PapelUsuario.CLIENTE)) {
+        if (!Boolean.TRUE.equals(usuario.getAtivo()) || !usuario.getPapeis().contains(PapelUsuario.CLIENTE)||(perfilAtivo!=null&&perfilAtivo.atual()!=PapelUsuario.CLIENTE)) {
             throw new IllegalArgumentException("Apenas clientes podem registrar avaliacoes.");
         }
 
-        if (form.getAtendimentoId() == null) {
-            throw new IllegalArgumentException("Selecione um serviço concluído para avaliar.");
-        }
-        Atendimento contratado = atendimentoRepository.findByIdParaAvaliar(form.getAtendimentoId())
+        if (atendimentoId == null) throw new IllegalArgumentException("Atendimento concluído não informado.");
+        Atendimento contratado = atendimentoRepository.findByIdParaAvaliar(atendimentoId)
                 .orElseThrow(() -> new IllegalArgumentException("Serviço concluído não encontrado para avaliação."));
         if (!usuario.getId().equals(contratado.getClienteUsuarioId())
                 || !prestadorId.equals(contratado.getPrestadorId())

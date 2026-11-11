@@ -1,144 +1,169 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
-
-<head th:replace="~{fragments/layout :: head('Cadastro - Obras Link')}"></head>
-
+<head th:replace="~{fragments/layout :: head('Cadastro - ObraLink')}"></head>
 <body>
-
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-
-<div class="container auth-page" style="padding-top: 120px; padding-bottom: 60px; min-height: 80vh; max-width: 900px;">
-    <div class="auth-card" style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
-        <div class="auth-heading">
+<main class="container auth-page register-page">
+    <section class="auth-card register-card">
+        <header class="auth-heading">
             <span class="eyebrow">Cadastro</span>
-            <h2>Crie sua conta</h2>
+            <h1>Crie sua conta</h1>
             <p>Escolha como deseja usar a plataforma. Você pode atuar nos dois perfis com o mesmo acesso.</p>
-        </div>
+        </header>
 
-        <div th:if="${erro}" class="alert alert-danger"
-             style="padding: 12px; background: #f8d7da; color: #721c24; border-radius: var(--radius-sm); margin-bottom: 16px;">
-            <span th:text="${erro}"></span>
-        </div>
+        <div th:if="${erro}" class="alert alert-danger" role="alert" th:text="${erro}"></div>
 
-        <form class="pure-form pure-form-stacked" th:action="@{/register}" th:object="${form}" method="post">
-            <fieldset>
-                <div class="pure-g">
-                    <div class="pure-u-1 pure-u-md-1-2" style="padding-right: 16px;">
-                        <label for="email">E-mail</label>
-                        <input id="email" type="email" th:field="*{email}" class="pure-u-1" required>
-                    </div>
-                    <div class="pure-u-1 pure-u-md-1-4" style="padding-right: 16px;">
-                        <label for="senha">Senha</label>
-                        <input id="senha" type="password" th:field="*{senha}" class="pure-u-1" required minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres">
-                    </div>
-                    <div class="pure-u-1 pure-u-md-1-4">
-                        <label for="confirmarSenha">Confirmar Senha</label>
-                        <input id="confirmarSenha" type="password" th:field="*{confirmarSenha}" class="pure-u-1" required minlength="8" autocomplete="new-password" placeholder="Repita sua senha">
-                    </div>
+        <form class="pure-form pure-form-stacked register-form" th:action="@{/register}" th:object="${form}" method="post" enctype="multipart/form-data">
+            <section class="register-section">
+                <h2>Dados de acesso</h2>
+                <div class="register-grid register-grid-access">
+                    <label for="email">E-mail<input id="email" type="email" th:field="*{email}" autocomplete="email" placeholder="voce@exemplo.com" required></label>
+                    <label for="senha">Senha<input id="senha" type="password" th:field="*{senha}" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" required></label>
+                    <label for="confirmarSenha">Confirmar senha<input id="confirmarSenha" type="password" th:field="*{confirmarSenha}" minlength="8" autocomplete="new-password" placeholder="Digite a senha novamente" required></label>
                 </div>
+                <div id="sharedFields" class="register-shared" hidden>
+                    <label for="nome">Nome completo<input id="nome" type="text" th:field="*{nome}" maxlength="160" autocomplete="name" placeholder="Seu nome completo" data-shared-required></label>
+                    <small>O mesmo nome será usado nos perfis selecionados.</small>
+                </div>
+            </section>
 
-                <div class="profile-choice" role="group" aria-label="Escolha os seus perfis">
-                    <label class="profile-option" for="cadastroCliente">
-                        <input id="cadastroCliente" type="checkbox" th:field="*{cadastroCliente}">
-                        <span class="profile-option-icon" aria-hidden="true">C</span>
-                        <span><strong>Sou cliente</strong><small>Quero encontrar profissionais.</small></span>
-                    </label>
-                    <label class="profile-option" for="cadastroPrestador">
-                        <input id="cadastroPrestador" type="checkbox" th:field="*{cadastroPrestador}">
-                        <span class="profile-option-icon" aria-hidden="true">P</span>
-                        <span><strong>Sou prestador</strong><small>Quero oferecer meus serviços.</small></span>
-                    </label>
+            <fieldset class="register-section profile-section">
+                <legend>Como você vai usar o ObraLink?</legend>
+                <div class="profile-choice" role="group" aria-label="Escolha seus perfis">
+                    <label class="profile-option" for="cadastroCliente"><input id="cadastroCliente" type="checkbox" th:field="*{cadastroCliente}"><span class="profile-option-icon" aria-hidden="true">C</span><span><strong>Sou cliente</strong><small>Quero encontrar profissionais.</small></span></label>
+                    <label class="profile-option" for="cadastroPrestador"><input id="cadastroPrestador" type="checkbox" th:field="*{cadastroPrestador}"><span class="profile-option-icon" aria-hidden="true">P</span><span><strong>Sou prestador</strong><small>Quero oferecer meus serviços.</small></span></label>
                 </div>
             </fieldset>
 
-            <fieldset id="clienteFields" class="profile-fields" hidden>
+            <fieldset id="clienteFields" class="register-section profile-fields" hidden>
                 <legend>Dados de cliente</legend>
                 <p class="profile-fields-description">Informe os dados para solicitar serviços e acompanhar sua obra.</p>
-                <div class="pure-g">
-                    <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 16px;">
-                        <label for="clienteNome">Nome</label>
-                        <input id="clienteNome" type="text" th:field="*{clienteNome}" class="pure-u-1" data-profile-required>
-                    </div>
-                    <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 16px;">
-                        <label for="clienteCpfCnpj">CPF/CNPJ</label>
-                        <input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="clienteCpfCnpj" type="text" th:field="*{clienteCpfCnpj}" class="pure-u-1" data-profile-required>
-                    </div>
-                    <div class="pure-u-1 pure-u-md-1-3">
-                        <label for="clienteTelefone">Telefone</label>
-                        <input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="clienteTelefone" type="tel" th:field="*{clienteTelefone}" class="pure-u-1">
-                    </div>
+                <div class="register-grid">
+                    <label for="clienteCpfCnpj">CPF<input data-mask="documento" inputmode="numeric" autocomplete="off" id="clienteCpfCnpj" type="text" th:field="*{clienteCpfCnpj}" placeholder="000.000.000-00" data-profile-required></label>
+                    <label for="clienteTelefone">Telefone (opcional)<input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="clienteTelefone" type="tel" th:field="*{clienteTelefone}" placeholder="(11) 99999-9999"></label>
+                </div>
+                <h3 class="register-subheading">Endereço</h3>
+                <div class="register-grid register-grid-address">
+                    <label for="clienteCep">CEP<input id="clienteCep" th:field="*{clienteCep}" maxlength="9" inputmode="numeric" placeholder="00000-000" data-profile-required></label>
+                    <label for="clienteLogradouro">Logradouro<input id="clienteLogradouro" th:field="*{clienteLogradouro}" placeholder="Rua, avenida..." data-profile-required></label>
+                    <label for="clienteNumero">Número<input id="clienteNumero" th:field="*{clienteNumero}" placeholder="Número" data-profile-required></label>
+                    <label for="clienteComplemento">Complemento (opcional)<input id="clienteComplemento" th:field="*{clienteComplemento}" placeholder="Apto, bloco, referência"></label>
+                    <label for="clienteBairro">Bairro<input id="clienteBairro" th:field="*{clienteBairro}" placeholder="Seu bairro" data-profile-required></label>
+                    <label for="clienteCidade">Cidade<input id="clienteCidade" th:field="*{clienteCidade}" placeholder="Sua cidade" data-profile-required></label>
+                    <label for="clienteEstado">Estado<input id="clienteEstado" th:field="*{clienteEstado}" maxlength="2" placeholder="UF" autocomplete="address-level1" data-profile-required></label>
                 </div>
             </fieldset>
 
-            <fieldset id="prestadorFields" class="profile-fields" hidden>
+            <fieldset id="prestadorFields" class="register-section profile-fields" hidden>
                 <legend>Dados de prestador</legend>
-                <p class="profile-fields-description">Estes dados serão exibidos no seu perfil profissional.</p>
-                <div class="pure-g">
-                    <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 16px;">
-                        <label for="prestadorNome">Nome</label>
-                        <input id="prestadorNome" type="text" th:field="*{prestadorNome}" class="pure-u-1" data-profile-required>
-                    </div>
-                    <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 16px;">
-                        <label for="prestadorCpfCnpj">CPF/CNPJ</label>
-                        <input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="prestadorCpfCnpj" type="text" th:field="*{prestadorCpfCnpj}" class="pure-u-1" data-profile-required>
-                    </div>
-                    <div class="pure-u-1 pure-u-md-1-3">
-                        <label for="categoriaId">Categoria</label>
-                        <select id="categoriaId" th:field="*{categoriaId}" class="pure-u-1" data-profile-required>
-                            <option value="">Selecione...</option>
-                            <option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option>
-                        </select>
-                    </div>
-                    <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 16px; margin-top: 16px;">
-                        <label for="prestadorWhatsapp">WhatsApp</label>
-                        <input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="prestadorWhatsapp" type="tel" th:field="*{prestadorWhatsapp}" class="pure-u-1" data-profile-required
-                               placeholder="(11) 99999-9999">
-                    </div>
-                    <div class="pure-u-1" style="margin-top: 16px;">
-                        <label for="prestadorDescricao">Descricao profissional</label>
-                        <textarea id="prestadorDescricao" th:field="*{prestadorDescricao}" class="pure-u-1" rows="4"></textarea>
-                    </div>
+                <p class="profile-fields-description">Essas informações serão exibidas no seu perfil profissional.</p>
+                <div class="register-grid register-grid-provider">
+                    <label for="prestadorCpfCnpj">CNPJ (MEI ou EI)<input data-mask="documento" inputmode="numeric" autocomplete="off" id="prestadorCpfCnpj" type="text" th:field="*{prestadorCpfCnpj}" placeholder="00.000.000/0000-00" data-profile-required></label>
+                    <label for="prestadorWhatsapp">WhatsApp<input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="prestadorWhatsapp" type="tel" th:field="*{prestadorWhatsapp}" placeholder="(11) 99999-9999" data-profile-required></label>
+                    <label class="register-span-all" for="categoriasIds">Categorias profissionais<select id="categoriasIds" th:field="*{categoriasIds}" multiple size="3" data-profile-required><option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option></select><small>Para escolher mais de uma categoria, use Ctrl (Windows) ou Command (Mac).</small></label>
+                    <label class="register-span-all" for="prestadorDescricao">Apresentação profissional (opcional)<textarea id="prestadorDescricao" th:field="*{prestadorDescricao}" rows="4" maxlength="1000" placeholder="Conte brevemente sobre sua experiência e os serviços que oferece."></textarea></label>
                 </div>
+
+                <section class="signup-certifications" aria-labelledby="signup-certifications-title">
+                    <div class="signup-certifications-heading"><div><h3 id="signup-certifications-title">Certificações profissionais</h3><p>Opcional. Informe os dados e anexe o comprovante para cada certificação. Elas serão enviadas para análise.</p></div><button id="add-signup-certification" class="btn btn-outline" type="button">Adicionar certificação</button></div>
+                    <div id="signup-certifications-list">
+                        <article class="signup-certification" th:each="cert,stat : ${form.certificacoes}" data-certification-row>
+                            <div class="signup-certification-heading"><strong th:text="${'Certificação ' + (stat.index + 1)}">Certificação 1</strong><button type="button" class="remove-signup-certification">Remover</button></div>
+                            <div class="register-grid">
+                                <label th:for="${'cert-name-' + stat.index}">Nome da certificação<input th:id="${'cert-name-' + stat.index}" th:name="${'certificacoes[' + stat.index + '].nome'}" th:value="${cert.nome}" maxlength="180" placeholder="Ex.: NR-10" data-cert-field="required"></label>
+                                <label th:for="${'cert-emitter-' + stat.index}">Emissor<input th:id="${'cert-emitter-' + stat.index}" th:name="${'certificacoes[' + stat.index + '].emissor'}" th:value="${cert.emissor}" maxlength="180" placeholder="Instituição emissora" data-cert-field="required"></label>
+                                <label th:for="${'cert-issued-' + stat.index}">Data de emissão<input th:id="${'cert-issued-' + stat.index}" type="date" th:name="${'certificacoes[' + stat.index + '].dataEmissao'}" th:value="${cert.dataEmissao}" data-cert-field="required"></label>
+                                <label th:for="${'cert-expiry-' + stat.index}">Data de validade (opcional)<input th:id="${'cert-expiry-' + stat.index}" type="date" th:name="${'certificacoes[' + stat.index + '].dataValidade'}" th:value="${cert.dataValidade}"></label>
+                                <label th:for="${'cert-code-' + stat.index}">Código de registro (opcional)<input th:id="${'cert-code-' + stat.index}" th:name="${'certificacoes[' + stat.index + '].codigoRegistro'}" th:value="${cert.codigoRegistro}" maxlength="100" placeholder="Código do certificado"></label>
+                                <label class="register-span-all" th:for="${'cert-file-' + stat.index}">Comprovante (PDF, JPG ou PNG; até 10 MB)<input th:id="${'cert-file-' + stat.index}" type="file" th:name="${'certificacoes[' + stat.index + '].documento'}" accept="application/pdf,image/jpeg,image/png" data-cert-file="required"><small data-cert-file-label>Nenhum arquivo selecionado</small></label>
+                            </div>
+                        </article>
+                    </div>
+                </section>
             </fieldset>
 
-            <div style="margin-top: 32px; display: flex; gap: 16px; justify-content: flex-end;">
-                <a th:href="@{/login}" class="btn btn-outline"
-                   style="border: 1px solid var(--color-border); color: var(--color-text);">Ja tenho conta</a>
-                <button type="submit" class="btn btn-primary" style="border: none;">Criar Conta</button>
-            </div>
-            <p>Antes de cadastrar seus dados, consulte os <a th:href="@{/termos}">Termos de Uso</a> e o <a th:href="@{/privacidade}">Aviso de Privacidade</a>. A confirmação será solicitada no primeiro acesso à conta.</p>
+            <div class="register-actions"><a th:href="@{/login}" class="btn btn-outline">Já tenho conta</a><button type="submit" class="btn btn-primary">Criar conta</button></div>
+            <p class="register-legal">Antes de cadastrar seus dados, consulte os <a th:href="@{/termos}">Termos de Uso</a> e o <a th:href="@{/privacidade}">Aviso de Privacidade</a>. A confirmação será solicitada no primeiro acesso à conta.</p>
         </form>
-    </div>
-</div>
-
+    </section>
+</main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
-
+<template id="signup-certification-template">
+    <article class="signup-certification" data-certification-row>
+        <div class="signup-certification-heading"><strong>Certificação</strong><button type="button" class="remove-signup-certification">Remover</button></div>
+        <div class="register-grid">
+            <label>Nome da certificação<input name="certificacoes[__INDEX__].nome" maxlength="180" placeholder="Ex.: NR-10" data-cert-field="required"></label>
+            <label>Emissor<input name="certificacoes[__INDEX__].emissor" maxlength="180" placeholder="Instituição emissora" data-cert-field="required"></label>
+            <label>Data de emissão<input type="date" name="certificacoes[__INDEX__].dataEmissao" data-cert-field="required"></label>
+            <label>Data de validade (opcional)<input type="date" name="certificacoes[__INDEX__].dataValidade"></label>
+            <label>Código de registro (opcional)<input name="certificacoes[__INDEX__].codigoRegistro" maxlength="100" placeholder="Código do certificado"></label>
+            <label class="register-span-all">Comprovante (PDF, JPG ou PNG; até 10 MB)<input type="file" name="certificacoes[__INDEX__].documento" accept="application/pdf,image/jpeg,image/png" data-cert-file="required"><small data-cert-file-label>Nenhum arquivo selecionado</small></label>
+        </div>
+    </article>
+</template>
 <script>
-    (() => {
-        const cliente = document.getElementById('cadastroCliente');
-        const prestador = document.getElementById('cadastroPrestador');
-        const clienteFields = document.getElementById('clienteFields');
-        const prestadorFields = document.getElementById('prestadorFields');
+(() => {
+    const cliente = document.getElementById('cadastroCliente');
+    const prestador = document.getElementById('cadastroPrestador');
+    const clienteFields = document.getElementById('clienteFields');
+    const prestadorFields = document.getElementById('prestadorFields');
+    const sharedFields = document.getElementById('sharedFields');
+    const sharedName = document.getElementById('nome');
+    const certList = document.getElementById('signup-certifications-list');
 
-        function setRequired(container, active) {
-            container.querySelectorAll('[data-profile-required]').forEach(input => input.required = active);
-            container.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !active);
+    function setRequired(container, active) {
+        container.querySelectorAll('[data-profile-required]').forEach(input => input.required = active);
+        container.querySelectorAll('input, select, textarea').forEach(input => input.disabled = !active);
+    }
+    function updateProfiles() {
+        clienteFields.hidden = !cliente.checked;
+        prestadorFields.hidden = !prestador.checked;
+        sharedFields.hidden = !cliente.checked && !prestador.checked;
+        sharedName.required = cliente.checked || prestador.checked;
+        setRequired(clienteFields, cliente.checked);
+        setRequired(prestadorFields, prestador.checked);
+        updateCertificationRequirements();
+    }
+    function updateCertificationRequirements() {
+        if (!certList) return;
+        certList.querySelectorAll('[data-certification-row]').forEach(row => {
+            const hasContent = [...row.querySelectorAll('input:not([type=file])')].some(input => input.value.trim())
+                || [...row.querySelectorAll('input[type=file]')].some(input => input.files.length);
+            row.querySelectorAll('[data-cert-field], [data-cert-file]').forEach(input => input.required = prestador.checked && hasContent && input.dataset.certField === 'required' || prestador.checked && hasContent && input.dataset.certFile === 'required');
+        });
+    }
+    cliente.addEventListener('change', updateProfiles);
+    prestador.addEventListener('change', updateProfiles);
+    updateProfiles();
+
+    document.getElementById('add-signup-certification').addEventListener('click', () => {
+        const index = certList.querySelectorAll('[data-certification-row]').length;
+        const html = document.getElementById('signup-certification-template').innerHTML.replaceAll('__INDEX__', index);
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = html.trim();
+        certList.appendChild(wrapper.firstElementChild);
+    });
+    certList.addEventListener('input', updateCertificationRequirements);
+    certList.addEventListener('change', event => {
+        if (event.target.matches('[data-cert-file]')) {
+            const label = event.target.parentElement.querySelector('[data-cert-file-label]');
+            label.textContent = event.target.files.length ? event.target.files[0].name : 'Nenhum arquivo selecionado';
         }
-
-        function updateProfiles() {
-            clienteFields.hidden = !cliente.checked;
-            prestadorFields.hidden = !prestador.checked;
-            setRequired(clienteFields, cliente.checked);
-            setRequired(prestadorFields, prestador.checked);
+        updateCertificationRequirements();
+    });
+    certList.addEventListener('click', event => {
+        if (event.target.matches('.remove-signup-certification')) {
+            event.target.closest('[data-certification-row]').remove();
+            certList.querySelectorAll('[data-certification-row]').forEach((row, index) => {
+                row.querySelectorAll('[name]').forEach(input => input.name = input.name.replace(/certificacoes\[\d+\]/, `certificacoes[${index}]`));
+                const heading = row.querySelector('.signup-certification-heading strong');
+                if (heading) heading.textContent = `Certificação ${index + 1}`;
+            });
+            updateCertificationRequirements();
         }
-
-        cliente.addEventListener('change', updateProfiles);
-        prestador.addEventListener('change', updateProfiles);
-        updateProfiles();
-    })();
+    });
+})();
 </script>
-
 </body>
-
 </html>

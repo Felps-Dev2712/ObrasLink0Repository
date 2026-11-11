@@ -19,12 +19,17 @@ public class ContaService {
 
     private final AtendimentoRepository atendimentoRepository;
     private final AceiteTermosRepository aceiteTermosRepository;
+    private final FavoritoRepository favoritos;
+    private final DisponibilidadeRepository disponibilidades;
+    private final CertificacaoRepository certificacoes;
 
     @Transactional
     public void excluirMinhaConta() {
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
         // Remove as referencias antes dos perfis e dos servicos em cascata.
         aceiteTermosRepository.deleteByUsuarioId(usuario.getId());
+        clienteRepository.findByUsuarioId(usuario.getId()).ifPresent(c->favoritos.deleteByClienteId(c.getId()));
+        prestadorRepository.findByUsuarioId(usuario.getId()).ifPresent(p->{favoritos.deleteByPrestadorId(p.getId());disponibilidades.deleteByPrestadorId(p.getId());certificacoes.deleteByPrestadorId(p.getId());});
         avaliacaoClienteRepository.deleteByClienteUsuarioIdOrPrestadorUsuarioId(usuario.getId(), usuario.getId());
         atendimentoRepository.deleteByClienteUsuarioIdOrPrestadorUsuarioId(usuario.getId(), usuario.getId());
         avaliacaoRepository.deleteByConta(usuario.getId());

@@ -1,29 +1,59 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 <head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
-<body class="app-body">
+<body class="app-body home-page">
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main class="app-shell home-shell">
-    <section class="home-intro">
-        <div><p class="eyebrow">Marketplace de serviços</p><h1>O que você precisa resolver hoje?</h1><p class="intro-copy">Encontre profissionais para a sua reforma, compare especialidades e solicite um orçamento.</p></div>
+<main>
+    <section class="home-hero">
+        <div class="home-hero-content">
+            <p class="eyebrow">ObraLink · serviços para construir</p>
+            <h1>Encontre quem transforma<br>seu projeto em <span>realidade.</span></h1>
+            <p class="intro-copy">Profissionais de confiança para sua obra, reforma ou manutenção. Compare especialidades e fale direto com quem entende.</p>
+            <form action="/vitrine" method="get" class="home-search-form" aria-label="Buscar serviços">
+                <label class="search-field"><span>Qual serviço você precisa?</span>
+                    <select name="categoriaId"><option value="">Todas as especialidades</option>
+                        <option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.nome}">Eletricista</option>
+                    </select>
+                </label>
+                <button class="btn btn-primary" type="submit"><span aria-hidden="true">⌕</span> Buscar serviços</button>
+            </form>
+            <p class="hero-note">Contato direto pelo WhatsApp · Sem intermediários</p>
+        </div>
     </section>
-    <section class="search-panel" aria-label="Buscar profissionais">
-        <form action="/vitrine" method="get" class="home-search-form">
-            <label class="search-field"><span>Qual serviço você procura?</span><select name="categoriaId"><option value="">Todas as especialidades</option><option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.icone + ' ' + categoria.nome}">Eletricista</option></select></label>
-            <button class="btn btn-primary" type="submit">Buscar profissionais</button>
-        </form>
+
+    <section class="home-section home-categories" aria-labelledby="categories-title">
+        <div class="section-heading"><div><p class="eyebrow">Encontre por especialidade</p><h2 id="categories-title">O que sua obra precisa?</h2></div><a href="/categorias">Ver serviços <span aria-hidden="true">→</span></a></div>
+        <div class="category-grid">
+            <a th:each="categoria : ${categorias}" th:href="@{/vitrine(categoriaId=${categoria.id})}" class="category-card">
+                <span class="category-icon" aria-hidden="true" th:text="${categoria.icone}">+</span><span th:text="${categoria.nome}">Encanador</span><span class="category-arrow" aria-hidden="true">→</span>
+            </a>
+        </div>
     </section>
-    <section class="quick-section">
-        <div class="section-heading"><div><p class="eyebrow">Comece por aqui</p><h2>Encontre por especialidade</h2></div><a href="/vitrine">Ver todos</a></div>
-        <div class="category-grid"><a th:each="categoria : ${categorias}" th:href="@{/vitrine(categoriaId=${categoria.id})}" class="category-card"><span class="category-icon" th:text="${categoria.icone}">+</span><span th:text="${categoria.nome}">Encanador</span><span aria-hidden="true">&rarr;</span></a></div>
+
+    <section class="home-featured" aria-labelledby="featured-title">
+        <div class="home-section featured-inner">
+            <div class="section-heading section-heading-light"><div><p class="eyebrow">Gente que constrói</p><h2 id="featured-title">Profissionais em destaque</h2><p>Conheça alguns dos profissionais da comunidade ObraLink.</p></div><a href="/prestadores">Ver profissionais <span aria-hidden="true">→</span></a></div>
+            <div class="provider-grid">
+                <article class="provider-card" th:each="profissional : ${destaques}">
+                    <div class="provider-card-top"><span class="provider-avatar" aria-hidden="true" th:text="${profissional.inicial}">P</span><span class="provider-verified" th:unless="${auth.authenticated and auth.hasCliente and auth.perfilAtivo == 'CLIENTE'}">Profissional</span><div class="provider-card-favorite" th:if="${auth.authenticated and auth.hasCliente and auth.perfilAtivo == 'CLIENTE'}" th:insert="~{fragments/favorito :: botao(${profissional.id}, ${favoritosPrestadores.contains(profissional.id)})}"></div></div>
+                    <h3 th:text="${profissional.nome}">Profissional</h3><p th:text="${profissional.especialidade}">Especialidade</p>
+                    <a th:href="@{/prestadores/{id}(id=${profissional.id})}" class="btn btn-outline">Ver perfil <span aria-hidden="true">→</span></a>
+                </article>
+                <p th:if="${#lists.isEmpty(destaques)}" class="empty-featured">Ainda não há profissionais em destaque.</p>
+            </div>
+        </div>
     </section>
-    <section class="home-bottom-grid">
-        <div class="info-card"><span class="info-icon">1</span><div><h3>Busque e compare</h3><p>Confira especialidades, experiência, avaliações e informações de cada profissional.</p></div></div>
-        <div class="info-card"><span class="info-icon">2</span><div><h3>Solicite seu orçamento</h3><p>Envie os detalhes do serviço diretamente para o profissional pelo WhatsApp.</p></div></div>
+
+    <section class="home-section how-section" aria-labelledby="how-title">
+        <div class="section-heading centered-heading"><div><p class="eyebrow">Simples assim</p><h2 id="how-title">Sua obra começa com uma boa conexão</h2></div></div>
+        <div class="steps-grid">
+            <article class="step-card"><span class="step-number">01</span><h3>Encontre</h3><p>Busque por especialidade e conheça profissionais e serviços disponíveis.</p></article>
+            <article class="step-card"><span class="step-number">02</span><h3>Converse</h3><p>Entre em contato direto e combine os detalhes do seu projeto.</p></article>
+            <article class="step-card"><span class="step-number">03</span><h3>Acompanhe</h3><p>Acompanhe as etapas do atendimento pela sua conta ObraLink.</p></article>
+        </div>
     </section>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
-
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
 </html>

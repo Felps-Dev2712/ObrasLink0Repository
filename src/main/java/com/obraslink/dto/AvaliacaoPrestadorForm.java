@@ -5,7 +5,6 @@ import lombok.Data;
 @Data
 public class AvaliacaoPrestadorForm {
 
-    private Long atendimentoId;
     private Integer qualidade;
     private Integer prazo;
     private Integer preco;

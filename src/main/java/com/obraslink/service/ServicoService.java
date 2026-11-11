@@ -16,7 +16,11 @@ public class ServicoService {
     private final ServicoRepository servicoRepository;
 
     public List<Servico> findAllAvailable() {
-        return servicoRepository.findByDisponivelTrue();
+        return servicoRepository.findPublicosDisponiveis();
+    }
+
+    public List<Servico> findByDisponibilidade(Boolean disponivel) {
+        return disponivel == null ? servicoRepository.findAll() : disponivel ? servicoRepository.findByDisponivelTrue() : servicoRepository.findByDisponivelFalse();
     }
 
     public List<Servico> findAll() {
@@ -27,12 +31,13 @@ public class ServicoService {
         if (categoriaId == null) {
             return findAllAvailable();
         }
-        return servicoRepository.findByCategoriaIdAndDisponivelTrue(categoriaId);
+        return servicoRepository.findPublicosDisponiveisPorCategoria(categoriaId);
     }
     
     public List<Servico> findByPrestador(Long prestadorId) {
-        return servicoRepository.findByPrestadorId(prestadorId);
+        return servicoRepository.findPublicosPorPrestador(prestadorId);
     }
+    public List<Servico> findByPrestadorDisponibilidade(Long prestadorId,boolean disponivel){return disponivel?servicoRepository.findContrataveisPorPrestador(prestadorId):servicoRepository.findByPrestadorIdAndDisponivel(prestadorId,false);}
 
     public Optional<Servico> findById(Long id) {
         return servicoRepository.findById(id);

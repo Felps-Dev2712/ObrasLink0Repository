@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
 
-<head th:replace="~{fragments/layout :: head(${prestador.nome} + ' - Obras Link')}"></head>
+<head th:replace="~{fragments/layout :: head(${prestador.nome} + ' - ObraLink')}"></head>
 
 <body>
 
     <nav th:replace="~{fragments/layout :: navbar}"></nav>
 
-    <div class="container" style="padding-top: 120px; padding-bottom: 60px; min-height: 80vh;">
+    <div class="profile-page">
+        <div class="profile-cover" aria-hidden="true"></div>
+        <div class="container profile-content" style="padding-top: 36px; padding-bottom: 60px; min-height: 80vh;">
         <div class="pure-g">
             <div class="pure-u-1 pure-u-md-1-3" style="padding-right: 24px;">
                 <!-- Profile Sidebar -->
-                <div
+                <div class="provider-summary"
                     style="background: #fff; border-radius: var(--radius-md); padding: 32px 24px; box-shadow: var(--shadow-sm); text-align: center;">
                     <div class="profile-avatar"
                         style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary)); color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 20px; font-family: 'Outfit', sans-serif; font-weight: 700;">
@@ -25,6 +27,7 @@
                         <span th:text="${prestador.categoria != null ? prestador.categoria.icone + ' ' + prestador.categoria.nome : 'Categoria nao informada'}">🧱
                             Pedreiro</span>
                     </div>
+                    <p th:if="${prestador.categorias != null and #lists.size(prestador.categorias) > 1}" class="provider-categories"><span th:each="cat,stat : ${prestador.categorias}" th:text="${(stat.index > 0 ? ' · ' : '') + cat.nome}">Especialidade</span></p>
 
                     <div
                         style="text-align: left; margin-top: 24px; border-top: 1px solid var(--color-border); padding-top: 20px;">
@@ -46,10 +49,6 @@
                                 anos</span>
                         </p>
                         <p style="margin-bottom: 12px; font-size: 0.9rem;">
-                            <strong>Preço mínimo:</strong> <span th:text="${prestador.precoMinimo != null ? 'R$ ' + prestador.precoMinimo : 'Sob consulta'}">R$
-                                50.00</span>
-                        </p>
-                        <p style="margin-bottom: 12px; font-size: 0.9rem;">
                             <strong>Email:</strong> <span th:text="${prestador.email}">email@exemplo.com</span>
                         </p>
                         <p style="margin-bottom: 12px; font-size: 0.9rem;">
@@ -62,12 +61,16 @@
                     </div>
 
                     <div style="margin-top: 32px;">
-                        <form th:if="${prestador.whatsapp != null and !#strings.isEmpty(prestador.whatsapp)}"
+                        <form th:if="${auth.authenticated and auth.perfilAtivo == 'CLIENTE' and auth.hasCliente and prestador.whatsapp != null and !#strings.isEmpty(prestador.whatsapp)}"
                               th:action="@{/prestadores/{id}/contato(id=${prestador.id})}" method="post">
                             <button type="submit" class="btn btn-primary" style="width: 100%;">Contato pelo WhatsApp</button>
                         </form>
                         <span th:if="${prestador.whatsapp == null or #strings.isEmpty(prestador.whatsapp)}"
                             class="btn btn-outline" style="width: 100%; cursor: default;">WhatsApp nao informado</span>
+                        <form th:if="${auth.authenticated and auth.perfilAtivo == 'CLIENTE' and auth.hasCliente}" th:action="@{/favoritos/{id}(id=${prestador.id})}" method="post" style="margin-top:10px">
+                            <input type="hidden" name="adicionar" th:value="${!favorito}">
+                            <button class="btn btn-outline" style="width:100%" th:text="${favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">Favorito</button>
+                        </form>
                     </div>
                 </div>
 
@@ -83,7 +86,7 @@
 
             <div class="pure-u-1 pure-u-md-2-3">
                 <!-- Main Content -->
-                <div
+                <div class="provider-panel"
                     style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
                     <h3
                         style="margin-bottom: 16px; border-bottom: 2px solid var(--color-surface-alt); padding-bottom: 12px;">
@@ -94,7 +97,7 @@
                     </p>
                 </div>
 
-                <div
+                <div class="provider-panel"
                     style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm);">
                     <div
                         style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--color-surface-alt); padding-bottom: 12px; margin-bottom: 24px;">
@@ -103,13 +106,13 @@
                             style="padding: 6px 12px; font-size: 0.8rem;">+ Adicionar Serviço</a>
                     </div>
 
-                    <div th:if="${#lists.isEmpty(prestador.servicos)}"
+                    <div th:if="${#lists.isEmpty(servicos)}"
                         style="padding: 24px; text-align: center; color: var(--color-text-muted); background: var(--color-surface-alt); border-radius: var(--radius-sm);">
                         Este profissional ainda não adicionou serviços específicos.
                     </div>
 
-                    <div th:unless="${#lists.isEmpty(prestador.servicos)}" class="pure-g">
-                        <div th:each="servico : ${prestador.servicos}" class="pure-u-1 pure-u-md-1-2"
+                    <div th:unless="${#lists.isEmpty(servicos)}" class="pure-g">
+                        <div th:each="servico : ${servicos}" class="pure-u-1 pure-u-md-1-2"
                             style="padding: 12px;">
                             <div
                                 style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 20px;">
@@ -119,12 +122,23 @@
                                     Descrição do serviço em detalhes.</p>
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span style="font-weight: 700; color: var(--color-primary-dark);"
-                                        th:text="'R$ ' + ${servico.preco}">R$ 100.00</span>
+                                        th:text="${servico.preco != null ? 'A partir de R$ ' + servico.preco : 'Sob consulta'}">A partir de R$ 100.00</span>
+                                    <span class="service-availability" th:classappend="${servico.disponivel} ? ' is-available' : ' is-unavailable'" th:text="${servico.disponivel} ? 'Disponível' : 'Indisponível'">Disponível</span>
                                 </div>
+                                <p th:if="${servico.categoria != null}" class="service-category" th:text="${servico.categoria.nome}">Categoria</p>
+                                <form th:if="${servico.disponivel and auth.authenticated and auth.perfilAtivo == 'CLIENTE' and auth.hasCliente and servico.prestador.usuarioId != auth.usuarioId}" th:action="@{/prestadores/{pid}/servicos/{sid}/contato(pid=${prestador.id},sid=${servico.id})}" method="post" style="margin-top:14px"><button class="btn btn-primary" type="submit">Solicitar este serviço</button></form>
+                                <p th:if="${!servico.disponivel}" class="service-unavailable-note">Este serviço não está aceitando novas solicitações.</p>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <section class="provider-panel" aria-labelledby="availability-title"><h3 id="availability-title">Disponibilidade semanal</h3><ul><li th:each="d : ${disponibilidades}" th:text="${d.dia + ' · ' + #temporals.format(d.inicio,'HH:mm') + '–' + #temporals.format(d.fim,'HH:mm')}">SEGUNDA · 08:00–17:00</li></ul><p th:if="${#lists.isEmpty(disponibilidades)}">Horários ainda não informados.</p></section>
+
+                <section class="provider-panel portfolio-panel" aria-labelledby="portfolio-title">
+                    <h3 id="portfolio-title">Galeria de trabalhos</h3>
+                    <p class="portfolio-empty">Este perfil ainda não possui imagens de trabalhos cadastradas.</p>
+                </section>
 
                 <div class="reviews-card" id="avaliacoes"
                     style="background: #fff; border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-sm); margin-top: 24px;">
@@ -144,26 +158,20 @@
                         </div>
                     </div>
 
-                    <div th:if="${podeAvaliarPrestador}" class="rating-form-card"
+                    <div th:each="contratado : ${atendimentosParaAvaliar}" class="rating-form-card"
                         style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 24px; margin-bottom: 28px; background: var(--color-surface-alt);">
                         <h4 style="margin-bottom: 16px;">Registrar avaliação</h4>
                         <form class="pure-form pure-form-stacked"
-                            th:action="@{/prestadores/{id}/avaliacoes(id=${prestador.id})}"
+                            th:action="@{/prestadores/{id}/atendimentos/{atendimentoId}/avaliacoes(id=${prestador.id},atendimentoId=${contratado.id})}"
                             th:object="${avaliacaoForm}" method="post" data-rating-form>
-                            <p>Escolha um atendimento concluído e dê uma nota de 1 a 5 para cada critério. A avaliação só será registrada ao enviar.</p>
-                            <label for="atendimentoId">Serviço concluído</label>
-                            <select id="atendimentoId" th:field="*{atendimentoId}" class="pure-u-1" required>
-                                <option value="">Selecione o atendimento que deseja avaliar...</option>
-                                <option th:each="contratado : ${atendimentosParaAvaliar}" th:value="${contratado.id}"
-                                        th:text="${'Atendimento #' + contratado.id + (contratado.concluidoEm != null ? ' - concluído em ' + #temporals.format(contratado.concluidoEm, 'dd/MM/yyyy') : '')}"></option>
-                            </select>
+                            <p>Escolha um atendimento concluído e dê uma nota de 1 a 5 para cada critério. A avaliação só será registrada ao enviar.</p><p>Atendimento <strong th:text="${'#' + contratado.id}">#1</strong> concluído. Ele será associado automaticamente à avaliação.</p>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('qualidade', 'Qualidade')}"></fieldset>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('prazo', 'Prazo')}"></fieldset>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('preco', 'Preço')}"></fieldset>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('organizacao', 'Organização')}"></fieldset>
                             <fieldset th:replace="~{fragments/avaliacao :: criterio('atendimento', 'Atendimento')}"></fieldset>
-                            <label for="comentario">Comentário (opcional)</label>
-                            <textarea id="comentario" th:field="*{comentario}" class="pure-u-1" rows="4"
+                            <label th:for="${'comentario-' + contratado.id}">Comentário (opcional)</label>
+                            <textarea th:id="${'comentario-' + contratado.id}" th:field="*{comentario}" maxlength="2000" class="pure-u-1" rows="4"
                                       placeholder="Conte como foi a experiência com este profissional."></textarea>
                             <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Enviar avaliação</button>
                         </form>
@@ -214,6 +222,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 

@@ -25,21 +25,27 @@ public class ServicoController {
     private final PrestadorService prestadorService;
     private final CategoriaService categoriaService;
     private final AcessoService acessoService;
+    private final com.obraslink.service.RelacionamentosService relacionamentosService;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.PerfilAtivoService perfilAtivo;
+
+    private boolean podeGerenciarServico(Long id){return acessoService.isAdmin()||(perfilAtivo==null||perfilAtivo.atual()==PapelUsuario.PRESTADOR)&&acessoService.podeGerenciarServico(id);}
 
     @GetMapping("/vitrine")
     public String vitrine(@RequestParam(required = false) Long categoriaId, Model model) {
         model.addAttribute("servicos", servicoService.findByCategoria(categoriaId));
         model.addAttribute("categorias", categoriaService.findAll());
         model.addAttribute("categoriaAtiva", categoriaId);
+        model.addAttribute("favoritosPrestadores", relacionamentosService.idsFavoritosDoAtual());
         return "vitrine/index";
     }
 
     @GetMapping("/servicos")
-    public String list(Model model) {
+    public String list(@RequestParam(required=false) String disponibilidade, Model model) {
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
         boolean admin = acessoService.isAdmin(usuario);
-        boolean cliente = usuario.getPapeis().contains(PapelUsuario.CLIENTE);
-        boolean prestador = usuario.getPapeis().contains(PapelUsuario.PRESTADOR);
+        PapelUsuario ativo=perfilAtivo==null?null:perfilAtivo.atual();
+        boolean cliente = usuario.getPapeis().contains(PapelUsuario.CLIENTE)&&(ativo==PapelUsuario.CLIENTE||ativo==null&&!usuario.getPapeis().contains(PapelUsuario.PRESTADOR));
+        boolean prestador = usuario.getPapeis().contains(PapelUsuario.PRESTADOR)&&(ativo==PapelUsuario.PRESTADOR||ativo==null&&!usuario.getPapeis().contains(PapelUsuario.CLIENTE));
 
         Long prestadorAtualId = null;
         List<Servico> servicos;
@@ -62,18 +68,24 @@ public class ServicoController {
         } else {
             servicos = servicoService.findAllAvailable();
         }
+        String filtro=disponibilidade==null?"todos":disponibilidade;
+        if(!List.of("todos","disponiveis","indisponiveis").contains(filtro))filtro="todos";
+        if (!admin && prestador && !cliente && prestadorAtualId!=null && !filtro.equals("todos")) {
+            servicos=servicoService.findByPrestadorDisponibilidade(prestadorAtualId,filtro.equals("disponiveis"));
+        }
 
         model.addAttribute("servicos", servicos);
         model.addAttribute("isAdmin", admin);
         model.addAttribute("prestadorAtualId", prestadorAtualId);
         model.addAttribute("podeGerenciarServicos", admin || prestador);
+        model.addAttribute("filtroDisponibilidade",filtro);
         return "servicos/lista";
     }
 
     @GetMapping("/servicos/novo")
     public String createForm(Model model, RedirectAttributes redirectAttributes) {
         boolean admin = acessoService.isAdmin();
-        boolean prestador = acessoService.hasPapel(PapelUsuario.PRESTADOR);
+        boolean prestador = acessoService.hasPapel(PapelUsuario.PRESTADOR)&&(perfilAtivo==null||perfilAtivo.atual()==PapelUsuario.PRESTADOR);
         if (!admin && !prestador) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para criar servicos.");
             return "redirect:/servicos";
@@ -102,7 +114,7 @@ public class ServicoController {
     @PostMapping("/servicos")
     public String save(@ModelAttribute Servico servico, RedirectAttributes redirectAttributes) {
         boolean admin = acessoService.isAdmin();
-        boolean prestador = acessoService.hasPapel(PapelUsuario.PRESTADOR);
+        boolean prestador = acessoService.hasPapel(PapelUsuario.PRESTADOR)&&(perfilAtivo==null||perfilAtivo.atual()==PapelUsuario.PRESTADOR);
         if (!admin && !prestador) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para criar servicos.");
             return "redirect:/servicos";
@@ -125,7 +137,7 @@ public class ServicoController {
 
     @GetMapping("/servicos/{id}/editar")
     public String editForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        if (!acessoService.podeGerenciarServico(id)) {
+        if (!podeGerenciarServico(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para editar este servico.");
             return "redirect:/servicos";
         }
@@ -150,7 +162,7 @@ public class ServicoController {
     public String update(@PathVariable Long id,
                          @ModelAttribute Servico servico,
                          RedirectAttributes redirectAttributes) {
-        if (!acessoService.podeGerenciarServico(id)) {
+        if (!podeGerenciarServico(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para editar este servico.");
             return "redirect:/servicos";
         }
@@ -182,7 +194,7 @@ public class ServicoController {
 
     @PostMapping("/servicos/{id}/excluir")
     public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        if (!acessoService.podeGerenciarServico(id)) {
+        if (!podeGerenciarServico(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para excluir este servico.");
             return "redirect:/servicos";
         }
