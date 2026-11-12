@@ -1,27 +1,46 @@
-# Aceite no primeiro acesso
+# Termos de Uso e Aviso de Privacidade: aceite
 
-Depois do login, qualquer conta sem aceite da versão atual é direcionada a `/termos/aceitar`, incluindo contas já existentes e administradores. Um filtro na cadeia do Spring Security impede acesso direto às funcionalidades e POSTs antes do aceite. A autenticação e a proteção CSRF continuam ativas.
+Versão atual dos documentos: **2026-11-12-v2** (`TermosService.VERSAO_ATUAL`, arquivos em `templates/legal/2026-11-12-v2`).
 
-O formulário exige duas marcações inicialmente desmarcadas: aceitação dos Termos de Uso e ciência do Aviso de Privacidade. Não se trata de consentimento para marketing ou tratamento opcional. A leitura dos documentos, a saída e a exclusão da própria conta permanecem disponíveis sem aceite.
+## Aceite no cadastro (obrigatório)
 
-`aceites_termos` registra o usuário autenticado, a versão conjunta dos documentos e a data/hora UTC do servidor. Há unicidade por usuário e versão e bloqueio transacional para evitar duplicação por cliques simultâneos. Os dados não vêm de um ID ou data enviados pelo navegador. A exclusão de conta remove seus registros de aceite, conforme a política atual do projeto.
+O formulário de cadastro (`/register`) tem duas caixas, inicialmente desmarcadas e obrigatórias: aceite dos Termos de Uso e ciência do Aviso de Privacidade. Os dois documentos abrem em outra aba.
 
-## Documentos e publicação
+`AuthService.registrar` recusa o cadastro se alguma das duas não estiver marcada ("Para criar a conta, aceite os Termos de Uso e confirme a leitura do Aviso de Privacidade."). Assim nenhum dado é gravado sem o aceite. Com as duas marcadas, o aceite da versão atual é gravado em `aceites_termos` **na mesma transação** que cria o usuário: ou os dois são gravados, ou nenhum.
 
-Os textos em `templates/legal/2026-09-09-v1` são textos iniciais para revisão, não uma avaliação de conformidade com a LGPD. O contato foi reutilizado do rodapé existente (`contato@obraslink.com.br`); sua validade não foi verificada. Antes de publicar, o responsável deve validar os textos e informar sua identificação/razão social, o canal efetivo de privacidade, as bases legais por finalidade, os fornecedores de infraestrutura e os prazos/procedimentos reais de retenção, backups e exercício de direitos.
+## Aceite de nova versão (no próximo acesso)
 
-O cadastro já coleta dados antes do primeiro login. Por isso, há links para os documentos também no cadastro. O aceite posterior não substitui a necessidade de determinar bases legais e prestar informações antes da coleta.
+Depois do login, qualquer conta sem aceite da **versão atual** é direcionada a `/termos/aceitar`, incluindo administradores e contas criadas antes da versão atual. Um filtro na cadeia do Spring Security impede acesso às funcionalidades e POSTs antes do aceite. A leitura dos documentos, a saída e a exclusão da própria conta continuam disponíveis sem aceite.
+
+`aceites_termos` registra o usuário, a versão dos documentos e a data/hora UTC do servidor (nunca valores enviados pelo navegador). Há unicidade por usuário e versão e bloqueio transacional contra cliques simultâneos. Aceites de versões anteriores continuam registrados.
+
+## Exclusão de conta
+
+`ContaService.excluirMinhaConta` apaga, em uma transação: aceites, favoritos, agenda, certificações, avaliações feitas e recebidas, atendimentos dos dois lados, notificações, fotos de serviços, perfis de cliente e de profissional (com serviços) e o usuário. Os arquivos (fotos, capa, foto de perfil e **comprovantes das certificações**) são apagados do disco somente depois do commit. Os textos de Termos (item 9) e Privacidade (itens 8 e 9) descrevem exatamente esse comportamento: se ele mudar, atualize os documentos em uma nova versão.
+
+## Publicar uma nova versão
+
+Depois que uma versão foi disponibilizada para aceite, **não altere os arquivos dela**. Para mudar o texto:
+
+1. Crie outra pasta em `templates/legal/` (ex.: `2027-01-10-v3`) com `termos.html` e `privacidade.html`.
+2. Atualize `TermosService.VERSAO_ATUAL`.
+3. Todos os usuários terão de aceitar a nova versão no próximo acesso.
+
+## Antes de publicar em produção (revisão jurídica)
+
+Os textos são uma proposta técnica alinhada ao funcionamento da plataforma, **não um parecer jurídico**. Antes de publicar, o responsável deve validar com o jurídico:
+
+- identificação do controlador (razão social/CNPJ) e o canal efetivo de privacidade/encarregado (o e-mail `contato@obraslink.com.br` foi reaproveitado do rodapé e não foi verificado);
+- as bases legais por finalidade;
+- a guarda dos **registros de acesso por 6 meses** (Marco Civil, art. 15): o texto informa essa retenção, então a infraestrutura precisa de fato guardar IP, data e hora das requisições por esse prazo, inclusive após a exclusão da conta;
+- o ciclo real de cópias de segurança (backups) e os fornecedores de infraestrutura/hospedagem.
 
 Referência: [Perguntas frequentes da ANPD](https://www.gov.br/anpd/pt-br/acesso-a-informacao/perguntas-frequentes/perguntas-frequentes).
-
-Depois de disponibilizar uma versão para aceite, preserve seus arquivos. Para publicar alterações, crie outra pasta com os dois documentos e atualize `TermosService.VERSAO_ATUAL`. Uma tela aberta com versão antiga será rejeitada e pedirá a leitura da versão atual. Aceites anteriores permanecem registrados.
-
-Com `spring.jpa.hibernate.ddl-auto=update`, a tabela é criada ao iniciar a aplicação. Não são atribuídos aceites automáticos às contas existentes.
 
 ## Verificação
 
 - Testes: `mvn test` com Java 21.
-- Entre com uma conta sem aceite: o início e as URLs de funcionalidades devem direcionar à confirmação.
-- Confira os dois links, a opção de sair e a validação das caixas desmarcadas.
-- Aceite e faça login novamente: a mesma versão não deve ser solicitada outra vez.
-- Confira o registro no banco e o comportamento com uma nova versão.
+- Cadastro sem marcar as caixas: o formulário não envia; enviado por fora da tela, o servidor recusa e nada é gravado.
+- Cadastro com as caixas marcadas: a conta entra direto, sem pedir o aceite de novo, e `aceites_termos` tem a versão atual.
+- Conta com aceite de versão anterior: ao entrar, é direcionada a `/termos/aceitar`.
+- Exclusão de conta de profissional com certificação: o arquivo do comprovante some da pasta de uploads.

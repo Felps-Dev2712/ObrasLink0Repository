@@ -89,7 +89,7 @@ public class AtendimentoService {
         }
         String mensagem = "Olá, sou " + cliente.getNome() + ". Vim pelo ObraLink e gostaria de solicitar um orçamento"
                 + (servicoSolicitado==null?"":" para " + servicoSolicitado.getTitulo()) + " com "
-                + prestador.getNome() + ". Atendimento #" + atendimento.getId()
+                + prestador.getNome() + "."
                 + "\nCategoria: " + (prestador.getCategoria() == null ? "Não informada" : prestador.getCategoria().getNome())
                 + "\nPreço mínimo: " + (prestador.getPrecoMinimo() == null ? "Sob consulta" : "R$ " + prestador.getPrecoMinimo())
                 + "\nLocal: " + (prestador.getEndereco() == null ? "Não informado" : prestador.getEndereco().getCidade() + " - " + prestador.getEndereco().getEstado())
@@ -108,31 +108,77 @@ public class AtendimentoService {
         atualizar(id, concluir, null, null);
     }
 
+    private static final java.time.format.DateTimeFormatter DATA_BR = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final java.time.format.DateTimeFormatter HORA_BR = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+    /** Relógio no fuso de São Paulo (substituível nos testes). */
+    private java.time.Clock relogio = java.time.Clock.system(java.time.ZoneId.of("America/Sao_Paulo"));
+
+    void usarRelogio(java.time.Clock relogio) { this.relogio = relogio; }
+
     @Transactional
     public void atualizar(Long id, boolean concluir, java.time.LocalDate data, java.time.LocalTime horario) {
-        Usuario usuario = acessoService.getUsuarioAtualOrThrow();
-        Atendimento atendimento = entityManager.find(Atendimento.class, id, LockModeType.PESSIMISTIC_WRITE);
-        if (atendimento == null || !Boolean.TRUE.equals(usuario.getAtivo())
-                || !usuario.getId().equals(atendimento.getPrestadorUsuarioId())||(perfil!=null&&perfil.atual()!=PapelUsuario.PRESTADOR)) {
-            throw new IllegalArgumentException("Você não pode alterar este atendimento.");
-        }
+        Atendimento atendimento = atendimentoDoPrestadorAtual(id);
         Atendimento.Status destino = concluir ? Atendimento.Status.CONCLUIDO : Atendimento.Status.EM_ANDAMENTO;
         if (atendimento.getStatus() == destino) return;
         Atendimento.Status origem = concluir ? Atendimento.Status.EM_ANDAMENTO : Atendimento.Status.CONTATO_SOLICITADO;
         if (atendimento.getStatus() != origem) {
             throw new IllegalArgumentException("Esta alteração não é permitida na etapa atual do serviço.");
         }
-        if (!concluir) {
-            var hoje = java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo"));
-            if (data == null || horario == null) throw new IllegalArgumentException("Informe a data e o horário combinados.");
-            if (data.isBefore(hoje)) throw new IllegalArgumentException("A data do serviço não pode ser anterior a hoje.");
+        if (concluir) {
+            // Só conclui a partir do dia agendado; para terminar antes, o prestador altera a data primeiro.
+            var hoje = java.time.LocalDate.now(relogio);
+            if (atendimento.getDataAgendada() != null && hoje.isBefore(atendimento.getDataAgendada())) {
+                throw new IllegalArgumentException("Este serviço está agendado para " + quando(atendimento.getDataAgendada(), atendimento.getHorarioAgendado())
+                        + ". Para concluir antes, altere a data do serviço para hoje.");
+            }
+        } else {
+            validarAgendamento(data, horario);
             atendimento.setDataAgendada(data);
             atendimento.setHorarioAgendado(horario);
         }
         atendimento.setStatus(destino);
-        if (concluir) atendimento.setConcluidoEm(LocalDateTime.now());
-        else atendimento.setConfirmadoEm(LocalDateTime.now());
+        if (concluir) atendimento.setConcluidoEm(LocalDateTime.now(relogio));
+        else atendimento.setConfirmadoEm(LocalDateTime.now(relogio));
         notificacoes.criar(atendimento.getClienteUsuarioId(), atendimento.getPrestadorNome()
-                + (concluir ? " marcou seu serviço como concluído." : " confirmou a contratação para " + data + " às " + horario + "."), "/notificacoes");
+                + (concluir ? " marcou seu serviço como concluído." : " confirmou a contratação para " + quando(data, horario) + "."), "/notificacoes");
+    }
+
+    /** O prestador altera a data e o horário de um serviço em andamento; o cliente é avisado. */
+    @Transactional
+    public void reagendar(Long id, java.time.LocalDate data, java.time.LocalTime horario) {
+        Atendimento atendimento = atendimentoDoPrestadorAtual(id);
+        if (atendimento.getStatus() != Atendimento.Status.EM_ANDAMENTO) {
+            throw new IllegalArgumentException("Só é possível alterar a data de um serviço em andamento.");
+        }
+        validarAgendamento(data, horario);
+        if (data.equals(atendimento.getDataAgendada()) && horario.equals(atendimento.getHorarioAgendado())) {
+            throw new IllegalArgumentException("Escolha uma data ou um horário diferente do atual.");
+        }
+        atendimento.setDataAgendada(data);
+        atendimento.setHorarioAgendado(horario);
+        notificacoes.criar(atendimento.getClienteUsuarioId(), atendimento.getPrestadorNome()
+                + " alterou a data do seu serviço para " + quando(data, horario) + ".", "/notificacoes");
+    }
+
+    private Atendimento atendimentoDoPrestadorAtual(Long id) {
+        Usuario usuario = acessoService.getUsuarioAtualOrThrow();
+        Atendimento atendimento = entityManager.find(Atendimento.class, id, LockModeType.PESSIMISTIC_WRITE);
+        if (atendimento == null || !Boolean.TRUE.equals(usuario.getAtivo())
+                || !usuario.getId().equals(atendimento.getPrestadorUsuarioId())||(perfil!=null&&perfil.atual()!=PapelUsuario.PRESTADOR)) {
+            throw new IllegalArgumentException("Você não pode alterar este atendimento.");
+        }
+        return atendimento;
+    }
+
+    /** Data e horário obrigatórios e não podem estar no passado (no fuso de São Paulo). */
+    private void validarAgendamento(java.time.LocalDate data, java.time.LocalTime horario) {
+        if (data == null || horario == null) throw new IllegalArgumentException("Informe a data e o horário combinados.");
+        var agora = LocalDateTime.now(relogio).withSecond(0).withNano(0);
+        if (data.isBefore(agora.toLocalDate())) throw new IllegalArgumentException("A data do serviço não pode ser anterior a hoje.");
+        if (LocalDateTime.of(data, horario).isBefore(agora)) throw new IllegalArgumentException("O horário do serviço já passou. Escolha um horário futuro.");
+    }
+
+    private static String quando(java.time.LocalDate data, java.time.LocalTime horario) {
+        return DATA_BR.format(data) + (horario == null ? "" : " às " + HORA_BR.format(horario));
     }
 }

@@ -32,13 +32,13 @@ class AvaliacaoClienteTelaTest {
   when(service.consultar(50L)).thenReturn(new AvaliacaoClienteService.Detalhes(atendimento,null,true));
   String html = mvc.perform(get("/atendimentos/50/avaliacao-cliente")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
   assertEquals(15, java.util.regex.Pattern.compile("type=\"radio\"").matcher(html).results().count());
-  assertFalse(html.contains("checked=")); assertTrue(html.contains("type=\"submit\""));
+  assertFalse(html.contains("checked=")); assertTrue(html.contains("type=\"submit\"")); assertFalse(html.contains("Atendimento #"));
  }
  @Test void avaliacaoRecebidaSomenteLeitura() throws Exception {
   AvaliacaoCliente avaliacao = new AvaliacaoCliente(); avaliacao.setComunicacao(5); avaliacao.setPontualidade(3); avaliacao.setCumprimentoCombinado(1); avaliacao.setComentario("<script>alert(1)</script>");
   when(service.consultar(50L)).thenReturn(new AvaliacaoClienteService.Detalhes(atendimento,avaliacao,false));
   String html = mvc.perform(get("/atendimentos/50/avaliacao-cliente")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-  assertFalse(html.contains("type=\"radio\"")); assertTrue(html.contains("5 de 5")); assertFalse(html.contains("<script>alert(1)</script>"));
+  assertFalse(html.contains("type=\"radio\"")); assertTrue(html.contains("5 de 5")); assertFalse(html.contains("<script>alert(1)</script>")); assertFalse(html.contains("Atendimento #"));
  }
  @Test void notasNaoNumericasPreservamFormularioSemEnviar() throws Exception {
   mvc.perform(post("/atendimentos/50/avaliacao-cliente").param("comunicacao","texto")).andExpect(status().is3xxRedirection()).andExpect(flash().attributeExists("mensagemErro","avaliacaoForm"));

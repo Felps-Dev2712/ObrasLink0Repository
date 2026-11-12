@@ -87,8 +87,10 @@ public class DashboardService {
     public Resumo carregar(LocalDate inicio, LocalDate fim) {
         Usuario usuario = acesso.getUsuarioAtualOrThrow();
         validarPrestador(usuario);
-        LocalDate cadastro = prestadores == null ? (usuario.getCriadoEm() == null ? LocalDate.now(ZoneId.of("America/Sao_Paulo")) : usuario.getCriadoEm().toLocalDate())
-                : prestadores.findByUsuarioId(usuario.getId()).map(p -> p.getCriadoEm() == null ? LocalDate.now(ZoneId.of("America/Sao_Paulo")) : p.getCriadoEm().toLocalDate()).orElseThrow(() -> new IllegalArgumentException("Cadastro de prestador não encontrado."));
+        if (prestadores != null && prestadores.findByUsuarioId(usuario.getId()).isEmpty()) {
+            throw new IllegalArgumentException("Cadastro de prestador não encontrado.");
+        }
+        LocalDate cadastro = dataCadastro(usuario);
         LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
         LocalDate de = inicio == null ? cadastro : inicio;
         LocalDate ate = fim == null ? hoje : fim;
@@ -97,7 +99,21 @@ public class DashboardService {
         if (ate.isAfter(hoje)) throw new IllegalArgumentException("A data final não pode ser posterior à data atual.");
         return carregarDados(usuario, de, ate);
     }
-    @Transactional(readOnly=true) public LocalDate dataInicioPadrao(){var u=acesso.getUsuarioAtualOrThrow();if(prestadores==null)return u.getCriadoEm()==null?LocalDate.now(ZoneId.of("America/Sao_Paulo")):u.getCriadoEm().toLocalDate();return prestadores.findByUsuarioId(u.getId()).map(p->p.getCriadoEm()==null?LocalDate.now(ZoneId.of("America/Sao_Paulo")):p.getCriadoEm().toLocalDate()).orElse(LocalDate.now(ZoneId.of("America/Sao_Paulo")));}
+    @Transactional(readOnly=true) public LocalDate dataInicioPadrao(){ return dataCadastro(acesso.getUsuarioAtualOrThrow()); }
+
+    /**
+     * Data de cadastro do prestador limitada a hoje (fuso de São Paulo). O criado_em é gravado no horário do servidor
+     * (UTC): uma conta criada depois das 21h teria a data de amanhã, o período padrão ficaria inválido (início depois
+     * do fim) e o painel entrava em loop de redirecionamento.
+     */
+    private LocalDate dataCadastro(Usuario usuario) {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+        java.time.LocalDateTime criado = prestadores == null ? usuario.getCriadoEm()
+                : prestadores.findByUsuarioId(usuario.getId()).map(p -> p.getCriadoEm()).orElse(null);
+        if (criado == null) return hoje;
+        LocalDate data = criado.toLocalDate();
+        return data.isAfter(hoje) ? hoje : data;
+    }
     public LocalDate dataFimPadrao(){return LocalDate.now(ZoneId.of("America/Sao_Paulo"));}
 
     private Resumo carregarDados(Usuario usuario, LocalDate inicio, LocalDate fim) {

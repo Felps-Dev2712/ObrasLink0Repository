@@ -25,10 +25,17 @@ public class ContaService {
     private final ServicoFotoRepository servicoFotos;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ImagemService imagemService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private CertificacaoService certificacaoService;
 
     @Transactional
     public void excluirMinhaConta() {
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
+        // Comprovantes das certificações: arquivos apagados do disco depois do commit (as linhas saem abaixo).
+        if (certificacaoService != null) {
+            prestadorRepository.findByUsuarioId(usuario.getId())
+                    .ifPresent(p -> certificacaoService.excluirDocumentosDoPrestadorAposConfirmar(p.getId()));
+        }
         // Imagens: guarda as chaves para apagar os arquivos depois que a exclusão for confirmada.
         java.util.List<String> imagens = new java.util.ArrayList<>(servicoFotos.chavesDaConta(usuario.getId()));
         prestadorRepository.findByUsuarioId(usuario.getId()).ifPresent(p -> {

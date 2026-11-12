@@ -19,8 +19,9 @@
                 <h2>Dados de acesso</h2>
                 <div class="register-grid register-grid-access">
                     <label for="email">E-mail<input id="email" type="email" th:field="*{email}" autocomplete="email" placeholder="voce@exemplo.com" required></label>
-                    <label for="senha">Senha<input id="senha" type="password" th:field="*{senha}" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" required></label>
-                    <label for="confirmarSenha">Confirmar senha<input id="confirmarSenha" type="password" th:field="*{confirmarSenha}" minlength="8" autocomplete="new-password" placeholder="Digite a senha novamente" required></label>
+                    <!-- th:value (e não th:field): o th:field nunca devolve o valor de campos de senha, e após um erro o usuário teria de digitar de novo -->
+                    <label for="senha">Senha<input id="senha" type="password" name="senha" th:value="*{senha}" minlength="8" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" required></label>
+                    <label for="confirmarSenha">Confirmar senha<input id="confirmarSenha" type="password" name="confirmarSenha" th:value="*{confirmarSenha}" minlength="8" autocomplete="new-password" placeholder="Digite a senha novamente" required></label>
                 </div>
                 <div id="sharedFields" class="register-shared" hidden>
                     <label for="nome">Nome completo<input id="nome" type="text" th:field="*{nome}" maxlength="160" autocomplete="name" placeholder="Seu nome completo" data-shared-required></label>
@@ -100,15 +101,28 @@
                                 <label th:for="${'cert-issued-' + stat.index}">Data de emissão<input th:id="${'cert-issued-' + stat.index}" type="date" th:name="${'certificacoes[' + stat.index + '].dataEmissao'}" th:value="${cert.dataEmissao}" data-cert-field="required"></label>
                                 <label th:for="${'cert-expiry-' + stat.index}">Data de validade (opcional)<input th:id="${'cert-expiry-' + stat.index}" type="date" th:name="${'certificacoes[' + stat.index + '].dataValidade'}" th:value="${cert.dataValidade}"></label>
                                 <label th:for="${'cert-code-' + stat.index}">Código de registro (opcional)<input th:id="${'cert-code-' + stat.index}" th:name="${'certificacoes[' + stat.index + '].codigoRegistro'}" th:value="${cert.codigoRegistro}" maxlength="100" placeholder="Código do certificado"></label>
-                                <label class="register-span-all" th:for="${'cert-file-' + stat.index}">Comprovante (PDF, JPG ou PNG; até 10 MB)<input th:id="${'cert-file-' + stat.index}" type="file" th:name="${'certificacoes[' + stat.index + '].documento'}" accept="application/pdf,image/jpeg,image/png" data-cert-file="required"><small data-cert-file-label>Nenhum arquivo selecionado</small></label>
+                                <label class="register-span-all" th:for="${'cert-file-' + stat.index}">Comprovante (PDF, JPG, PNG ou WebP; até 10 MB)<input th:id="${'cert-file-' + stat.index}" type="file" th:name="${'certificacoes[' + stat.index + '].documento'}" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp" data-max-mb="10" data-cert-file="required"><small data-cert-file-label th:classappend="${erro != null} ? 'field-error-text'" th:text="${erro != null ? 'Selecione o arquivo de novo: por segurança, o navegador não mantém anexos depois de um erro.' : 'Nenhum arquivo selecionado'}">Nenhum arquivo selecionado</small></label>
                             </div>
                         </article>
                     </div>
                 </section>
             </fieldset>
 
+            <!-- Aceite obrigatório antes de criar a conta (registrado junto com o cadastro) -->
+            <fieldset class="register-consent">
+                <legend class="sr-only">Termos de Uso e Aviso de Privacidade</legend>
+                <label class="consent-option" for="aceitouTermos">
+                    <input id="aceitouTermos" type="checkbox" th:field="*{aceitouTermos}" required>
+                    <span>Li e aceito os <a th:href="@{/termos}" target="_blank" rel="noopener">Termos de Uso</a>.</span>
+                </label>
+                <label class="consent-option" for="cientePrivacidade">
+                    <input id="cientePrivacidade" type="checkbox" th:field="*{cientePrivacidade}" required>
+                    <span>Li o <a th:href="@{/privacidade}" target="_blank" rel="noopener">Aviso de Privacidade</a> e estou ciente de como meus dados são utilizados.</span>
+                </label>
+                <p class="register-legal">Os documentos abrem em outra aba. Sem essas confirmações a conta não é criada.</p>
+            </fieldset>
+
             <div class="register-actions"><a th:href="@{/login}" class="btn btn-ghost">Já tenho conta</a><button type="submit" class="btn btn-primary btn-lg">Criar conta</button></div>
-            <p class="register-legal">Antes de cadastrar seus dados, consulte os <a th:href="@{/termos}">Termos de Uso</a> e o <a th:href="@{/privacidade}">Aviso de Privacidade</a>. A confirmação será solicitada no primeiro acesso à conta.</p>
         </form>
     </section>
 </main>
@@ -123,7 +137,7 @@
             <label>Data de emissão<input type="date" name="certificacoes[__INDEX__].dataEmissao" data-cert-field="required"></label>
             <label>Data de validade (opcional)<input type="date" name="certificacoes[__INDEX__].dataValidade"></label>
             <label>Código de registro (opcional)<input name="certificacoes[__INDEX__].codigoRegistro" maxlength="100" placeholder="Código do certificado"></label>
-            <label class="register-span-all">Comprovante (PDF, JPG ou PNG; até 10 MB)<input type="file" name="certificacoes[__INDEX__].documento" accept="application/pdf,image/jpeg,image/png" data-cert-file="required"><small data-cert-file-label>Nenhum arquivo selecionado</small></label>
+            <label class="register-span-all">Comprovante (PDF, JPG, PNG ou WebP; até 10 MB)<input type="file" name="certificacoes[__INDEX__].documento" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp" data-max-mb="10" data-cert-file="required"><small data-cert-file-label>Nenhum arquivo selecionado</small></label>
         </div>
     </article>
 </template>
@@ -178,8 +192,21 @@
     certList.addEventListener('input', updateCertificationRequirements);
     certList.addEventListener('change', event => {
         if (event.target.matches('[data-cert-file]')) {
-            const label = event.target.parentElement.querySelector('[data-cert-file-label]');
-            label.textContent = event.target.files.length ? event.target.files[0].name : 'Nenhum arquivo selecionado';
+            const input = event.target;
+            const label = input.parentElement.querySelector('[data-cert-file-label]');
+            const arquivo = input.files[0];
+            // Confere já na escolha: tamanho real (até 10 MB) e formato pelo tipo/extensão. O servidor confere de novo pelo conteúdo.
+            let problema = '';
+            if (arquivo) {
+                const mb = arquivo.size / (1024 * 1024);
+                const formatoOk = /^(application\/pdf|image\/(jpeg|png|webp))$/.test(arquivo.type) || /\.(pdf|jpe?g|png|webp)$/i.test(arquivo.name);
+                if (mb > 10) problema = `${arquivo.name} tem ${mb.toFixed(1).replace('.', ',')} MB. O limite é 10 MB.`;
+                else if (!formatoOk) problema = `${arquivo.name} não é PDF, JPG, PNG ou WebP.`;
+            }
+            input.setCustomValidity(problema);
+            if (problema) { input.value = ''; input.reportValidity(); }
+            label.textContent = problema || (input.files.length ? arquivo.name : 'Nenhum arquivo selecionado');
+            label.classList.toggle('field-error-text', !!problema);
         }
         updateCertificationRequirements();
     });

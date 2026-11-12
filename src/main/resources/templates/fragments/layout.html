@@ -41,7 +41,8 @@
                         <li><a href="/" th:aria-current="${path == '/' ? 'page' : null}">Início</a></li>
                         <li><a href="/prestadores" th:aria-current="${path.startsWith('/prestadores') and !path.startsWith('/prestadores/minha') ? 'page' : null}">Profissionais</a></li>
                         <li><a href="/vitrine" th:aria-current="${path.startsWith('/vitrine') ? 'page' : null}">Serviços</a></li>
-                        <li><a href="/categorias" th:aria-current="${path.startsWith('/categorias') ? 'page' : null}">Categorias</a></li>
+                        <!-- Cliente acessa as especialidades pela página inicial; o menu dele não tem Categorias -->
+                        <li th:if="${auth['perfilAtivo'] != 'CLIENTE'}"><a href="/categorias" th:aria-current="${path.startsWith('/categorias') ? 'page' : null}">Categorias</a></li>
                     </th:block>
                     <li th:if="${auth['authenticated'] and auth['perfilAtivo'] == 'CLIENTE'}"><a href="/favoritos" th:aria-current="${path.startsWith('/favoritos') ? 'page' : null}">Favoritos</a></li>
 
@@ -133,7 +134,7 @@
                     <ul>
                         <li><a href="/prestadores">Profissionais</a></li>
                         <li><a href="/vitrine">Serviços</a></li>
-                        <li><a href="/categorias">Categorias</a></li>
+                        <li th:if="${auth['perfilAtivo'] != 'CLIENTE'}"><a href="/categorias">Categorias</a></li>
                     </ul>
                 </div>
                 <div>
@@ -170,6 +171,7 @@
         <script th:src="@{/js/favoritos.js}" defer></script>
         <script th:src="@{/js/selects.js}" defer></script>
         <script th:src="@{/js/midia.js}" defer></script>
+        <script th:src="@{/js/confirmacao.js}" defer></script>
         <script th:src="@{/js/localizacao.js}" defer></script>
         <script th:src="@{/js/painel.js}" defer></script>
         <script data-layout>
@@ -256,11 +258,20 @@
                         const contador = raiz.querySelector('[data-filter-count]');
                         const vazio = raiz.querySelector('[data-filter-empty]');
                         let grupo = 'todos';
+                        // data-filter-match="inicio-palavra" (busca por nome): cada palavra digitada precisa ser o começo
+                        // de uma palavra do nome. "ana" encontra "Ana Costa", mas não "Encanamentos". Padrão: trecho em qualquer lugar.
+                        const porInicioDePalavra = !!busca && busca.dataset.filterMatch === 'inicio-palavra';
+                        const corresponde = (texto, termo) => {
+                            const alvo = normalizar(texto);
+                            if (!porInicioDePalavra) return alvo.includes(termo);
+                            const palavras = alvo.split(/[^a-z0-9]+/).filter(Boolean);
+                            return termo.split(/\s+/).filter(Boolean).every(parte => palavras.some(p => p.startsWith(parte)));
+                        };
                         const aplicar = () => {
                             const termo = busca ? normalizar(busca.value) : '';
                             let visiveis = 0;
                             itens.forEach(item => {
-                                const ok = (!termo || normalizar(item.dataset.filterText).includes(termo))
+                                const ok = (!termo || corresponde(item.dataset.filterText, termo))
                                     && (grupo === 'todos' || item.dataset.filterGroup === grupo);
                                 item.hidden = !ok;
                                 if (ok) { visiveis++; item.classList.add('is-visible'); }

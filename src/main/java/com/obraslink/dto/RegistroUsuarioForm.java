@@ -15,6 +15,10 @@ public class RegistroUsuarioForm {
     private Boolean cadastroCliente = false;
     private Boolean cadastroPrestador = false;
 
+    /** Obrigatórios para concluir o cadastro: aceite dos Termos de Uso e ciência do Aviso de Privacidade. */
+    private Boolean aceitouTermos = false;
+    private Boolean cientePrivacidade = false;
+
     @Deprecated
     private String clienteNome;
     private String clienteCpfCnpj;

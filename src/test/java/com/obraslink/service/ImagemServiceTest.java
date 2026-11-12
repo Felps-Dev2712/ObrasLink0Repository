@@ -104,6 +104,80 @@ class ImagemServiceTest {
         assertNull(prestador.getBannerChave());
     }
 
+    private static byte[] imagemReal(String formato, int largura, int altura) throws Exception {
+        var imagem = new java.awt.image.BufferedImage(largura, altura, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var saida = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(imagem, formato, saida);
+        return saida.toByteArray();
+    }
+
+    @Test
+    void capaNoTamanhoMinimoOuMaiorEhAceitaSemAlterarOArquivo() throws Exception {
+        byte[] png = imagemReal("png", 1600, 400);
+        service.atualizarImagemPerfil(ImagemService.Tipo.BANNER, arquivo("capa.png", png));
+        assertNotNull(prestador.getBannerChave());
+        assertArrayEquals(png, Files.readAllBytes(service.arquivo(prestador.getBannerChave()).orElseThrow()), "sem recompressão");
+
+        service.atualizarImagemPerfil(ImagemService.Tipo.BANNER, arquivo("capa.jpg", imagemReal("jpg", 1200, 300)));
+        assertTrue(prestador.getBannerChave().endsWith(".jpg"));
+    }
+
+    @Test
+    void capaMenorQue1200x300EhRecusadaComAsDimensoesNaMensagem() throws Exception {
+        var erro = assertThrows(IllegalArgumentException.class,
+                () -> service.atualizarImagemPerfil(ImagemService.Tipo.BANNER, arquivo("pequena.png", imagemReal("png", 800, 600))));
+        assertTrue(erro.getMessage().contains("1200 × 300") && erro.getMessage().contains("800 × 600"), erro.getMessage());
+        assertThrows(IllegalArgumentException.class,
+                () -> service.atualizarImagemPerfil(ImagemService.Tipo.BANNER, arquivo("baixa.png", imagemReal("png", 2000, 250))));
+        assertNull(prestador.getBannerChave());
+        Path imagens = pasta.resolve("imagens");
+        assertTrue(!Files.exists(imagens) || Files.list(imagens).findAny().isEmpty(), "nada gravado em disco");
+    }
+
+    @Test
+    void capaComCabecalhoIlegivelEhRecusada() {
+        assertThrows(IllegalArgumentException.class,
+                () -> service.atualizarImagemPerfil(ImagemService.Tipo.BANNER, arquivo("falsa.jpg", JPG)));
+        assertNull(prestador.getBannerChave());
+    }
+
+    @Test
+    void fotoDePerfilNaoTemExigenciaDeTamanhoDeCapa() throws Exception {
+        service.atualizarImagemPerfil(ImagemService.Tipo.FOTO_PERFIL, arquivo("rosto.png", imagemReal("png", 200, 200)));
+        assertNotNull(prestador.getFotoPerfilChave());
+    }
+
+    @Test
+    void leDimensoesDosTresTiposDeWebp() {
+        byte[] vp8x = webp("VP8X");
+        int l = 1600 - 1, a = 400 - 1;
+        vp8x[24] = (byte) l; vp8x[25] = (byte) (l >> 8); vp8x[26] = (byte) (l >> 16);
+        vp8x[27] = (byte) a; vp8x[28] = (byte) (a >> 8); vp8x[29] = (byte) (a >> 16);
+        assertArrayEquals(new int[]{1600, 400}, ImagemService.dimensoesWebp(vp8x).orElseThrow());
+
+        byte[] vp8 = webp("VP8 ");
+        vp8[23] = (byte) 0x9D; vp8[24] = 0x01; vp8[25] = 0x2A;
+        vp8[26] = (byte) (1280 & 0xFF); vp8[27] = (byte) (1280 >> 8); vp8[28] = (byte) (320 & 0xFF); vp8[29] = (byte) (320 >> 8);
+        assertArrayEquals(new int[]{1280, 320}, ImagemService.dimensoesWebp(vp8).orElseThrow());
+
+        byte[] vp8l = webp("VP8L");
+        int w = 1200 - 1, h = 300 - 1;
+        long bits = w | ((long) h << 14);
+        vp8l[20] = 0x2F; vp8l[21] = (byte) bits; vp8l[22] = (byte) (bits >> 8); vp8l[23] = (byte) (bits >> 16); vp8l[24] = (byte) (bits >> 24);
+        assertArrayEquals(new int[]{1200, 300}, ImagemService.dimensoesWebp(vp8l).orElseThrow());
+
+        assertTrue(ImagemService.dimensoesWebp(webp("XXXX")).isEmpty());
+        assertTrue(ImagemService.dimensoesWebp(new byte[10]).isEmpty());
+    }
+
+    private static byte[] webp(String bloco) {
+        byte[] b = new byte[30];
+        System.arraycopy("RIFF".getBytes(), 0, b, 0, 4);
+        System.arraycopy("WEBP".getBytes(), 0, b, 8, 4);
+        System.arraycopy(bloco.getBytes(), 0, b, 12, 4);
+        return b;
+    }
+
     @Test
     void removeBannerELimpaAChave() {
         prestador.setBannerChave(service.armazenar(arquivo("b.jpg", JPG)));

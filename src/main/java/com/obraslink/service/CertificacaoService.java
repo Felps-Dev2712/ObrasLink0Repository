@@ -23,7 +23,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CertificacaoService {
     private static final long MAX_FILE_SIZE = 10L * 1024 * 1024;
-    private static final Set<String> ALLOWED_TYPES = Set.of("application/pdf", "image/jpeg", "image/png");
 
     private final AcessoService acesso;
     private final PrestadorRepository prestadores;
@@ -137,6 +136,26 @@ public class CertificacaoService {
         c.setObservacaoValidacao(observacao == null ? null : observacao.trim());
     }
 
+    /**
+     * Exclusão de conta: apaga do disco os comprovantes das certificações do prestador, só depois que a exclusão
+     * for confirmada no banco (se a transação for desfeita, os arquivos continuam lá).
+     */
+    public void excluirDocumentosDoPrestadorAposConfirmar(Long prestadorId) {
+        Path root = Path.of(uploadDir).toAbsolutePath().normalize();
+        List<Path> arquivos = certificacoes.findByPrestadorIdOrderByCriadoEmDesc(prestadorId).stream()
+                .map(Certificacao::getDocumentoChave).filter(java.util.Objects::nonNull)
+                .map(chave -> root.resolve(chave).normalize()).filter(p -> p.startsWith(root)).toList();
+        if (arquivos.isEmpty()) return;
+        Runnable apagar = () -> arquivos.forEach(p -> {
+            try { Files.deleteIfExists(p); } catch (IOException e) { /* arquivo já removido ou indisponível: segue */ }
+        });
+        if (!org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) { apagar.run(); return; }
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override public void afterCommit() { apagar.run(); }
+                });
+    }
+
     public Path arquivo(Certificacao c) {
         Path root = Path.of(uploadDir).toAbsolutePath().normalize();
         Path file = root.resolve(c.getDocumentoChave()).normalize();
@@ -190,19 +209,10 @@ public class CertificacaoService {
 
     private String armazenarDocumento(MultipartFile arquivo, boolean obrigatorio) {
         if (arquivo == null || arquivo.isEmpty()) {
-            if (obrigatorio) throw new IllegalArgumentException("Anexe um documento de até 10 MB.");
+            if (obrigatorio) throw new IllegalArgumentException("Anexe o comprovante da certificação (PDF, JPG, PNG ou WebP de até 10 MB).");
             return null;
         }
-        String type = arquivo.getContentType();
-        if (arquivo.getSize() > MAX_FILE_SIZE || type == null || !ALLOWED_TYPES.contains(type)
-                || !signatureMatches(arquivo, type)) {
-            throw new IllegalArgumentException("Envie um documento PDF, JPG ou PNG válido de até 10 MB.");
-        }
-        String ext = switch (type) {
-            case "application/pdf" -> ".pdf";
-            case "image/jpeg" -> ".jpg";
-            default -> ".png";
-        };
+        String ext = validarDocumento(arquivo);
         String key = UUID.randomUUID() + ext;
         try {
             Path root = Path.of(uploadDir).toAbsolutePath().normalize();
@@ -233,16 +243,35 @@ public class CertificacaoService {
         return leaf.isBlank() ? "documento" : leaf;
     }
 
-    private boolean signatureMatches(MultipartFile file, String type) {
-        try {
-            byte[] b = file.getBytes();
-            if (type.equals("application/pdf")) return b.length >= 5 && b[0] == '%' && b[1] == 'P'
-                    && b[2] == 'D' && b[3] == 'F' && b[4] == '-';
-            if (type.equals("image/png")) return b.length >= 8 && (b[0] & 255) == 137
-                    && b[1] == 'P' && b[2] == 'N' && b[3] == 'G';
-            return b.length >= 3 && (b[0] & 255) == 255 && (b[1] & 255) == 216 && (b[2] & 255) == 255;
-        } catch (IOException e) {
-            return false;
+    /**
+     * Confere o comprovante pelo CONTEÚDO do arquivo (não pelo tipo informado pelo navegador nem pela extensão),
+     * com mensagens separadas para tamanho e formato. Devolve a extensão usada no disco.
+     */
+    String validarDocumento(MultipartFile arquivo) {
+        String nome = safeName(arquivo.getOriginalFilename());
+        if (arquivo.getSize() > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException(String.format(java.util.Locale.forLanguageTag("pt-BR"),
+                    "O arquivo %s tem %.1f MB. O limite é 10 MB.", nome, arquivo.getSize() / (1024.0 * 1024.0)));
         }
+        String ext = extensaoPeloConteudo(arquivo);
+        if (ext == null) throw new IllegalArgumentException("O arquivo " + nome + " não é um PDF, JPG, PNG ou WebP válido.");
+        return ext;
+    }
+
+    /** ".pdf", ".jpg", ".png" ou ".webp" conforme a assinatura do arquivo; null se não for nenhum desses. */
+    static String extensaoPeloConteudo(MultipartFile file) {
+        byte[] b;
+        try (var in = file.getInputStream()) {
+            b = in.readNBytes(12);
+        } catch (IOException e) {
+            return null;
+        }
+        if (b.length >= 5 && b[0] == '%' && b[1] == 'P' && b[2] == 'D' && b[3] == 'F' && b[4] == '-') return ".pdf";
+        if (b.length >= 3 && (b[0] & 255) == 0xFF && (b[1] & 255) == 0xD8 && (b[2] & 255) == 0xFF) return ".jpg";
+        if (b.length >= 8 && (b[0] & 255) == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G'
+                && b[4] == 0x0D && b[5] == 0x0A && b[6] == 0x1A && b[7] == 0x0A) return ".png";
+        if (b.length >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
+                && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P') return ".webp";
+        return null;
     }
 }

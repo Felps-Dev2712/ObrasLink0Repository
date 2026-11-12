@@ -52,7 +52,68 @@ class AvaliacaoPrestadorServiceTest {
         verify(avaliacoes).save(argThat(a -> a.getAtendimentoId().equals(50L)
                 && a.getQualidade() == 5 && a.getPrazo() == 4 && a.getPreco() == 3
                 && a.getOrganizacao() == 2 && a.getAtendimento() == 1 && a.getServico() == null));
-        verify(notificacoes, times(2)).criar(anyLong(), anyString(), eq("/prestadores/30"));
+        // Cliente vai para o perfil; o prestador vai direto para a avaliação que recebeu
+        verify(notificacoes).criar(eq(10L), anyString(), eq("/prestadores/30"));
+        verify(notificacoes).criar(eq(40L), contains("nova avaliação"), eq("/atendimentos/50/avaliacao-profissional"));
+    }
+
+    @Test
+    void prestadorVeAAvaliacaoRecebidaDoAtendimentoComMedia() {
+        usuario.setId(40L); // o prestador do atendimento
+        when(atendimentos.findById(50L)).thenReturn(Optional.of(contratado));
+        AvaliacaoPrestador recebida = AvaliacaoPrestador.builder().atendimentoId(50L).qualidade(5).prazo(4).preco(5).organizacao(4).atendimento(5).build();
+        when(avaliacoes.findDetalheByAtendimentoId(50L)).thenReturn(Optional.of(recebida));
+
+        var r = service.consultarRecebida(50L);
+        assertTrue(r.souPrestador());
+        assertSame(recebida, r.avaliacao());
+        assertEquals(new java.math.BigDecimal("4.6"), r.media());
+    }
+
+    @Test
+    void clienteQueAvaliouTambemPodeVerMasTerceirosNao() {
+        when(atendimentos.findById(50L)).thenReturn(Optional.of(contratado));
+        when(avaliacoes.findDetalheByAtendimentoId(50L)).thenReturn(Optional.empty());
+        var r = service.consultarRecebida(50L); // usuário 10 = cliente
+        assertFalse(r.souPrestador());
+        assertNull(r.avaliacao());
+        assertNull(r.media());
+
+        usuario.setId(99L);
+        assertThrows(IllegalArgumentException.class, () -> service.consultarRecebida(50L));
+        when(atendimentos.findById(77L)).thenReturn(Optional.empty());
+        assertThrows(IllegalArgumentException.class, () -> service.consultarRecebida(77L));
+    }
+
+    @Test
+    void listaQuaisAtendimentosJaForamAvaliadosPeloClienteNumaConsulta() {
+        when(avaliacoes.findAtendimentoIdsAvaliados(java.util.List.of(50L, 51L))).thenReturn(java.util.List.of(51L));
+        assertEquals(Set.of(51L), service.atendimentosComAvaliacaoDoCliente(java.util.List.of(50L, 51L)));
+        assertTrue(service.atendimentosComAvaliacaoDoCliente(java.util.List.of()).isEmpty());
+        verify(avaliacoes, times(1)).findAtendimentoIdsAvaliados(any());
+    }
+
+    @Test
+    void recusaComentarioAcimaDe2000CaracteresSemGravar() {
+        form.setComentario("a".repeat(2001));
+        var erro = assertThrows(IllegalArgumentException.class, () -> service.avaliar(30L, 50L, form));
+        assertEquals("O comentário deve ter no máximo 2.000 caracteres.", erro.getMessage());
+        verify(avaliacoes, never()).save(any());
+        verifyNoInteractions(notificacoes);
+    }
+
+    @Test
+    void gravaComentarioNormalizadoNoLimite() {
+        form.setComentario("  " + "a".repeat(1000) + "\r\n" + "b".repeat(999) + "  ");
+        service.avaliar(30L, 50L, form);
+        verify(avaliacoes).save(argThat(a -> a.getComentario().length() == 2000 && !a.getComentario().contains("\r")));
+    }
+
+    @Test
+    void comentarioEmBrancoViraNulo() {
+        form.setComentario("   ");
+        service.avaliar(30L, 50L, form);
+        verify(avaliacoes).save(argThat(a -> a.getComentario() == null));
     }
 
     @ParameterizedTest

@@ -221,8 +221,6 @@ public class PrestadorController {
         prestador.setWhatsapp(dados.getWhatsapp());
         prestador.setDescricao(dados.getDescricao());
         prestador.setCategoria(dados.getCategoria());
-        prestador.setAnosExperiencia(dados.getAnosExperiencia());
-        prestador.setPrecoMinimo(dados.getPrecoMinimo());
         prestador.setRaioAtendimentoKm(dados.getRaioAtendimentoKm());
         if (dados.getEndereco() != null) {
             com.obraslink.model.Endereco atual = prestador.getEndereco() == null ? new com.obraslink.model.Endereco() : prestador.getEndereco();

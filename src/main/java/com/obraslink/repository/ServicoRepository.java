@@ -27,4 +27,9 @@ public interface ServicoRepository extends JpaRepository<Servico, Long> {
     List<Servico> findPublicosPorPrestador(@Param("prestadorId") Long prestadorId);
 
     boolean existsByIdAndPrestadorUsuarioId(Long id, Long usuarioId);
+
+    /** Serviço para a página pública de detalhes: prestador e conta ativos; traz prestador e categoria na mesma consulta. */
+    @Query("select s from Servico s join fetch s.prestador p left join fetch s.categoria where s.id = :id and p.ativo = true "
+            + "and exists (select u.id from Usuario u where u.id = p.usuarioId and u.ativo = true)")
+    java.util.Optional<Servico> findPublicoPorId(@Param("id") Long id);
 }

@@ -7,7 +7,7 @@
     const linksMenu = [...shell.querySelectorAll('.sidebar-nav a')];
     // Rotas que sempre abrem fora do painel (sessão, arquivos e documentos)
     const FORA = /^\/(login|logout|register|termos|privacidade|imagens\/|certificacoes\/\d+\/documento)/;
-    const SCRIPTS_DO_LAYOUT = /\/js\/(dados-cadastrais|favoritos|selects|midia|localizacao|painel|login)\.js$/;
+    const SCRIPTS_DO_LAYOUT = /\/js\/(dados-cadastrais|favoritos|selects|midia|confirmacao|localizacao|painel|login)\.js$/;
 
     const interno = url => url.origin === location.origin && !FORA.test(url.pathname);
 

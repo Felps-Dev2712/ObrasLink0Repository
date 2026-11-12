@@ -91,9 +91,14 @@ public class ImagemService {
 
     // ---------- Perfil do prestador ----------
 
+    /** Capa: exibida em 4:1, até 1200 × 300 px. Abaixo disso a imagem seria ampliada na tela e perderia qualidade. */
+    public static final int CAPA_LARGURA_MINIMA = 1200;
+    public static final int CAPA_ALTURA_MINIMA = 300;
+
     @Transactional
     public void atualizarImagemPerfil(Tipo tipo, MultipartFile arquivo) {
         Prestador prestador = prestadorDoUsuarioAtual();
+        if (tipo == Tipo.BANNER) validarCapa(arquivo);
         String nova = armazenar(arquivo);
         String antiga = tipo == Tipo.FOTO_PERFIL ? prestador.getFotoPerfilChave() : prestador.getBannerChave();
         if (tipo == Tipo.FOTO_PERFIL) prestador.setFotoPerfilChave(nova);
@@ -207,6 +212,63 @@ public class ImagemService {
         if (lidos >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
                 && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P') return "webp";
         throw new IllegalArgumentException("Envie uma imagem JPG, PNG ou WebP.");
+    }
+
+    /** A capa precisa ter pelo menos 1200 × 300 px. Não altera nem recomprime o arquivo: só confere as dimensões. */
+    void validarCapa(MultipartFile arquivo) {
+        String extensao = validar(arquivo);
+        int[] tamanho = dimensoes(arquivo, extensao)
+                .orElseThrow(() -> new IllegalArgumentException("Não foi possível ler as dimensões da imagem. Envie outra foto."));
+        if (tamanho[0] < CAPA_LARGURA_MINIMA || tamanho[1] < CAPA_ALTURA_MINIMA) {
+            throw new IllegalArgumentException("A capa deve ter pelo menos " + CAPA_LARGURA_MINIMA + " × " + CAPA_ALTURA_MINIMA
+                    + " px (a imagem enviada tem " + tamanho[0] + " × " + tamanho[1] + " px). Use uma foto na horizontal, de preferência 1600 × 400 px.");
+        }
+    }
+
+    /** Largura e altura lidas só do cabeçalho do arquivo (sem decodificar a imagem inteira). */
+    static java.util.Optional<int[]> dimensoes(MultipartFile arquivo, String extensao) {
+        try (InputStream in = arquivo.getInputStream()) {
+            if ("webp".equals(extensao)) return dimensoesWebp(in.readNBytes(30));
+            try (var iis = javax.imageio.ImageIO.createImageInputStream(in)) {
+                if (iis == null) return java.util.Optional.empty();
+                var leitores = javax.imageio.ImageIO.getImageReaders(iis);
+                if (!leitores.hasNext()) return java.util.Optional.empty();
+                var leitor = leitores.next();
+                try {
+                    leitor.setInput(iis, true, true);
+                    return java.util.Optional.of(new int[]{leitor.getWidth(0), leitor.getHeight(0)});
+                } finally {
+                    leitor.dispose();
+                }
+            }
+        } catch (IOException | RuntimeException e) {
+            return java.util.Optional.empty();
+        }
+    }
+
+    /** WebP (o Java não lê nativamente): dimensões dos blocos VP8X, VP8 (com perdas) e VP8L (sem perdas). */
+    static java.util.Optional<int[]> dimensoesWebp(byte[] b) {
+        if (b == null || b.length < 30) return java.util.Optional.empty();
+        String bloco = new String(b, 12, 4, java.nio.charset.StandardCharsets.US_ASCII);
+        int largura, altura;
+        switch (bloco) {
+            case "VP8X" -> {
+                largura = 1 + ((b[24] & 0xFF) | (b[25] & 0xFF) << 8 | (b[26] & 0xFF) << 16);
+                altura = 1 + ((b[27] & 0xFF) | (b[28] & 0xFF) << 8 | (b[29] & 0xFF) << 16);
+            }
+            case "VP8 " -> {
+                if ((b[23] & 0xFF) != 0x9D || (b[24] & 0xFF) != 0x01 || (b[25] & 0xFF) != 0x2A) return java.util.Optional.empty();
+                largura = ((b[26] & 0xFF) | (b[27] & 0xFF) << 8) & 0x3FFF;
+                altura = ((b[28] & 0xFF) | (b[29] & 0xFF) << 8) & 0x3FFF;
+            }
+            case "VP8L" -> {
+                if ((b[20] & 0xFF) != 0x2F) return java.util.Optional.empty();
+                largura = 1 + ((b[21] & 0xFF) | (b[22] & 0x3F) << 8);
+                altura = 1 + (((b[22] & 0xFF) >> 6) | (b[23] & 0xFF) << 2 | (b[24] & 0x0F) << 10);
+            }
+            default -> { return java.util.Optional.empty(); }
+        }
+        return largura > 0 && altura > 0 ? java.util.Optional.of(new int[]{largura, altura}) : java.util.Optional.empty();
     }
 
     void excluirArquivo(String chave) {

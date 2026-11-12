@@ -32,16 +32,25 @@
                         </select>
                         <input th:if="${not isAdmin}" id="prestador" type="text" th:value="${prestadorAtual.nome}" readonly>
                     </div>
+                    <!-- Categoria = especialidade principal do prestador (definida no servidor; não é editável aqui) -->
                     <div class="field">
                         <label for="categoria">Categoria</label>
-                        <select id="categoria" th:field="*{categoria}" required>
-                            <option value="">Selecione...</option>
-                            <option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option>
-                        </select>
+                        <th:block th:unless="${isAdmin}">
+                            <input id="categoria" type="text" readonly aria-readonly="true" class="input-fixed"
+                                   th:value="${prestadorAtual != null and prestadorAtual.categoria != null ? prestadorAtual.categoria.nome : 'Especialidade principal não definida'}"
+                                   aria-describedby="categoria-ajuda">
+                            <small id="categoria-ajuda" th:if="${prestadorAtual != null and prestadorAtual.categoria != null}">Definida pela sua especialidade principal. Para mudar, edite em <a href="/clientes">Minha conta</a>.</small>
+                            <small id="categoria-ajuda" th:unless="${prestadorAtual != null and prestadorAtual.categoria != null}" class="text-warning">Defina sua especialidade principal em <a href="/clientes">Minha conta</a> antes de salvar o serviço.</small>
+                        </th:block>
+                        <th:block th:if="${isAdmin}">
+                            <input id="categoria" type="text" readonly aria-readonly="true" class="input-fixed"
+                                   th:value="${servico.categoria != null ? servico.categoria.nome : 'Especialidade principal do profissional'}" aria-describedby="categoria-ajuda">
+                            <small id="categoria-ajuda">Ao salvar, a categoria acompanha a especialidade principal do profissional responsável.</small>
+                        </th:block>
                     </div>
                     <div class="field">
-                        <label for="preco">Preço inicial (R$) <span class="text-subtle">(opcional)</span></label>
-                        <input id="preco" type="number" step="0.01" min="0" inputmode="decimal" th:field="*{preco}" placeholder="0,00">
+                        <label for="preco">Preço inicial <span class="text-subtle">(opcional)</span></label>
+                        <input id="preco" type="text" inputmode="decimal" autocomplete="off" data-mask="moeda" th:field="*{preco}" placeholder="R$ 0,00" maxlength="18">
                         <small>Deixe em branco para mostrar "Sob consulta".</small>
                     </div>
                     <div class="field">
@@ -105,5 +114,6 @@
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/moeda.js}" defer></script>
 </body>
 </html>

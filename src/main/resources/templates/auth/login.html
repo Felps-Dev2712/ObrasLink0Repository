@@ -5,6 +5,8 @@
 <main class="login-layout" id="conteudo">
     <section class="login-welcome" aria-label="Boas-vindas">
         <a th:replace="~{fragments/layout :: brand('brand-light login-wordmark')}" href="/">ObraLink</a>
+        <!-- Conteúdo principal centralizado na altura do painel; "Mais bem avaliados" fica embaixo -->
+        <div class="login-welcome-main">
         <h1>O marketplace que conecta você aos melhores profissionais.</h1>
         <p class="login-lead">Encontre profissionais para sua reforma, compare avaliações e acompanhe seus atendimentos com mais segurança.</p>
         <section class="login-platform-stats" aria-label="Indicadores reais da plataforma">
@@ -17,6 +19,7 @@
             <div class="testimonial-author"><span class="testimonial-avatar" th:text="${indicadores.depoimento.iniciais}">MS</span><span><strong th:text="${indicadores.depoimento.nome}">Cliente</strong><small>Cliente ObraLink</small></span></div>
         </section>
         <p class="login-testimonial-empty" th:if="${indicadores == null or indicadores.depoimento == null}">Avaliações reais de clientes ajudam você a escolher com mais confiança.</p>
+        </div>
         <section class="best-rated-providers" aria-label="Profissionais mais bem avaliados">
             <h2>Mais bem avaliados</h2>
             <div class="best-rated-carousel" data-best-rated-carousel th:if="${indicadores != null and !#lists.isEmpty(indicadores.melhores)}">
@@ -60,9 +63,9 @@
             <button type="submit" class="btn btn-primary login-submit">Entrar</button>
         </form>
 
-        <p class="login-register">Ainda não tem conta? <a th:href="@{/register}">Criar cadastro grátis</a></p>
+        <p class="login-register">Ainda não tem conta? <a th:href="@{/register}">Cadastre-se</a></p>
         <div class="login-role-links"><span>Cadastre-se como</span><a th:href="@{/register(perfil='cliente')}">Cliente</a><a th:href="@{/register(perfil='prestador')}">Profissional</a></div>
-        <p class="login-legal">Ao entrar pela primeira vez, você poderá ler os <a th:href="@{/termos}">Termos de Uso</a> e o <a th:href="@{/privacidade}">Aviso de Privacidade</a>.</p>
+        <p class="login-legal">Ao criar sua conta, você aceita os <a th:href="@{/termos}">Termos de Uso</a> e confirma a leitura do <a th:href="@{/privacidade}">Aviso de Privacidade</a>.</p>
     </section>
 </main>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>

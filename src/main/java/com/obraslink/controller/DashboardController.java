@@ -31,7 +31,13 @@ public class DashboardController {
             try{de=inicio==null?service.dataInicioPadrao():LocalDate.parse(inicio);ate=fim==null?service.dataFimPadrao():LocalDate.parse(fim);}
             catch(java.time.format.DateTimeParseException e){redirect.addFlashAttribute("mensagemErro","Informe datas válidas no formato esperado.");return "redirect:/dashboard?inicio="+service.dataInicioPadrao()+"&fim="+service.dataFimPadrao();}
             try { model.addAttribute("dashboard", service.carregar(de,ate)); }
-            catch(IllegalArgumentException e){redirect.addFlashAttribute("mensagemErro",e.getMessage());return "redirect:/dashboard?inicio="+service.dataInicioPadrao()+"&fim="+service.dataFimPadrao();}
+            catch(IllegalArgumentException e){
+                redirect.addFlashAttribute("mensagemErro",e.getMessage());
+                // Se o período que falhou já é o padrão, voltar para ele repetiria o erro para sempre (loop). Vai para o início.
+                boolean periodoPadrao=de.equals(service.dataInicioPadrao())&&ate.equals(service.dataFimPadrao());
+                if(periodoPadrao) return "redirect:/";
+                return "redirect:/dashboard?inicio="+service.dataInicioPadrao()+"&fim="+service.dataFimPadrao();
+            }
             model.addAttribute("inicioFiltro",de);model.addAttribute("fimFiltro",ate);
             model.addAttribute("inicioPadrao",service.dataInicioPadrao());model.addAttribute("fimPadrao",service.dataFimPadrao());
         }

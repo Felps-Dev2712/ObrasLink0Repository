@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Avaliação recebida - ObraLink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<!-- Avaliação que o cliente fez do profissional. A avaliação que o profissional faz do cliente fica em /avaliacao-cliente. -->
+<main id="conteudo" class="container container-narrow page review-page">
+    <a th:href="@{/notificacoes}" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar aos atendimentos</a>
+
+    <header class="page-header review-header">
+        <div>
+            <p class="eyebrow">Avaliação do atendimento</p>
+            <h1 th:text="${souPrestador ? 'Avaliação recebida' : 'Sua avaliação do profissional'}">Avaliação recebida</h1>
+            <p th:text="${souPrestador ? 'Veja como o cliente avaliou o seu trabalho neste serviço.' : 'Esta é a avaliação que você enviou sobre o profissional.'}">Veja como o cliente avaliou o seu trabalho.</p>
+        </div>
+    </header>
+
+    <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+
+    <section class="card review-context" aria-label="Resumo do serviço" data-reveal>
+        <div class="review-context-person">
+            <span class="pro-avatar" aria-hidden="true"
+                  th:text="${#strings.isEmpty(atendimento.clienteNome) ? 'C' : #strings.substring(atendimento.clienteNome, 0, 1)}">C</span>
+            <div>
+                <small>Avaliado por</small>
+                <strong th:text="${avaliacao != null ? avaliacao.cliente.nome : atendimento.clienteNome}">Cliente</strong>
+            </div>
+        </div>
+        <dl class="review-context-meta">
+            <div>
+                <dt>Serviço</dt>
+                <dd th:text="${atendimento.servicoTitulo != null ? atendimento.servicoTitulo : 'Contato pelo perfil'}">Serviço</dd>
+            </div>
+            <div>
+                <dt>Profissional</dt>
+                <dd th:text="${atendimento.prestadorNome}">Profissional</dd>
+            </div>
+            <div th:if="${atendimento.concluidoEm != null}">
+                <dt>Concluído em</dt>
+                <dd th:text="${#temporals.format(atendimento.concluidoEm, 'dd/MM/yyyy')}">01/01/2026</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="card review-panel" data-reveal>
+        <div th:if="${avaliacao != null}" class="review-section">
+            <div class="review-result-head">
+                <h2 class="review-section-title">Notas <span class="review-score" th:text="${'★ ' + media + ' média'}">★ 4.6 média</span></h2>
+                <span class="text-subtle" th:text="${'Enviada em ' + #temporals.format(avaliacao.criadoEm, 'dd/MM/yyyy')}">Enviada em</span>
+            </div>
+            <ul class="review-result">
+                <li th:each="item : ${ {{'Qualidade', avaliacao.qualidade}, {'Prazo', avaliacao.prazo}, {'Preço', avaliacao.preco}, {'Organização', avaliacao.organizacao}, {'Atendimento', avaliacao.atendimento}} }">
+                    <span th:text="${item[0]}">Critério</span>
+                    <span class="review-result-score" role="img" th:attr="aria-label=${item[1] + ' de 5 estrelas'}">
+                        <span class="review-stars" aria-hidden="true"><th:block th:each="n : ${#numbers.sequence(1, 5)}"><span th:classappend="${n <= item[1]} ? 'is-on'">★</span></th:block></span>
+                        <strong aria-hidden="true" th:text="${item[1] + '/5'}">5/5</strong>
+                    </span>
+                </li>
+            </ul>
+            <blockquote th:if="${avaliacao.comentario != null and !#strings.isEmpty(avaliacao.comentario)}" class="review-comment" th:text="${avaliacao.comentario}">Comentário</blockquote>
+            <p th:unless="${avaliacao.comentario != null and !#strings.isEmpty(avaliacao.comentario)}" class="review-section-hint">O cliente não deixou comentário.</p>
+        </div>
+
+        <div th:if="${avaliacao == null}" class="review-section">
+            <p class="empty-inline" th:text="${souPrestador ? 'O cliente ainda não avaliou este atendimento.' : 'Você ainda não avaliou este profissional.'}">Ainda sem avaliação.</p>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

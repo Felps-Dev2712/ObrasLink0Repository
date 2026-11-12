@@ -33,6 +33,39 @@
         return mapa;
     }
 
+    // Acima disso a posição do aparelho não é confiável para preencher um endereço (ex.: localização pela internet).
+    const PRECISAO_MAXIMA_METROS = 300;
+
+    /** Endereço de um ponto (geocodificação reversa no OpenStreetMap). Devolve null se não achar ou se não for no Brasil. */
+    async function enderecoDoPonto(lat, lng) {
+        try {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&lat=${lat}&lon=${lng}`;
+            const r = await fetch(url, {headers: {'Accept-Language': 'pt-BR'}});
+            if (!r.ok) return null;
+            return lerEnderecoReverso(await r.json());
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /** Converte a resposta do Nominatim nos campos do formulário (exposto para testes). */
+    function lerEnderecoReverso(dados) {
+        const a = dados && dados.address;
+        if (!a || (a.country_code && a.country_code !== 'br')) return null;
+        const cepDigitos = String(a.postcode || '').replace(/\D/g, '');
+        const ufCodigo = String(a['ISO3166-2-lvl4'] || '').replace(/^BR-/, '');
+        const endereco = {
+            cep: cepDigitos.length === 8 ? cepDigitos.slice(0, 5) + '-' + cepDigitos.slice(5) : '',
+            rua: a.road || a.pedestrian || a.residential || '',
+            numero: a.house_number || '',
+            bairro: a.suburb || a.neighbourhood || a.quarter || a.city_district || '',
+            cidade: a.city || a.town || a.village || a.municipality || '',
+            uf: /^[A-Z]{2}$/.test(ufCodigo) ? ufCodigo : ''
+        };
+        return endereco.cidade && (endereco.rua || endereco.cep) ? endereco : null;
+    }
+    window.ObraLinkEnderecoReverso = lerEnderecoReverso;
+
     const pino = (classe = '') => L.divIcon({className: 'map-pin ' + classe, html: '<span></span>', iconSize: [28, 28], iconAnchor: [14, 28], popupAnchor: [0, -26]});
     const casa = () => L.divIcon({className: 'map-home', html: '<span>⌂</span>', iconSize: [30, 30], iconAnchor: [15, 15]});
 
@@ -125,13 +158,43 @@
         if (raio) raio.addEventListener('input', () => desenhar());
 
         caixa.querySelector('[data-geo-buscar]')?.addEventListener('click', buscarCoordenadas);
+        // "Usar minha localização": pega a posição do aparelho, descobre o endereço desse ponto e preenche o formulário.
+        // Se a posição for imprecisa (ex.: computador sem GPS, localizado pela internet) ou o endereço não for encontrado,
+        // avisa e NÃO altera nada, para não gravar um endereço errado.
         caixa.querySelector('[data-geo-gps]')?.addEventListener('click', () => {
-            if (!navigator.geolocation) { avisar('Seu navegador não permite usar a localização.', 'aviso'); return; }
+            if (!navigator.geolocation) { avisar('Seu navegador não permite usar a localização. Use o CEP ou clique no mapa.', 'aviso'); return; }
             avisar('Obtendo sua localização…');
-            navigator.geolocation.getCurrentPosition(
-                pos => definir({lat: pos.coords.latitude, lng: pos.coords.longitude}, 'Localização atual marcada. Confira o endereço acima.'),
-                () => avisar('Não foi possível obter sua localização. Use o CEP ou clique no mapa.', 'aviso'),
-                {enableHighAccuracy: true, timeout: 10000});
+            navigator.geolocation.getCurrentPosition(async pos => {
+                const {latitude, longitude, accuracy} = pos.coords;
+                if (accuracy > PRECISAO_MAXIMA_METROS) {
+                    const distancia = accuracy >= 1000 ? `${(accuracy / 1000).toFixed(1).replace('.', ',')} km` : `${Math.round(accuracy)} m`;
+                    avisar(`Sua localização veio com baixa precisão (cerca de ${distancia}), comum em computadores sem GPS. `
+                        + 'Para não salvar um endereço errado, mantivemos os dados atuais. Use o CEP ou arraste o marcador.', 'aviso');
+                    return;
+                }
+                avisar('Buscando o endereço da sua localização…');
+                const endereco = await enderecoDoPonto(latitude, longitude);
+                if (!endereco) {
+                    avisar('Não conseguimos identificar o endereço desta localização. Os dados atuais foram mantidos: use o CEP ou o mapa.', 'aviso');
+                    return;
+                }
+                const ruaMudou = endereco.rua && endereco.rua !== rua.value.trim();
+                if (endereco.cep) { cep.value = endereco.cep; ultimoCep = endereco.cep.replace(/\D/g, ''); }
+                if (endereco.rua) rua.value = endereco.rua;
+                if (endereco.numero) numero.value = endereco.numero; else if (ruaMudou) numero.value = '';
+                if (endereco.bairro) bairro.value = endereco.bairro;
+                if (endereco.cidade) cidade.value = endereco.cidade;
+                if (endereco.uf) uf.value = endereco.uf;
+                definir({lat: latitude, lng: longitude},
+                    endereco.numero ? 'Endereço preenchido pela sua localização. Confira os dados antes de salvar.'
+                                    : 'Endereço preenchido pela sua localização. Informe o número e confira os dados antes de salvar.');
+                if (!numero.value) numero.focus();
+            }, erro => {
+                const motivo = erro && erro.code === 1 ? 'Permita o acesso à localização no navegador ou use o CEP.'
+                    : erro && erro.code === 3 ? 'A localização demorou para responder. Tente de novo ou use o CEP.'
+                    : 'Não foi possível obter sua localização. Use o CEP ou clique no mapa.';
+                avisar(motivo + ' Nenhum dado foi alterado.', 'aviso');
+            }, {enableHighAccuracy: true, timeout: 15000, maximumAge: 0});
         });
 
         // Envio sem ponto no mapa: tenta localizar antes (o servidor também tenta, se faltar)

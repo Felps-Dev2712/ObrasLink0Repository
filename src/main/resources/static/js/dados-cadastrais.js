@@ -112,7 +112,8 @@
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     root.DadosCadastrais = api;
     if (typeof document !== 'undefined') {
-        const init = () => document.querySelectorAll('input[data-mask]').forEach(preparar);
+        // Só documento e telefone; o valor em reais tem a própria máscara (moeda.js).
+        const init = () => document.querySelectorAll('input[data-mask="documento"], input[data-mask="telefone"]').forEach(preparar);
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
         else init();
         document.addEventListener('htmx:afterSwap', init);
