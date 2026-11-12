@@ -19,6 +19,13 @@ public class AvaliacaoClienteService {
 
     public record Detalhes(Atendimento atendimento, AvaliacaoCliente avaliacao, boolean podeAvaliar) {}
 
+    /** Atendimentos (entre os informados) em que o prestador já registrou a avaliação do cliente. */
+    @Transactional(readOnly = true)
+    public java.util.Set<Long> atendimentosComAvaliacaoRecebida(java.util.Collection<Long> atendimentoIds) {
+        if (atendimentoIds == null || atendimentoIds.isEmpty()) return java.util.Set.of();
+        return new java.util.HashSet<>(avaliacoes.findAtendimentoIdsAvaliados(atendimentoIds));
+    }
+
     @Transactional(readOnly = true)
     public Detalhes consultar(Long id) {
         Usuario usuario = acesso.getUsuarioAtualOrThrow();
@@ -44,10 +51,7 @@ public class AvaliacaoClienteService {
         validarNota(form.getComunicacao());
         validarNota(form.getPontualidade());
         validarNota(form.getCumprimentoCombinado());
-        String comentario = form.getComentario() == null ? null : form.getComentario().trim();
-        if (comentario != null && comentario.length() > 2000) {
-            throw new IllegalArgumentException("O comentário deve ter no máximo 2000 caracteres.");
-        }
+        String comentario = com.obraslink.validation.Comentario.normalizar(form.getComentario());
         AvaliacaoCliente avaliacao = new AvaliacaoCliente();
         avaliacao.setAtendimentoId(id);
         avaliacao.setClienteUsuarioId(atendimento.getClienteUsuarioId());
@@ -58,7 +62,8 @@ public class AvaliacaoClienteService {
         avaliacao.setComentario(comentario);
         avaliacoes.save(avaliacao);
         notificacoes.criar(atendimento.getClienteUsuarioId(),
-                atendimento.getPrestadorNome() + " avaliou você pelo atendimento #" + id + ".",
+                atendimento.getPrestadorNome() + " avaliou você pelo serviço "
+                        + (atendimento.getServicoTitulo() == null ? "concluído" : atendimento.getServicoTitulo()) + ".",
                 "/atendimentos/" + id + "/avaliacao-cliente");
     }
 

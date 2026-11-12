@@ -30,6 +30,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private CertificacaoService certificacaoService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.obraslink.repository.AceiteTermosRepository aceiteTermosRepository;
 
     /** Endereço da conta a partir do formulário de cadastro (cliente e prestador usam o mesmo). */
     public static com.obraslink.model.Endereco enderecoDoFormulario(RegistroUsuarioForm f) {
@@ -46,6 +48,10 @@ public class AuthService {
         com.obraslink.model.Endereco endereco = enderecoDoFormulario(form);
         LocalizacaoService.validarEndereco(endereco);
         int raio = LocalizacaoService.validarRaio(form.getPrestadorRaioKm());
+        // Sem o aceite dos Termos e a ciência do Aviso de Privacidade a conta não é criada.
+        if (!Boolean.TRUE.equals(form.getAceitouTermos()) || !Boolean.TRUE.equals(form.getCientePrivacidade())) {
+            throw new IllegalArgumentException("Para criar a conta, aceite os Termos de Uso e confirme a leitura do Aviso de Privacidade.");
+        }
 
         Set<PapelUsuario> papeis = new HashSet<>();
         if (Boolean.TRUE.equals(form.getCadastroCliente())) {
@@ -63,6 +69,10 @@ public class AuthService {
                 .ativo(true)
                 .build();
         usuario = usuarioRepository.save(usuario);
+        // Registra o aceite junto com a conta (mesma transação): versão atual dos documentos e data/hora do servidor.
+        if (aceiteTermosRepository != null) {
+            aceiteTermosRepository.save(new com.obraslink.model.AceiteTermos(usuario.getId(), TermosService.VERSAO_ATUAL));
+        }
 
         if (papeis.contains(PapelUsuario.CLIENTE)) {
             Cliente cliente = Cliente.builder()

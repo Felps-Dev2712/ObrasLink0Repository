@@ -27,6 +27,7 @@ public class ServicoController {
     private final AcessoService acessoService;
     private final com.obraslink.service.RelacionamentosService relacionamentosService;
     @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.PerfilAtivoService perfilAtivo;
+    @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.ServicoDetalheService detalheService;
     @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.ImagemService imagemService;
 
     /** Primeira foto de cada serviço (uma consulta só), para as listagens. */
@@ -49,6 +50,28 @@ public class ServicoController {
     }
 
     private boolean podeGerenciarServico(Long id){return acessoService.isAdmin()||(perfilAtivo==null||perfilAtivo.atual()==PapelUsuario.PRESTADOR)&&acessoService.podeGerenciarServico(id);}
+
+    /** Preço no formato brasileiro ("R$ 2.000,00") nos dois sentidos: exibição no formulário e leitura do envio. */
+    @InitBinder("servico")
+    void configurarPreco(org.springframework.web.bind.WebDataBinder binder) {
+        binder.registerCustomEditor(java.math.BigDecimal.class, "preco", new com.obraslink.validation.Moeda.Editor());
+    }
+
+    /**
+     * A categoria do serviço é sempre a especialidade principal do prestador (não vem do formulário).
+     * Devolve a mensagem de erro, ou null se deu certo.
+     */
+    private String aplicarCategoriaDoPrestador(Servico servico) {
+        Prestador dono = servico.getPrestador() == null || servico.getPrestador().getId() == null ? servico.getPrestador()
+                : prestadorService.findById(servico.getPrestador().getId()).orElse(servico.getPrestador());
+        if (dono == null) return "Selecione o profissional responsável.";
+        servico.setPrestador(dono);
+        if (dono.getCategoria() == null) {
+            return "Defina sua especialidade principal em Minha conta antes de cadastrar serviços: ela é a categoria dos seus serviços.";
+        }
+        servico.setCategoria(dono.getCategoria());
+        return null;
+    }
 
     @GetMapping("/vitrine")
     public String vitrine(@RequestParam(required = false) Long categoriaId, Model model) {
@@ -104,6 +127,26 @@ public class ServicoController {
         return "servicos/lista";
     }
 
+    /** Página pública de detalhes do serviço (qualquer usuário logado). Serviço inexistente ou de conta inativa volta para a vitrine. */
+    @GetMapping("/servicos/{id:\\d+}")
+    public String detalhes(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        var detalhe = detalheService == null ? java.util.Optional.<com.obraslink.service.ServicoDetalheService.Detalhe>empty() : detalheService.carregar(id);
+        if (detalhe.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensagemErro", "Serviço não encontrado ou indisponível.");
+            return "redirect:/vitrine";
+        }
+        var d = detalhe.get();
+        model.addAttribute("servico", d.servico());
+        model.addAttribute("prestador", d.servico().getPrestador());
+        model.addAttribute("fotos", d.fotos());
+        model.addAttribute("avaliacoes", d.avaliacoes());
+        model.addAttribute("mediaServico", d.mediaServico());
+        model.addAttribute("totalAvaliacoesPrestador", d.totalAvaliacoesPrestador());
+        model.addAttribute("mediaPrestador", d.mediaPrestador());
+        model.addAttribute("podeGerenciar", podeGerenciarServico(id));
+        return "servicos/detalhes";
+    }
+
     @GetMapping("/servicos/novo")
     public String createForm(Model model, RedirectAttributes redirectAttributes) {
         boolean admin = acessoService.isAdmin();
@@ -134,9 +177,13 @@ public class ServicoController {
     }
 
     @PostMapping("/servicos")
-    public String save(@ModelAttribute Servico servico,
+    public String save(@ModelAttribute Servico servico, org.springframework.validation.BindingResult binding,
                        @RequestParam(value = "fotos", required = false) List<org.springframework.web.multipart.MultipartFile> fotos,
                        RedirectAttributes redirectAttributes) {
+        if (binding.hasFieldErrors("preco")) {
+            redirectAttributes.addFlashAttribute("mensagemErro", com.obraslink.validation.Moeda.MENSAGEM_INVALIDO);
+            return "redirect:/servicos/novo";
+        }
         boolean admin = acessoService.isAdmin();
         boolean prestador = acessoService.hasPapel(PapelUsuario.PRESTADOR)&&(perfilAtivo==null||perfilAtivo.atual()==PapelUsuario.PRESTADOR);
         if (!admin && !prestador) {
@@ -152,6 +199,11 @@ public class ServicoController {
                 return "redirect:/servicos";
             }
             servico.setPrestador(prestadorAtual);
+        }
+        String erroCategoria = aplicarCategoriaDoPrestador(servico);
+        if (erroCategoria != null) {
+            redirectAttributes.addFlashAttribute("mensagemErro", erroCategoria);
+            return "redirect:/servicos/novo";
         }
 
         Servico salvo = servicoService.save(servico);
@@ -187,9 +239,13 @@ public class ServicoController {
 
     @PostMapping("/servicos/{id}")
     public String update(@PathVariable Long id,
-                         @ModelAttribute Servico servico,
+                         @ModelAttribute Servico servico, org.springframework.validation.BindingResult binding,
                          @RequestParam(value = "fotos", required = false) List<org.springframework.web.multipart.MultipartFile> fotos,
                          RedirectAttributes redirectAttributes) {
+        if (binding.hasFieldErrors("preco")) {
+            redirectAttributes.addFlashAttribute("mensagemErro", com.obraslink.validation.Moeda.MENSAGEM_INVALIDO);
+            return "redirect:/servicos/" + id + "/editar";
+        }
         if (!podeGerenciarServico(id)) {
             redirectAttributes.addFlashAttribute("mensagemErro", "Voce nao tem permissao para editar este servico.");
             return "redirect:/servicos";
@@ -213,6 +269,11 @@ public class ServicoController {
             servico.setPrestador(prestadorAtual);
         } else if (servico.getPrestador() == null) {
             servico.setPrestador(existente.getPrestador());
+        }
+        String erroCategoria = aplicarCategoriaDoPrestador(servico);
+        if (erroCategoria != null) {
+            redirectAttributes.addFlashAttribute("mensagemErro", erroCategoria);
+            return "redirect:/servicos/" + id + "/editar";
         }
 
         servicoService.save(servico);

@@ -24,7 +24,7 @@
                 <label>Data de emissão<input type="date" name="dataEmissao" th:max="${dataMaximaEmissao}" required></label>
                 <label>Data de validade <span class="text-subtle">(opcional)</span><input type="date" name="dataValidade"></label>
                 <label class="span-all">Código de registro <span class="text-subtle">(opcional)</span><input name="codigoRegistro" maxlength="100" placeholder="Número ou código do certificado"></label>
-                <label class="certification-file">Comprovante (PDF, JPG ou PNG; até 10 MB)<input type="file" name="documento" accept="application/pdf,image/jpeg,image/png" required data-file-name><small data-file-label class="help">Nenhum arquivo selecionado</small></label>
+                <label class="certification-file">Comprovante (PDF, JPG, PNG ou WebP; até 10 MB)<input type="file" name="documento" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp" data-max-mb="10" required data-file-name><small data-file-label class="help">Nenhum arquivo selecionado</small></label>
                 <button class="btn btn-primary" type="submit">Enviar para análise</button>
             </form>
         </div>

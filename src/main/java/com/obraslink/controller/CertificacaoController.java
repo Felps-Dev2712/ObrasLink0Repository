@@ -82,7 +82,8 @@ public class CertificacaoController {
         var file = service.arquivo(c);
         if (!Files.isRegularFile(file)) return ResponseEntity.notFound().build();
         MediaType type = c.getDocumentoChave().endsWith(".pdf") ? MediaType.APPLICATION_PDF
-                : c.getDocumentoChave().endsWith(".png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
+                : c.getDocumentoChave().endsWith(".png") ? MediaType.IMAGE_PNG
+                : c.getDocumentoChave().endsWith(".webp") ? MediaType.parseMediaType("image/webp") : MediaType.IMAGE_JPEG;
         return ResponseEntity.ok().contentType(type)
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment().filename(c.getDocumentoNome()).build().toString())

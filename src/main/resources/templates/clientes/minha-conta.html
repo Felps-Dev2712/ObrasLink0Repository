@@ -106,9 +106,10 @@
                     <div><h2 id="photos-title">Fotos do perfil</h2><p>Aparecem no seu perfil público e nas listas de profissionais. JPG, PNG ou WebP de até 5 MB.</p></div>
                 </div>
                 <div class="card-body">
+                    <!-- A prévia usa a mesma moldura 4:1 do perfil público: o que aparece aqui é o recorte que os clientes veem -->
                     <div class="media-editor">
-                        <div class="media-banner" th:style="${prestador.bannerChave != null ? 'background-image:url(/imagens/' + prestador.bannerChave + ')' : ''}"
-                             th:classappend="${prestador.bannerChave == null} ? ' is-empty'">
+                        <div class="media-banner" th:classappend="${prestador.bannerChave == null} ? ' is-empty'">
+                            <img th:if="${prestador.bannerChave != null}" th:src="@{/imagens/{c}(c=${prestador.bannerChave})}" alt="Prévia da capa">
                             <span th:if="${prestador.bannerChave == null}" class="media-placeholder">Sem capa — use uma foto de obra sua na horizontal</span>
                         </div>
                         <div class="media-avatar-row">
@@ -127,7 +128,7 @@
                                 <form th:if="${prestador.fotoPerfilChave != null}" th:action="@{/prestadores/minha-conta/foto/remover}" method="post">
                                     <button type="submit" class="btn btn-ghost btn-sm">Remover foto</button>
                                 </form>
-                                <form th:action="@{/prestadores/minha-conta/banner}" method="post" enctype="multipart/form-data" data-auto-upload>
+                                <form th:action="@{/prestadores/minha-conta/banner}" method="post" enctype="multipart/form-data" data-auto-upload data-min-largura="1200" data-min-altura="300">
                                     <label class="btn btn-outline btn-sm">
                                         <input type="file" name="arquivo" accept="image/jpeg,image/png,image/webp" class="sr-only" required>
                                         <span th:text="${prestador.bannerChave == null ? 'Enviar capa' : 'Trocar capa'}">Enviar capa</span>
@@ -140,6 +141,7 @@
                             </div>
                         </div>
                     </div>
+                    <p class="media-hint">Capa: proporção 4:1 — recomendado <strong>1600 × 400 px</strong>, mínimo 1200 × 300 px. A foto é ajustada sem distorcer; se tiver outro formato, as bordas são recortadas pelo centro.</p>
                 </div>
             </section>
 
@@ -155,8 +157,6 @@
                             <div class="field"><label for="prestadorCpfCnpj">CPF / CNPJ</label><input data-mask="documento" inputmode="text" autocapitalize="characters" spellcheck="false" id="prestadorCpfCnpj" type="text" th:field="*{cpfCnpj}" required></div>
                             <div class="field"><label for="prestadorWhatsapp">WhatsApp</label><input data-mask="telefone" inputmode="tel" autocomplete="tel-national" id="prestadorWhatsapp" type="tel" th:field="*{whatsapp}" required><small>Os clientes entram em contato por este número.</small></div>
                             <div class="field"><label for="categoria">Especialidade principal</label><select id="categoria" th:field="*{categoria}" required><option value="">Selecione...</option><option th:each="cat : ${categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option></select></div>
-                            <div class="field"><label for="anosExperiencia">Anos de experiência</label><input id="anosExperiencia" type="number" th:field="*{anosExperiencia}" min="0" inputmode="numeric"></div>
-                            <div class="field"><label for="precoMinimo">Preço mínimo (R$)</label><input id="precoMinimo" type="number" step="0.01" th:field="*{precoMinimo}" min="0" inputmode="decimal"></div>
                             <div class="field span-all"><label for="descricao">Descrição profissional</label><textarea id="descricao" th:field="*{descricao}" rows="4" placeholder="Conte brevemente sobre sua experiência e os serviços que oferece."></textarea></div>
                         </div>
 

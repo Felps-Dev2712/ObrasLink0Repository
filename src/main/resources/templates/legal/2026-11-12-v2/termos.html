@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Termos de Uso - ObraLink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main class="container legal-page">
+    <article class="legal-card">
+        <h1>Termos de Uso</h1>
+        <p>Versão 2026-11-12-v2 • 12 de novembro de 2026</p>
+
+        <h2>1. Sobre o ObraLink</h2>
+        <p>O ObraLink é uma plataforma que aproxima clientes (contratantes) de profissionais e empresas da construção civil. Pela plataforma é possível encontrar profissionais por especialidade e localização, divulgar serviços, solicitar contato pelo WhatsApp, acompanhar as etapas de um atendimento e registrar avaliações.</p>
+        <p>O ObraLink não executa os serviços, não intermedeia pagamentos e não é parte do contrato firmado entre cliente e profissional.</p>
+
+        <h2>2. Aceite obrigatório para criar a conta</h2>
+        <p>Para concluir o cadastro, você precisa marcar que leu e aceita estes Termos de Uso e que leu o <a th:href="@{/privacidade}">Aviso de Privacidade</a>. Sem essas duas confirmações a conta não é criada.</p>
+        <p>A plataforma registra a versão dos documentos aceita e a data e a hora do aceite, junto com a sua conta.</p>
+        <p>Quando estes Termos ou o Aviso de Privacidade forem atualizados, a nova versão será apresentada no seu próximo acesso. Até você confirmar a nova versão, as funcionalidades da conta ficam bloqueadas. Você continua podendo ler os documentos, sair da conta ou excluí-la.</p>
+
+        <h2>3. Sua conta</h2>
+        <p>Você pode usar a plataforma como cliente, como profissional ou com os dois perfis na mesma conta. Informe dados verdadeiros e mantenha o cadastro atualizado, incluindo o endereço, que é usado para mostrar profissionais próximos e a área de atendimento.</p>
+        <p>A conta é pessoal. Proteja sua senha e não use dados, documentos ou fotos de terceiros sem autorização.</p>
+
+        <h2>4. Regras para profissionais</h2>
+        <ul>
+            <li>A especialidade principal definida no cadastro é a categoria dos seus serviços.</li>
+            <li>Descrições, preços e fotos de serviços devem corresponder ao que você realmente oferece. As fotos devem ser suas ou usadas com autorização.</li>
+            <li>No perfil público aparecem a região aproximada e o raio de atendimento, nunca o endereço completo.</li>
+            <li>Certificações enviadas passam por análise e podem ser recusadas se o documento não for legível ou não comprovar o que foi informado.</li>
+        </ul>
+
+        <h2>5. Contato e contratação</h2>
+        <p>Ao solicitar contato, a plataforma registra seu interesse, avisa o profissional e abre o WhatsApp com uma mensagem sugerida. O clique não comprova o envio da mensagem nem a contratação.</p>
+        <p>Preço, escopo, prazo, forma de pagamento e demais condições são combinados diretamente entre cliente e profissional. A confirmação da contratação, a data agendada, eventuais alterações dessa data e a conclusão são registradas pelo profissional responsável e não representam uma verificação independente da execução do serviço.</p>
+
+        <h2>6. Avaliações</h2>
+        <p>Depois que o profissional conclui um atendimento, cliente e profissional podem avaliar um ao outro uma vez por atendimento. As avaliações devem refletir a experiência real, com comentários de até 2.000 caracteres, e não podem ser alteradas depois de enviadas.</p>
+
+        <h2>7. Uso responsável</h2>
+        <p>Não publique conteúdo falso, ofensivo, discriminatório ou que exponha dados de terceiros. Não tente acessar contas, alterar atendimentos ou avaliações de outras pessoas, nem usar a plataforma para fraudes. Contas e conteúdos que descumpram estes Termos podem ser removidos.</p>
+
+        <h2>8. Dados pessoais</h2>
+        <p>O <a th:href="@{/privacidade}">Aviso de Privacidade</a> explica quais dados são coletados, como são usados, o que fica visível para outros usuários e como funciona a exclusão. Aceitar estes Termos não é uma autorização genérica para qualquer uso dos seus dados.</p>
+
+        <h2>9. Exclusão da conta</h2>
+        <p>Você pode excluir sua conta a qualquer momento, sem precisar de aprovação: em <strong>Minha conta &gt; Excluir minha conta</strong>, ou na tela de confirmação dos documentos, em "Prefiro excluir minha conta". Também é possível pedir a exclusão pelo canal de contato.</p>
+        <p><strong>A exclusão é permanente e imediata. Não pode ser desfeita e a conta não pode ser recuperada.</strong> Ela remove:</p>
+        <ul>
+            <li>os perfis de cliente e de profissional e a sessão de acesso;</li>
+            <li>serviços, fotos, capa, foto de perfil, agenda e certificações, incluindo os arquivos enviados;</li>
+            <li>os atendimentos em que você participou, inclusive o histórico que a outra parte via;</li>
+            <li>as avaliações que você fez e as que recebeu, favoritos, notificações e os registros de aceite dos documentos.</li>
+        </ul>
+        <p>Para voltar a usar a plataforma, será preciso fazer um novo cadastro. Dados que a lei obriga a guardar por um período, mesmo após a exclusão, estão descritos no Aviso de Privacidade.</p>
+
+        <h2>10. Alterações destes Termos</h2>
+        <p>Estes Termos podem ser atualizados para refletir mudanças na plataforma ou na legislação. Cada versão fica registrada com sua data, e a nova versão precisa ser aceita para continuar usando a conta, como descrito no item 2. Estes Termos não afastam direitos garantidos pela legislação, incluindo o Código de Defesa do Consumidor e a Lei Geral de Proteção de Dados (LGPD).</p>
+
+        <h2>11. Contato</h2>
+        <p>Dúvidas, solicitações e denúncias: <a href="mailto:contato@obraslink.com.br">contato@obraslink.com.br</a>.</p>
+        <a th:if="${auth['authenticated']}" th:href="@{/termos/aceitar}" class="btn btn-primary">Continuar</a>
+    </article>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -39,6 +39,35 @@ public class AvaliacaoPrestadorService {
                 .orElseGet(List::of);
     }
 
+    /** Avaliação que o cliente fez do profissional em um atendimento (null se ainda não avaliou). */
+    public record Recebida(Atendimento atendimento, AvaliacaoPrestador avaliacao, boolean souPrestador) {
+        public java.math.BigDecimal media() {
+            if (avaliacao == null) return null;
+            double m = (avaliacao.getQualidade() + avaliacao.getPrazo() + avaliacao.getPreco() + avaliacao.getOrganizacao() + avaliacao.getAtendimento()) / 5.0;
+            return java.math.BigDecimal.valueOf(m).setScale(1, java.math.RoundingMode.HALF_UP);
+        }
+    }
+
+    /** Só os dois participantes do atendimento (o profissional avaliado e o cliente que avaliou) podem ver. */
+    @Transactional(readOnly = true)
+    public Recebida consultarRecebida(Long atendimentoId) {
+        var usuario = acessoService.getUsuarioAtualOrThrow();
+        Atendimento atendimento = atendimentoRepository.findById(atendimentoId)
+                .orElseThrow(() -> new IllegalArgumentException("Atendimento não encontrado."));
+        boolean prestador = usuario.getId().equals(atendimento.getPrestadorUsuarioId());
+        if (!prestador && !usuario.getId().equals(atendimento.getClienteUsuarioId())) {
+            throw new IllegalArgumentException("Você não tem acesso a esta avaliação.");
+        }
+        return new Recebida(atendimento, avaliacaoRepository.findDetalheByAtendimentoId(atendimentoId).orElse(null), prestador);
+    }
+
+    /** Atendimentos (entre os informados) em que o cliente já avaliou o profissional. */
+    @Transactional(readOnly = true)
+    public java.util.Set<Long> atendimentosComAvaliacaoDoCliente(java.util.Collection<Long> atendimentoIds) {
+        if (atendimentoIds == null || atendimentoIds.isEmpty()) return java.util.Set.of();
+        return new java.util.HashSet<>(avaliacaoRepository.findAtendimentoIdsAvaliados(atendimentoIds));
+    }
+
     public List<AvaliacaoPrestador> findByPrestador(Long prestadorId) {
         return avaliacaoRepository.findByPrestadorIdOrderByCriadoEmDesc(prestadorId);
     }
@@ -102,6 +131,7 @@ public class AvaliacaoPrestadorService {
         validarNota(form.getPreco(), "preco");
         validarNota(form.getOrganizacao(), "organizacao");
         validarNota(form.getAtendimento(), "atendimento");
+        String comentario = com.obraslink.validation.Comentario.normalizar(form.getComentario());
 
         AvaliacaoPrestador avaliacao = AvaliacaoPrestador.builder()
                 .prestador(prestador)
@@ -112,7 +142,7 @@ public class AvaliacaoPrestadorService {
                 .preco(form.getPreco())
                 .organizacao(form.getOrganizacao())
                 .atendimento(form.getAtendimento())
-                .comentario(form.getComentario())
+                .comentario(comentario)
                 .build();
         avaliacaoRepository.save(avaliacao);
 
@@ -120,7 +150,7 @@ public class AvaliacaoPrestadorService {
         notificacaoService.criar(usuario.getId(),
                 "Sua avaliação para " + prestador.getNome() + " foi registrada.", link);
         notificacaoService.criar(prestador.getUsuarioId(),
-                "Você recebeu uma nova avaliação de " + cliente.getNome() + ".", link);
+                "Você recebeu uma nova avaliação de " + cliente.getNome() + ".", "/atendimentos/" + contratado.getId() + "/avaliacao-profissional");
     }
 
     private void validarNota(Integer nota, String criterio) {

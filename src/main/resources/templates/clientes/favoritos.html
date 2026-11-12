@@ -17,7 +17,7 @@
             <div class="dir-search" role="search">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                 <label class="sr-only" for="busca-favorito">Buscar nos favoritos</label>
-                <input id="busca-favorito" type="search" placeholder="Buscar pelo nome ou especialidade…" autocomplete="off" data-filter-input>
+                <input id="busca-favorito" type="search" placeholder="Buscar pelo nome do profissional…" autocomplete="off" data-filter-input data-filter-match="inicio-palavra">
                 <span class="dir-search-count" data-filter-count aria-live="polite"></span>
             </div>
         </div>
@@ -34,7 +34,7 @@
 
         <div class="pro-grid" th:unless="${#lists.isEmpty(favoritos)}">
             <article class="pro-card" th:each="fav, stat : ${favoritos}" data-reveal data-filter-item data-fav-card
-                     th:attr="data-filter-text=${fav.nome + ' ' + fav.categoria}" th:style="${'--i:' + (stat.index % 6)}">
+                     th:attr="data-filter-text=${fav.nome}" th:style="${'--i:' + (stat.index % 6)}">
                 <div class="pro-card-head">
                     <span class="pro-avatar" aria-hidden="true" th:text="${#strings.isEmpty(fav.nome) ? 'P' : #strings.substring(fav.nome, 0, 1)}">P</span>
                     <div class="pro-card-title">

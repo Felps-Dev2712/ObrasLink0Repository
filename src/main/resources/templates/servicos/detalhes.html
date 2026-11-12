@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head(${servico.titulo + ' - ObraLink'})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo" class="container page service-detail-page">
+    <a th:href="@{/prestadores/{id}(id=${prestador.id})}" class="page-back">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        <span th:text="${'Voltar ao perfil de ' + prestador.nome}">Voltar ao perfil</span>
+    </a>
+
+    <p th:if="${mensagem}" class="alert alert-success" role="status" th:text="${mensagem}"></p>
+    <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+
+    <div class="service-detail-layout">
+        <div class="service-detail-main">
+            <!-- Fotos: todas as enviadas pelo prestador; clique abre o visualizador ampliado -->
+            <section th:if="${!#lists.isEmpty(fotos)}" class="card service-detail-gallery" aria-label="Fotos do serviço" data-reveal>
+                <a class="service-detail-cover" th:href="@{/imagens/{c}(c=${fotos[0].chave})}" data-lightbox data-lightbox-group="servico-detalhe"
+                   th:attr="aria-label=${'Ampliar foto 1 de ' + #lists.size(fotos)}">
+                    <img th:src="@{/imagens/{c}(c=${fotos[0].chave})}" th:alt="${'Foto do serviço ' + servico.titulo}">
+                    <span class="service-gallery-count" th:if="${#lists.size(fotos) > 1}" th:text="${#lists.size(fotos) + ' fotos'}">3 fotos</span>
+                </a>
+                <div class="service-detail-thumbs" th:if="${#lists.size(fotos) > 1}">
+                    <a th:each="foto, fs : ${fotos}" th:if="${fs.index > 0}" th:href="@{/imagens/{c}(c=${foto.chave})}" data-lightbox data-lightbox-group="servico-detalhe"
+                       th:attr="aria-label=${'Ampliar foto ' + (fs.index + 1) + ' de ' + #lists.size(fotos)}">
+                        <img th:src="@{/imagens/{c}(c=${foto.chave})}" alt="" loading="lazy">
+                    </a>
+                </div>
+            </section>
+
+            <section class="card service-detail-info" aria-labelledby="servico-titulo" data-reveal>
+                <div class="service-detail-tags">
+                    <span th:if="${servico.categoria != null}" class="badge badge-brand"
+                          th:text="${(servico.categoria.icone != null ? servico.categoria.icone + ' ' : '') + servico.categoria.nome}">Categoria</span>
+                    <span class="service-availability" th:classappend="${servico.disponivel} ? ' is-available' : ' is-unavailable'"
+                          th:text="${servico.disponivel} ? 'Disponível para contratação' : 'Indisponível no momento'">Disponível</span>
+                </div>
+                <h1 id="servico-titulo" th:text="${servico.titulo}">Nome do serviço</h1>
+                <p class="service-detail-price">
+                    <span>Preço</span>
+                    <strong th:text="${servico.preco != null ? 'A partir de R$ ' + #numbers.formatDecimal(servico.preco, 1, 'POINT', 2, 'COMMA') : 'Sob consulta'}">A partir de R$ 100,00</strong>
+                </p>
+                <h2 class="service-detail-subtitle">Descrição</h2>
+                <p class="service-detail-desc" th:if="${servico.descricao != null and !#strings.isEmpty(servico.descricao)}" th:text="${servico.descricao}">Descrição completa.</p>
+                <p class="service-detail-desc text-subtle" th:unless="${servico.descricao != null and !#strings.isEmpty(servico.descricao)}">O profissional não adicionou uma descrição para este serviço.</p>
+            </section>
+
+            <!-- Avaliações deste serviço -->
+            <section class="card provider-panel reviews-panel" id="avaliacoes" aria-labelledby="avaliacoes-servico" data-reveal>
+                <div class="provider-panel-head">
+                    <div>
+                        <h2 id="avaliacoes-servico">Avaliações deste serviço</h2>
+                        <p th:text="${#lists.isEmpty(avaliacoes) ? 'Opiniões de quem contratou este serviço pelo ObraLink.' : (#lists.size(avaliacoes) == 1 ? '1 avaliação' : #lists.size(avaliacoes) + ' avaliações')}">Avaliações</p>
+                    </div>
+                    <span th:if="${mediaServico != null}" class="review-score" th:text="${'★ ' + mediaServico + ' média'}">★ 5.0</span>
+                </div>
+                <p th:if="${#lists.isEmpty(avaliacoes)}" class="reviews-empty">
+                    <span aria-hidden="true">☆</span><span>Este serviço ainda não recebeu avaliações.</span>
+                </p>
+                <article th:each="avaliacao : ${avaliacoes}" class="review-card">
+                    <div class="review-card-head">
+                        <div>
+                            <span class="avatar avatar-sm" aria-hidden="true" th:text="${#strings.substring(avaliacao.cliente.nome, 0, 1)}">C</span>
+                            <span><strong th:text="${avaliacao.cliente.nome}">Cliente</strong><small th:text="${#temporals.format(avaliacao.criadoEm, 'dd/MM/yyyy')}">25/05/2026</small></span>
+                        </div>
+                        <span class="review-score" th:text="${'★ ' + #numbers.formatDecimal((avaliacao.qualidade + avaliacao.prazo + avaliacao.preco + avaliacao.organizacao + avaliacao.atendimento) / 5.0, 1, 1)}">★ 5.0</span>
+                    </div>
+                    <ul class="review-criteria" aria-label="Notas por critério">
+                        <li>Qualidade <strong th:text="${avaliacao.qualidade}">5</strong></li>
+                        <li>Prazo <strong th:text="${avaliacao.prazo}">5</strong></li>
+                        <li>Preço <strong th:text="${avaliacao.preco}">5</strong></li>
+                        <li>Organização <strong th:text="${avaliacao.organizacao}">5</strong></li>
+                        <li>Atendimento <strong th:text="${avaliacao.atendimento}">5</strong></li>
+                    </ul>
+                    <p th:if="${avaliacao.comentario != null and !#strings.isEmpty(avaliacao.comentario)}" class="review-text" data-texto-recolhivel
+                       th:id="${'comentario-avaliacao-' + avaliacao.id}" th:text="${avaliacao.comentario}">Comentário</p>
+                </article>
+            </section>
+        </div>
+
+        <!-- Identificação do prestador e contratação -->
+        <aside class="service-detail-aside">
+            <section class="card service-provider-card" aria-label="Profissional" data-reveal>
+                <p class="service-provider-label">Oferecido por</p>
+                <a th:href="@{/prestadores/{id}(id=${prestador.id})}" class="service-provider-id">
+                    <span class="pro-avatar" aria-hidden="true"><img th:if="${prestador.fotoPerfilChave != null}" th:src="@{/imagens/{c}(c=${prestador.fotoPerfilChave})}" alt=""><th:block th:unless="${prestador.fotoPerfilChave != null}" th:text="${#strings.isEmpty(prestador.nome) ? 'P' : #strings.substring(prestador.nome, 0, 1)}">P</th:block></span>
+                    <span>
+                        <strong th:text="${prestador.nome}">Profissional</strong>
+                        <small th:text="${mediaPrestador != null ? '★ ' + mediaPrestador + ' · ' + totalAvaliacoesPrestador + (totalAvaliacoesPrestador == 1 ? ' avaliação' : ' avaliações') : 'Ainda sem avaliações'}">★ 4.5</small>
+                    </span>
+                </a>
+                <ul class="provider-specialties service-provider-tags" aria-label="Especialidades">
+                    <li th:if="${prestador.categoria != null}" class="badge badge-brand"
+                        th:text="${(prestador.categoria.icone != null ? prestador.categoria.icone + ' ' : '') + prestador.categoria.nome}">Especialidade</li>
+                    <li th:each="cat : ${prestador.categorias}" th:if="${prestador.categoria == null or cat.id != prestador.categoria.id}" class="badge badge-brand"
+                        th:text="${(cat.icone != null ? cat.icone + ' ' : '') + cat.nome}">Especialidade</li>
+                </ul>
+
+                <div class="service-provider-actions">
+                    <form th:if="${servico.disponivel and auth['authenticated'] and auth['perfilAtivo'] == 'CLIENTE' and auth['hasCliente'] and prestador.usuarioId != auth['usuarioId']}"
+                          th:action="@{/prestadores/{pid}/servicos/{sid}/contato(pid=${prestador.id},sid=${servico.id})}" method="post">
+                        <button class="btn btn-primary btn-block" type="submit">Solicitar este serviço</button>
+                    </form>
+                    <p th:if="${!servico.disponivel}" class="service-unavailable-note">Este serviço não está aceitando novas solicitações.</p>
+                    <a th:href="@{/prestadores/{id}(id=${prestador.id})}" class="btn btn-outline btn-block">Ver perfil do profissional</a>
+                    <a th:if="${podeGerenciar}" th:href="@{/servicos/{id}/editar(id=${servico.id})}" class="btn btn-ghost btn-block">Editar serviço</a>
+                </div>
+            </section>
+        </aside>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/avaliacoes.js}" defer></script>
+</body>
+</html>

@@ -14,13 +14,39 @@
         if (autoForm && input.files.length) {
             const problema = problemaDoArquivo(input.files[0]);
             if (problema) { alert(problema); input.value = ''; return; }
-            autoForm.classList.add('is-uploading');
-            if (autoForm.requestSubmit) autoForm.requestSubmit(); else autoForm.submit();
+            const enviar = () => {
+                autoForm.classList.add('is-uploading');
+                if (autoForm.requestSubmit) autoForm.requestSubmit(); else autoForm.submit();
+            };
+            // Capa: confere o tamanho mínimo antes de enviar (o servidor confere de novo).
+            const minLargura = Number(autoForm.dataset.minLargura || 0);
+            const minAltura = Number(autoForm.dataset.minAltura || 0);
+            if (!minLargura && !minAltura) { enviar(); return; }
+            medirImagem(input.files[0]).then(tamanho => {
+                if (tamanho && (tamanho.largura < minLargura || tamanho.altura < minAltura)) {
+                    alert(`A capa deve ter pelo menos ${minLargura} × ${minAltura} px (esta tem ${tamanho.largura} × ${tamanho.altura} px). `
+                        + 'Use uma foto na horizontal, de preferência 1600 × 400 px.');
+                    input.value = '';
+                    return;
+                }
+                enviar(); // sem conseguir medir no navegador, deixa o servidor decidir
+            });
             return;
         }
         const zona = input.closest('[data-dropzone]');
         if (zona) mostrarPrevia(zona, input);
     });
+
+    // Largura e altura reais da imagem escolhida (null se o navegador não conseguir ler).
+    function medirImagem(arquivo) {
+        return new Promise(resolve => {
+            const url = URL.createObjectURL(arquivo);
+            const img = new Image();
+            img.onload = () => { URL.revokeObjectURL(url); resolve({largura: img.naturalWidth, altura: img.naturalHeight}); };
+            img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+            img.src = url;
+        });
+    }
 
     function mostrarPrevia(zona, input) {
         const campo = zona.parentElement;

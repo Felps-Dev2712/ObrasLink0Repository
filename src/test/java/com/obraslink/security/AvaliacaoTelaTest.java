@@ -63,9 +63,24 @@ class AvaliacaoTelaTest {
             });
         }
         assertTrue(html.contains("Enviar avaliação"));
-        assertTrue(html.contains("Atendimento #50"));
+        assertFalse(html.contains("Atendimento #"), "número interno do atendimento não pode aparecer na tela");
+        assertTrue(html.contains("concluído em 10/09/2026"));
         assertFalse(html.contains("name=\"atendimentoId\"")); assertTrue(html.contains("/atendimentos/50/avaliacoes"));
         assertFalse(html.contains("requestSubmit"));
+    }
+
+    @Test
+    void exibeTodasAsEspecialidadesEmEtiquetasSemRepetirAPrincipal() throws Exception {
+        Categoria eletricista = Categoria.builder().id(1L).nome("Eletricista").icone("⚡").build();
+        Categoria pintor = Categoria.builder().id(2L).nome("Pintor").icone("🎨").build();
+        Prestador prestador = Prestador.builder().id(30L).nome("Fornecedor").categoria(eletricista).build();
+        prestador.getCategorias().addAll(List.of(eletricista, pintor));
+        when(prestadores.findPerfilPublico(30L)).thenReturn(Optional.of(prestador));
+
+        String html = mvc.perform(get("/prestadores/30")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        var etiquetas = Pattern.compile("<li class=\"badge badge-brand\">([^<]*)</li>").matcher(html).results().map(m -> m.group(1)).toList();
+        assertEquals(List.of("⚡ Eletricista", "🎨 Pintor"), etiquetas);
+        assertFalse(html.contains("provider-categories"));
     }
 
     @Test
@@ -73,7 +88,8 @@ class AvaliacaoTelaTest {
         when(avaliacoes.atendimentosDisponiveis(30L)).thenReturn(List.of());
         String html = mvc.perform(get("/prestadores/30")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertFalse(html.contains("data-rating-form"));
-        assertTrue(html.contains("Cada atendimento pode ser avaliado uma vez"));
+        assertTrue(html.contains("Você pode avaliar este prestador depois que ele concluir um serviço contratado por você."));
+        assertFalse(html.contains("Cada atendimento pode ser avaliado uma vez"), "frase removida da seção");
     }
 
     @Test

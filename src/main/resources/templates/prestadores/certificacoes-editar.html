@@ -23,7 +23,7 @@
                 <label>Data de emissão<input type="date" name="dataEmissao" th:value="${certificacao.dataEmissao}" th:max="${dataMaximaEmissao}" required></label>
                 <label>Data de validade <span class="text-subtle">(opcional)</span><input type="date" name="dataValidade" th:value="${certificacao.dataValidade}"></label>
                 <label class="span-all">Código de registro <span class="text-subtle">(opcional)</span><input name="codigoRegistro" maxlength="100" th:value="${certificacao.codigoRegistro}"></label>
-                <label class="certification-file">Substituir comprovante (PDF, JPG ou PNG; até 10 MB)<input type="file" name="documento" accept="application/pdf,image/jpeg,image/png" data-file-name><small data-file-label class="help" th:text="${'Comprovante atual: ' + certificacao.documentoNome}"></small></label>
+                <label class="certification-file">Substituir comprovante (PDF, JPG, PNG ou WebP; até 10 MB)<input type="file" name="documento" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp" data-max-mb="10" data-file-name><small data-file-label class="help" th:text="${'Comprovante atual: ' + certificacao.documentoNome}"></small></label>
                 <div class="form-actions certification-actions">
                     <a class="btn btn-ghost" th:href="@{/prestadores/minhas-certificacoes}">Cancelar</a>
                     <button class="btn btn-primary" type="submit">Salvar e enviar para análise</button>
