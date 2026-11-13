@@ -89,7 +89,7 @@
             const ponto = [Number(lat.value), Number(lng.value)];
             if (!marcador) {
                 marcador = L.marker(ponto, {draggable: true, icon: pino(), keyboard: true, title: 'Arraste para ajustar'}).addTo(mapa);
-                marcador.on('dragend', () => definir(marcador.getLatLng(), 'Ponto ajustado por você.'));
+                marcador.on('dragend', () => ajustarPontoManual(marcador.getLatLng(), 'arraste'));
             } else marcador.setLatLng(ponto);
             if (raio) {
                 const km = Math.max(1, Number(raio.value || 15));
@@ -104,6 +104,41 @@
             lng.value = Number(latlng.lng).toFixed(6);
             avisar(mensagem, 'ok');
             desenhar(true);
+        }
+
+        /** Preenche os campos com o endereço encontrado. Sem número no resultado e com a rua mudando, limpa o número
+         * antigo (era da rua anterior). Reaproveitado pelo arraste/clique no mapa e por "Usar minha localização". */
+        function preencherCampos(endereco) {
+            const ruaMudou = endereco.rua && endereco.rua !== rua.value.trim();
+            if (endereco.cep) { cep.value = endereco.cep; ultimoCep = endereco.cep.replace(/\D/g, ''); }
+            if (endereco.rua) rua.value = endereco.rua;
+            if (endereco.numero) numero.value = endereco.numero; else if (ruaMudou) numero.value = '';
+            if (endereco.bairro) bairro.value = endereco.bairro;
+            if (endereco.cidade) cidade.value = endereco.cidade;
+            if (endereco.uf) uf.value = endereco.uf;
+        }
+
+        // Descarta a resposta de uma busca de endereço que não é mais a mais recente (ex.: duas arrastadas seguidas).
+        let geoRequisicaoAtual = 0;
+
+        /** Arraste do marcador ou clique no mapa: move o ponto na hora e atualiza os campos de endereço (CEP, rua,
+         * número, bairro, cidade, UF) pelo endereço desse ponto. Sem endereço encontrado, mantém o ponto escolhido
+         * e avisa para preencher os campos manualmente — nunca troca o ponto que a pessoa acabou de marcar. */
+        async function ajustarPontoManual(latlng, origem) {
+            lat.value = Number(latlng.lat).toFixed(6);
+            lng.value = Number(latlng.lng).toFixed(6);
+            desenhar(true);
+            avisar('Localizando o endereço deste ponto…');
+            const minhaRequisicao = ++geoRequisicaoAtual;
+            const endereco = await enderecoDoPonto(latlng.lat, latlng.lng);
+            if (minhaRequisicao !== geoRequisicaoAtual) return;
+            const pontoDescricao = origem === 'arraste' ? 'Ponto ajustado' : 'Ponto marcado no mapa';
+            if (!endereco) {
+                avisar(`${pontoDescricao}. Não encontramos o endereço deste local: preencha os campos acima manualmente.`, 'aviso');
+                return;
+            }
+            preencherCampos(endereco);
+            avisar(`${pontoDescricao}. Endereço atualizado — confira os dados antes de salvar.`, 'ok');
         }
 
         async function buscarCoordenadas() {
@@ -173,18 +208,14 @@
                     return;
                 }
                 avisar('Buscando o endereço da sua localização…');
+                const minhaRequisicao = ++geoRequisicaoAtual;
                 const endereco = await enderecoDoPonto(latitude, longitude);
+                if (minhaRequisicao !== geoRequisicaoAtual) return;
                 if (!endereco) {
                     avisar('Não conseguimos identificar o endereço desta localização. Os dados atuais foram mantidos: use o CEP ou o mapa.', 'aviso');
                     return;
                 }
-                const ruaMudou = endereco.rua && endereco.rua !== rua.value.trim();
-                if (endereco.cep) { cep.value = endereco.cep; ultimoCep = endereco.cep.replace(/\D/g, ''); }
-                if (endereco.rua) rua.value = endereco.rua;
-                if (endereco.numero) numero.value = endereco.numero; else if (ruaMudou) numero.value = '';
-                if (endereco.bairro) bairro.value = endereco.bairro;
-                if (endereco.cidade) cidade.value = endereco.cidade;
-                if (endereco.uf) uf.value = endereco.uf;
+                preencherCampos(endereco);
                 definir({lat: latitude, lng: longitude},
                     endereco.numero ? 'Endereço preenchido pela sua localização. Confira os dados antes de salvar.'
                                     : 'Endereço preenchido pela sua localização. Informe o número e confira os dados antes de salvar.');
@@ -206,7 +237,7 @@
         if (elMapa) carregarLeaflet().then(() => {
             mapa = novoMapa(elMapa);
             mapa.setView(temPonto() ? [Number(lat.value), Number(lng.value)] : CENTRO_PADRAO, temPonto() ? 15 : 11);
-            mapa.on('click', e => definir(e.latlng, 'Ponto marcado no mapa.'));
+            mapa.on('click', e => ajustarPontoManual(e.latlng, 'clique'));
             desenhar(true);
             if (temPonto()) avisar('Localização salva. Arraste o marcador se precisar ajustar.', 'ok');
         }).catch(() => avisar('O mapa não carregou. O endereço será localizado ao salvar.', 'aviso'));
