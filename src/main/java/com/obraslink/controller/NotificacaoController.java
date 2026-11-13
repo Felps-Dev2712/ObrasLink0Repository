@@ -23,6 +23,7 @@ public class NotificacaoController {
     private final AtendimentoService atendimentoService;
     private final com.obraslink.service.AvaliacaoClienteService avaliacaoClienteService;
     private final com.obraslink.service.AvaliacaoPrestadorService avaliacaoPrestadorService;
+    private final com.obraslink.service.DenunciaService denunciaService;
 
     @GetMapping("/notificacoes")
     public String listar(Model model) {
@@ -41,6 +42,8 @@ public class NotificacaoController {
                 .map(com.obraslink.model.Atendimento::getId).toList();
         model.addAttribute("clientesJaAvaliados", avaliacaoClienteService.atendimentosComAvaliacaoRecebida(concluidosComoPrestador));
         model.addAttribute("avaliacoesDoCliente", avaliacaoPrestadorService.atendimentosComAvaliacaoDoCliente(concluidosComoPrestador));
+        model.addAttribute("denunciasFeitas", denunciaService.atendimentosJaDenunciados(
+                atendimentos.stream().map(com.obraslink.model.Atendimento::getId).toList(), usuario.getId()));
         model.addAttribute("usuarioAtualId", usuario.getId());
         model.addAttribute("hoje",java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo")));
         return "notificacoes/lista";

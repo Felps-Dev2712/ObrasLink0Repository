@@ -58,29 +58,59 @@ public class ServicoController {
     }
 
     /**
-     * A categoria do serviço é sempre a especialidade principal do prestador (não vem do formulário).
+     * A categoria do serviço é sempre uma especialidade do PRÓPRIO prestador — nunca uma categoria de fora,
+     * mesmo que alguém envie outro id por fora da tela. O prestador escolhe entre as especialidades do seu
+     * perfil (principal + secundárias); o admin continua usando a especialidade principal do profissional
+     * escolhido, sem lista própria (o formulário não recarrega as opções ao trocar o profissional).
      * Devolve a mensagem de erro, ou null se deu certo.
      */
-    private String aplicarCategoriaDoPrestador(Servico servico) {
+    private String aplicarCategoriaDoPrestador(Servico servico, boolean admin) {
         Prestador dono = servico.getPrestador() == null || servico.getPrestador().getId() == null ? servico.getPrestador()
                 : prestadorService.findById(servico.getPrestador().getId()).orElse(servico.getPrestador());
         if (dono == null) return "Selecione o profissional responsável.";
         servico.setPrestador(dono);
-        if (dono.getCategoria() == null) {
+        List<com.obraslink.model.Categoria> especialidades = dono.getCategorias() == null ? List.of() : dono.getCategorias();
+        if (especialidades.isEmpty() && dono.getCategoria() == null) {
             return "Defina sua especialidade principal em Minha conta antes de cadastrar serviços: ela é a categoria dos seus serviços.";
         }
-        servico.setCategoria(dono.getCategoria());
+        if (admin) {
+            if (dono.getCategoria() == null) return "Defina a especialidade principal deste profissional antes de salvar o serviço.";
+            servico.setCategoria(dono.getCategoria());
+            return null;
+        }
+        Long escolhidaId = servico.getCategoria() == null ? null : servico.getCategoria().getId();
+        com.obraslink.model.Categoria escolhida = especialidades.stream()
+                .filter(c -> java.util.Objects.equals(c.getId(), escolhidaId)).findFirst()
+                .orElse(dono.getCategoria()); // vazio ou id que não é do prestador: volta para a especialidade principal
+        if (escolhida == null) return "Selecione uma das suas especialidades cadastradas em Minha conta.";
+        servico.setCategoria(escolhida);
         return null;
     }
 
     @GetMapping("/vitrine")
-    public String vitrine(@RequestParam(required = false) Long categoriaId, Model model) {
+    public String vitrine(@RequestParam(required = false) Long categoriaId, @RequestParam(required = false) String q, Model model) {
         List<Servico> servicos = servicoService.findByCategoria(categoriaId);
+        String termoBusca = q == null || q.isBlank() ? null : q.trim();
+        if (termoBusca != null) {
+            String termoBuscaMinusculo = termoBusca.toLowerCase(java.util.Locale.ROOT);
+            servicos = servicos.stream().filter(s -> contemTermo(s, termoBuscaMinusculo)).toList();
+        }
         model.addAttribute("servicos", servicos);
         model.addAttribute("capasServicos", capas(servicos));
         model.addAttribute("categorias", categoriaService.findAll());
         model.addAttribute("categoriaAtiva", categoriaId);
+        model.addAttribute("termoBusca", termoBusca);
         return "vitrine/index";
+    }
+
+    /** Busca livre da vitrine: título, descrição, categoria ou nome do profissional contendo o termo (sem diferenciar maiúsculas). */
+    private boolean contemTermo(Servico servico, String termoBuscaMinusculo) {
+        return contem(servico.getTitulo(), termoBuscaMinusculo) || contem(servico.getDescricao(), termoBuscaMinusculo)
+                || contem(servico.getCategoria().getNome(), termoBuscaMinusculo) || contem(servico.getPrestador().getNome(), termoBuscaMinusculo);
+    }
+
+    private boolean contem(String campo, String termoBuscaMinusculo) {
+        return campo != null && campo.toLowerCase(java.util.Locale.ROOT).contains(termoBuscaMinusculo);
     }
 
     @GetMapping("/servicos")
@@ -200,7 +230,7 @@ public class ServicoController {
             }
             servico.setPrestador(prestadorAtual);
         }
-        String erroCategoria = aplicarCategoriaDoPrestador(servico);
+        String erroCategoria = aplicarCategoriaDoPrestador(servico, admin);
         if (erroCategoria != null) {
             redirectAttributes.addFlashAttribute("mensagemErro", erroCategoria);
             return "redirect:/servicos/novo";
@@ -259,7 +289,8 @@ public class ServicoController {
 
         servico.setId(id);
 
-        if (!acessoService.isAdmin()) {
+        boolean admin = acessoService.isAdmin();
+        if (!admin) {
             Usuario usuario = acessoService.getUsuarioAtualOrThrow();
             Prestador prestadorAtual = prestadorService.findByUsuarioId(usuario.getId()).orElse(null);
             if (prestadorAtual == null) {
@@ -270,7 +301,7 @@ public class ServicoController {
         } else if (servico.getPrestador() == null) {
             servico.setPrestador(existente.getPrestador());
         }
-        String erroCategoria = aplicarCategoriaDoPrestador(servico);
+        String erroCategoria = aplicarCategoriaDoPrestador(servico, admin);
         if (erroCategoria != null) {
             redirectAttributes.addFlashAttribute("mensagemErro", erroCategoria);
             return "redirect:/servicos/" + id + "/editar";

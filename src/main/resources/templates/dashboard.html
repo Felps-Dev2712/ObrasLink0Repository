@@ -108,15 +108,41 @@
 
             <div class="dash-grid" th:if="${dashboard.total > 0}">
                 <!-- Situação dos atendimentos -->
-                <section class="dashboard-panel" data-reveal aria-labelledby="status-title">
-                    <div class="panel-heading"><div><h2 id="status-title">Situação dos atendimentos</h2><p>Distribuição dos contatos do período</p></div></div>
-                    <div class="stacked-bar" role="img" th:attr="aria-label=${aguardando + ' aguardando, ' + dashboard.andamento + ' em andamento, ' + dashboard.concluidos + ' concluídos'}">
-                        <span th:each="barra : ${dashboard.status}" th:if="${barra.valor > 0}"
-                              th:classappend="${barra.titulo.startsWith('Aguard') ? 'seg-warn' : (barra.titulo.startsWith('Em') ? 'seg-info' : 'seg-success')}"
-                              th:style="${'width:' + barra.percentual + '%'}"></span>
-                    </div>
+                <section class="dashboard-panel" data-reveal aria-labelledby="status-title"
+                          th:with="circ=439.82,
+                                    pctAg=${aguardando * 100.0 / dashboard.total},
+                                    pctAnd=${dashboard.andamento * 100.0 / dashboard.total},
+                                    pctConc=${dashboard.concluidos * 100.0 / dashboard.total},
+                                    offAg=0, offAnd=${pctAg}, offConc=${pctAg + pctAnd}">
+                    <div class="panel-heading"><div><h2 id="status-title">Situação dos atendimentos</h2><p>Distribuição dos contatos do período. Clique numa fatia (ou na legenda) para ver os atendimentos.</p></div></div>
+                    <svg class="pie-chart" viewBox="0 0 160 160" aria-hidden="true" focusable="false">
+                        <g class="pie-ring">
+                        <g transform="rotate(-90 80 80)">
+                            <circle class="pie-track" cx="80" cy="80" r="70"></circle>
+                            <circle th:if="${aguardando > 0}" class="pie-slice seg-warn" data-status-fatia="CONTATO_SOLICITADO"
+                                    data-status-titulo="Aguardando confirmação" tabindex="0" role="button"
+                                    th:attr="aria-label=${'Ver os ' + aguardando + ' atendimentos aguardando confirmação'}"
+                                    cx="80" cy="80" r="70"
+                                    th:style="${'stroke-dasharray:' + (pctAg * circ / 100) + ' ' + circ + ';stroke-dashoffset:' + (-(offAg * circ / 100))}"></circle>
+                            <circle th:if="${dashboard.andamento > 0}" class="pie-slice seg-info" data-status-fatia="EM_ANDAMENTO"
+                                    data-status-titulo="Em andamento" tabindex="0" role="button"
+                                    th:attr="aria-label=${'Ver os ' + dashboard.andamento + ' atendimentos em andamento'}"
+                                    cx="80" cy="80" r="70"
+                                    th:style="${'stroke-dasharray:' + (pctAnd * circ / 100) + ' ' + circ + ';stroke-dashoffset:' + (-(offAnd * circ / 100))}"></circle>
+                            <circle th:if="${dashboard.concluidos > 0}" class="pie-slice seg-success" data-status-fatia="CONCLUIDO"
+                                    data-status-titulo="Concluídos" tabindex="0" role="button"
+                                    th:attr="aria-label=${'Ver os ' + dashboard.concluidos + ' atendimentos concluídos'}"
+                                    cx="80" cy="80" r="70"
+                                    th:style="${'stroke-dasharray:' + (pctConc * circ / 100) + ' ' + circ + ';stroke-dashoffset:' + (-(offConc * circ / 100))}"></circle>
+                        </g>
+                        </g>
+                        <text x="80" y="76" text-anchor="middle" class="pie-center-value" th:text="${dashboard.total}">0</text>
+                        <text x="80" y="94" text-anchor="middle" class="pie-center-label">contatos</text>
+                    </svg>
                     <ul class="legend-list">
-                        <li th:each="barra : ${dashboard.status}">
+                        <li th:each="barra : ${dashboard.status}" th:if="${barra.valor > 0}"
+                            th:attr="data-status-fatia=${barra.titulo.startsWith('Aguard') ? 'CONTATO_SOLICITADO' : (barra.titulo.startsWith('Em') ? 'EM_ANDAMENTO' : 'CONCLUIDO')},data-status-titulo=${barra.titulo},aria-label=${'Ver os ' + barra.valor + ' atendimentos: ' + barra.titulo}"
+                            tabindex="0" role="button">
                             <span class="legend-dot" th:classappend="${barra.titulo.startsWith('Aguard') ? 'seg-warn' : (barra.titulo.startsWith('Em') ? 'seg-info' : 'seg-success')}"></span>
                             <span th:text="${barra.titulo}">Status</span>
                             <strong th:text="${barra.valor}">0</strong>
@@ -137,6 +163,38 @@
                     </div>
                 </section>
             </div>
+
+            <!-- Detalhe de um status (preenchido ao clicar numa fatia do gráfico ou na legenda acima) -->
+            <section class="dashboard-panel" data-reveal id="status-detalhe" aria-labelledby="status-detalhe-title" th:if="${dashboard.total > 0}" hidden>
+                <div class="panel-heading">
+                    <div><h2 id="status-detalhe-title" data-status-detalhe-titulo>Status</h2><p data-status-detalhe-sub>0 atendimentos</p></div>
+                    <button type="button" class="btn btn-ghost" data-status-detalhe-fechar aria-label="Fechar detalhe">Fechar ×</button>
+                </div>
+                <div class="table-wrap table-flat">
+                    <table class="table">
+                        <thead><tr><th scope="col">Cliente</th><th scope="col">Serviço</th><th scope="col">Recebido em</th><th scope="col">Agendamento</th><th scope="col">Situação</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-outline status-detalhe-vermais" data-status-detalhe-vermais hidden>Ver mais (+<span data-status-detalhe-restante>0</span>)</button>
+            </section>
+
+            <!-- Dados de todos os atendimentos do período (até 200), ocultos: fonte do detalhe por status acima. -->
+            <template id="status-detalhe-dados" th:if="${dashboard.total > 0}">
+                <tr th:each="item : ${dashboard.detalheStatus}" th:attr="data-status=${item.status.name()}">
+                    <td>
+                        <div class="cell-person">
+                            <span class="avatar avatar-sm" aria-hidden="true" th:text="${#strings.isEmpty(item.clienteNome) ? 'C' : #strings.substring(item.clienteNome, 0, 1)}">C</span>
+                            <span><strong th:text="${item.clienteNome}">Cliente</strong><span class="cell-sub" th:text="${'#' + item.id}">#1</span></span>
+                        </div>
+                    </td>
+                    <td th:text="${item.servicoTitulo ?: 'Contato pelo perfil'}">Serviço</td>
+                    <td th:text="${#temporals.format(item.criadoEm, 'dd/MM/yyyy')}">01/01/2026</td>
+                    <td th:text="${item.dataAgendada != null ? #temporals.format(item.dataAgendada,'dd/MM') + ' às ' + #temporals.format(item.horarioAgendado,'HH:mm') : '—'}">—</td>
+                    <td><span class="status-pill" th:classappend="${item.status.name() == 'CONCLUIDO' ? ' status-complete' : (item.status.name() == 'EM_ANDAMENTO' ? ' status-progress' : '')}"
+                              th:text="${item.status.name() == 'CONCLUIDO' ? 'Concluído' : (item.status.name() == 'EM_ANDAMENTO' ? 'Em andamento' : 'Aguardando')}">Status</span></td>
+                </tr>
+            </template>
 
             <!-- Atendimentos recentes -->
             <section class="dashboard-panel" data-reveal aria-labelledby="recent-title" th:if="${dashboard.total > 0}">

@@ -18,7 +18,7 @@
             <div class="dir-search" role="search">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                 <label class="sr-only" for="busca-servico">Buscar serviço ou profissional</label>
-                <input id="busca-servico" type="search" placeholder="Buscar por serviço ou profissional…" autocomplete="off" data-filter-input>
+                <input id="busca-servico" type="search" placeholder="Buscar por serviço ou profissional…" autocomplete="off" data-filter-input th:value="${termoBusca}">
                 <span class="dir-search-count" data-filter-count aria-live="polite"></span>
             </div>
 
@@ -37,8 +37,9 @@
     <section class="container dir-body" aria-labelledby="results-title">
         <div class="results-heading">
             <h2 id="results-title">
-                <th:block th:if="${categoriaAtiva == null}">Todos os serviços</th:block>
-                <th:block th:each="categoria : ${categorias}" th:if="${categoria.id == categoriaAtiva}" th:text="${categoria.nome}">Categoria</th:block>
+                <th:block th:if="${termoBusca != null}">Resultados para "<span th:text="${termoBusca}">busca</span>"</th:block>
+                <th:block th:if="${termoBusca == null and categoriaAtiva == null}">Todos os serviços</th:block>
+                <th:block th:each="categoria : ${categorias}" th:if="${termoBusca == null and categoria.id == categoriaAtiva}" th:text="${categoria.nome}">Categoria</th:block>
             </h2>
             <span th:text="${#lists.size(servicos) + (#lists.size(servicos) == 1 ? ' serviço' : ' serviços')}">0 serviços</span>
         </div>
@@ -86,7 +87,16 @@
             <p>Confira a grafia ou limpe a busca para ver todos os serviços desta lista.</p>
         </div>
 
-        <div th:if="${#lists.isEmpty(servicos)}" class="empty-state">
+        <div th:if="${termoBusca != null and #lists.isEmpty(servicos)}" class="empty-state">
+            <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <h3>Nenhum resultado para "<span th:text="${termoBusca}">busca</span>"</h3>
+            <p>Confira a grafia ou tente outra palavra, categoria ou nome de profissional.</p>
+            <div class="cluster">
+                <a href="/vitrine" class="btn btn-primary">Limpar busca e ver todos</a>
+            </div>
+        </div>
+
+        <div th:if="${termoBusca == null and #lists.isEmpty(servicos)}" class="empty-state">
             <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
             <h3>Nenhum serviço nesta especialidade</h3>
             <p>Ainda não há serviços disponíveis aqui. Tente outra especialidade ou veja os profissionais.</p>

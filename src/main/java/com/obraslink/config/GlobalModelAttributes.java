@@ -2,8 +2,10 @@ package com.obraslink.config;
 
 import com.obraslink.model.PapelUsuario;
 import com.obraslink.model.Usuario;
+import com.obraslink.security.ContasVinculadasCookie;
 import com.obraslink.service.AcessoService;
 import com.obraslink.service.ClienteService;
+import com.obraslink.service.ContaVinculadaService;
 import com.obraslink.service.PrestadorService;
 import com.obraslink.service.NotificacaoService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -23,6 +26,8 @@ public class GlobalModelAttributes {
     private final PrestadorService prestadorService;
     private final NotificacaoService notificacaoService;
     private final com.obraslink.service.PerfilAtivoService perfilAtivoService;
+    private final ContaVinculadaService contaVinculadaService;
+    private final ContasVinculadasCookie contasVinculadasCookie;
 
     // Usado pelo layout para destacar o item ativo do menu e voltar à mesma página ao trocar de perfil.
     @ModelAttribute("currentPath")
@@ -31,7 +36,7 @@ public class GlobalModelAttributes {
     }
 
     @ModelAttribute("auth")
-    public Map<String, Object> auth() {
+    public Map<String, Object> auth(jakarta.servlet.http.HttpServletRequest request) {
         Optional<Usuario> usuarioOpt = acessoService.getUsuarioAtual();
         if (usuarioOpt.isEmpty()) {
             return Map.of(
@@ -68,6 +73,9 @@ public class GlobalModelAttributes {
                 ? (fotoCliente != null ? fotoCliente : fotoPrestador)
                 : (fotoPrestador != null ? fotoPrestador : fotoCliente));
         auth.put("perfilAtivo",perfilAtivo==null?"ADMIN":perfilAtivo.name());
+        List<String> tokensContas = contasVinculadasCookie.ler(request);
+        auth.put("outrasContas", tokensContas.isEmpty() ? List.of()
+                : contaVinculadaService.listar(tokensContas, usuario.getId()).stream().filter(c -> !c.ativa()).toList());
         return auth;
     }
 }

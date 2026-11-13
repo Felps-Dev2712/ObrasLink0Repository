@@ -14,11 +14,8 @@
             <p class="intro-copy">Profissionais de confiança para sua obra, reforma ou manutenção. Compare especialidades e fale direto com quem entende.</p>
             <form action="/vitrine" method="get" class="home-search-form" role="search" aria-label="Buscar serviços">
                 <svg class="icon search-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg>
-                <label class="search-field" for="busca-categoria"><span class="sr-only">Qual serviço você precisa?</span>
-                    <select id="busca-categoria" name="categoriaId" aria-label="Qual serviço você precisa?">
-                        <option value="">Todas as especialidades</option>
-                        <option th:each="categoria : ${categorias}" th:value="${categoria.id}" th:text="${categoria.nome}">Eletricista</option>
-                    </select>
+                <label class="search-field" for="busca-texto"><span class="sr-only">Qual serviço você precisa?</span>
+                    <input id="busca-texto" type="search" name="q" placeholder="Ex.: eletricista, pintura de parede, João Silva…" autocomplete="off" aria-label="Qual serviço você precisa?">
                 </label>
                 <button class="btn btn-primary" type="submit">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -88,6 +85,50 @@
         </div>
     </section>
 </main>
+
+<!-- Mascote: aparece só para quem já está logado, uma vez por navegador (ver tchuros.js). -->
+<div class="tchuros" id="tchuros" th:if="${auth['authenticated']}" hidden>
+    <div class="tchuros-bubble" role="note">
+        <button type="button" class="tchuros-fechar" data-tchuros-fechar aria-label="Fechar">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <strong>Oi, eu sou o Tchuros! 👷</strong>
+        <p>Aqui você encontra profissionais pra sua obra ou reforma e fala direto com eles pelo WhatsApp, sem intermediários. É só buscar, conversar e acompanhar tudo pela sua conta.</p>
+        <button type="button" class="btn btn-primary btn-sm" data-tchuros-fechar>Entendi!</button>
+    </div>
+    <svg class="tchuros-personagem" viewBox="0 0 120 170" aria-hidden="true" focusable="false">
+        <ellipse class="tchuros-sombra" cx="60" cy="163" rx="30" ry="6"></ellipse>
+        <!-- pernas -->
+        <rect x="38" y="118" width="15" height="38" rx="6" fill="#334155"></rect>
+        <rect x="67" y="118" width="15" height="38" rx="6" fill="#334155"></rect>
+        <rect x="35" y="150" width="20" height="10" rx="4" fill="#1E293B"></rect>
+        <rect x="65" y="150" width="20" height="10" rx="4" fill="#1E293B"></rect>
+        <!-- corpo (colete laranja) -->
+        <rect x="28" y="68" width="64" height="56" rx="18" fill="#EA580C"></rect>
+        <rect x="36" y="86" width="48" height="7" rx="3.5" fill="#FFF7ED" opacity=".85"></rect>
+        <rect x="36" y="100" width="48" height="7" rx="3.5" fill="#FFF7ED" opacity=".85"></rect>
+        <!-- braço esquerdo (parado) -->
+        <path d="M34 78c-10 4-14 14-12 26" fill="none" stroke="#EA580C" stroke-width="13" stroke-linecap="round"></path>
+        <circle cx="21" cy="104" r="8" fill="#F4C89A"></circle>
+        <!-- braço direito (acena) -->
+        <g class="tchuros-braco" style="transform-origin: 86px 80px;">
+            <path d="M86 80c10-18 14-30 10-42" fill="none" stroke="#EA580C" stroke-width="13" stroke-linecap="round"></path>
+            <circle cx="97" cy="36" r="8.5" fill="#F4C89A"></circle>
+        </g>
+        <!-- cabeça -->
+        <circle cx="60" cy="50" r="23" fill="#F4C89A"></circle>
+        <path d="M38 46a22 22 0 0 1 44 0c0 2-1 3-3 3H41c-2 0-3-1-3-3Z" fill="#334155"></path>
+        <!-- capacete -->
+        <path d="M34 36a26 26 0 0 1 52 0v2H34Z" fill="#FBBF24"></path>
+        <rect x="30" y="36" width="60" height="7" rx="3.5" fill="#F59E0B"></rect>
+        <!-- rosto -->
+        <circle cx="52" cy="52" r="2.6" fill="#1E293B"></circle>
+        <circle cx="68" cy="52" r="2.6" fill="#1E293B"></circle>
+        <path d="M51 60c4 4 14 4 18 0" fill="none" stroke="#1E293B" stroke-width="2.4" stroke-linecap="round"></path>
+        <circle cx="46" cy="57" r="3.5" fill="#F97316" opacity=".35"></circle>
+        <circle cx="74" cy="57" r="3.5" fill="#F97316" opacity=".35"></circle>
+    </svg>
+</div>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>

@@ -62,6 +62,15 @@ class TermosSecurityTest {
                     org.springframework.security.core.userdetails.User.withUsername("cliente")
                             .password("{noop}teste").roles("CLIENTE").build());
         }
+        // Exigidos pelo SecurityConfig (troca de conta sem senha); sem papel nestes testes de segurança.
+        @Bean com.obraslink.repository.UsuarioRepository usuarioRepository() { return mock(com.obraslink.repository.UsuarioRepository.class); }
+        @Bean com.obraslink.service.ContaVinculadaService contaVinculadaService() { return mock(com.obraslink.service.ContaVinculadaService.class); }
+        @Bean com.obraslink.security.ContasVinculadasCookie contasVinculadasCookie() { return new com.obraslink.security.ContasVinculadasCookie(); }
+        @Bean com.obraslink.security.ContaVinculadaAuthenticationSuccessHandler contaVinculadaAuthenticationSuccessHandler(
+                com.obraslink.repository.UsuarioRepository usuarios, com.obraslink.service.ContaVinculadaService svc,
+                com.obraslink.security.ContasVinculadasCookie cookie) {
+            return new com.obraslink.security.ContaVinculadaAuthenticationSuccessHandler(usuarios, svc, cookie);
+        }
     }
 
     @ControllerAdvice
