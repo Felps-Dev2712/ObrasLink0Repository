@@ -1,0 +1,49 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Denúncias pendentes - ObraLink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo" class="container container-narrow page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Administração</p>
+            <h1>Denúncias pendentes</h1>
+            <p>Avalie o relato de quem denunciou antes de marcar como procedente ou improcedente.</p>
+        </div>
+    </header>
+
+    <p th:if="${mensagem}" class="alert alert-success" role="status" th:text="${mensagem}"></p>
+    <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+
+    <article class="certification-card" th:each="d, stat : ${denuncias}" data-reveal th:style="${'--i:' + (stat.index % 6)}">
+        <div class="certification-card-heading">
+            <div>
+                <h2 th:text="${d.motivo.rotulo}">Motivo</h2>
+                <p th:text="${d.autorNome + ' denunciou ' + d.denunciadoNome + ' · Atendimento #' + d.atendimentoId}">Autor denunciou alguém</p>
+            </div>
+            <span class="certification-state state-pendente">Pendente</span>
+        </div>
+        <dl class="certification-details">
+            <div><dt>Enviada em</dt><dd th:text="${#temporals.format(d.criadoEm, 'dd/MM/yyyy HH:mm')}">01/01/2026</dd></div>
+            <div><dt>Autor</dt><dd th:text="${d.autorNome}">Nome</dd></div>
+            <div><dt>Denunciado</dt><dd th:text="${d.denunciadoNome}">Nome</dd></div>
+            <div><dt>Atendimento</dt><dd th:text="${'#' + d.atendimentoId}">#1</dd></div>
+        </dl>
+        <blockquote class="review-comment" th:text="${d.descricao}">Descrição</blockquote>
+        <form th:action="@{/admin/denuncias/{id}/analise(id=${d.id})}" method="post" class="certification-review-form">
+            <label>Observação da análise<input name="observacao" maxlength="1000" placeholder="Opcional"></label>
+            <button class="btn btn-danger-outline" type="submit" name="estado" value="IMPROCEDENTE">Marcar improcedente</button>
+            <button class="btn btn-danger" type="submit" name="estado" value="PROCEDENTE">Marcar procedente</button>
+        </form>
+    </article>
+
+    <div th:if="${#lists.isEmpty(denuncias)}" class="empty-state">
+        <span class="empty-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <h2>Tudo em dia</h2>
+        <p>Nenhuma denúncia aguarda análise.</p>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

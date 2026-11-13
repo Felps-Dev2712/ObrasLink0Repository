@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Denunciar atendimento - ObraLink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<!-- O número do atendimento é só de controle interno: fica na URL e no formulário, nunca no texto da tela. -->
+<main id="conteudo" class="container container-narrow page review-page"
+      th:with="souCliente=${atendimento.clienteUsuarioId == auth['usuarioId']}">
+    <a th:href="@{/notificacoes}" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar aos atendimentos</a>
+
+    <header class="page-header review-header">
+        <div>
+            <p class="eyebrow">Denúncia</p>
+            <h1 th:text="${souCliente ? 'Denunciar profissional' : 'Denunciar cliente'}">Denunciar</h1>
+            <p>Conte o que aconteceu com detalhes. Nossa equipe analisa cada denúncia antes de tomar qualquer ação.</p>
+        </div>
+    </header>
+
+    <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+
+    <!-- Resumo do atendimento: quem está sendo denunciado -->
+    <section class="card review-context" aria-label="Resumo do atendimento" data-reveal>
+        <div class="review-context-person">
+            <span class="pro-avatar" aria-hidden="true"
+                  th:text="${#strings.isEmpty((souCliente ? atendimento.prestadorNome : atendimento.clienteNome)) ? '?' : #strings.substring((souCliente ? atendimento.prestadorNome : atendimento.clienteNome), 0, 1)}">P</span>
+            <div>
+                <small th:text="${souCliente ? 'Profissional' : 'Cliente'}">Profissional</small>
+                <strong th:text="${souCliente ? atendimento.prestadorNome : atendimento.clienteNome}">Nome</strong>
+            </div>
+        </div>
+        <dl class="review-context-meta">
+            <div>
+                <dt>Serviço</dt>
+                <dd th:text="${atendimento.servicoTitulo != null ? atendimento.servicoTitulo : 'Contato pelo perfil'}">Serviço</dd>
+            </div>
+            <div>
+                <dt>Contato em</dt>
+                <dd th:text="${#temporals.format(atendimento.criadoEm, 'dd/MM/yyyy')}">01/01/2026</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="card review-panel" data-reveal>
+        <form th:if="${podeDenunciar}" th:action="@{/atendimentos/{id}/denunciar(id=${atendimento.id})}" th:object="${denunciaForm}"
+              method="post" class="review-form">
+            <div class="review-section">
+                <label for="motivo" class="review-section-title">Motivo</label>
+                <select id="motivo" th:field="*{motivo}" required>
+                    <option value="">Selecione...</option>
+                    <option th:each="m : ${motivos}" th:value="${m}" th:text="${m.rotulo}">Motivo</option>
+                </select>
+            </div>
+
+            <div class="review-section">
+                <label for="descricao" class="review-section-title">O que aconteceu</label>
+                <p class="review-section-hint" id="descricao-ajuda">Descreva com detalhes: datas, mensagens trocadas, o que foi combinado e o que não foi cumprido.</p>
+                <textarea id="descricao" th:field="*{descricao}" maxlength="2000" data-limite="2000" rows="6" required
+                          aria-describedby="descricao-ajuda" placeholder="Conte o que aconteceu..."></textarea>
+            </div>
+
+            <div class="review-actions">
+                <p>A denúncia é analisada pela nossa equipe; a outra pessoa não é avisada imediatamente.</p>
+                <button type="submit" class="btn btn-danger">Enviar denúncia</button>
+            </div>
+        </form>
+
+        <div th:if="${denuncia != null}" class="review-section">
+            <div class="review-result-head">
+                <h2 class="review-section-title">Denúncia enviada</h2>
+                <span class="text-subtle" th:text="${'Em ' + #temporals.format(denuncia.criadoEm, 'dd/MM/yyyy')}">Em</span>
+            </div>
+            <p><strong th:text="${denuncia.motivo.rotulo}">Motivo</strong></p>
+            <blockquote class="review-comment" th:text="${denuncia.descricao}">Descrição</blockquote>
+            <span class="status-pill" th:classappend="${denuncia.estado.name() == 'PROCEDENTE' ? ' status-complete' : (denuncia.estado.name() == 'IMPROCEDENTE' ? '' : ' status-progress')}"
+                  th:text="${denuncia.estado.name() == 'PENDENTE' ? 'Em análise' : (denuncia.estado.name() == 'PROCEDENTE' ? 'Procedente' : 'Improcedente')}">Status</span>
+            <p th:if="${denuncia.observacaoAnalise != null}" class="text-subtle" th:text="${'Observação da análise: ' + denuncia.observacaoAnalise}"></p>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+<script th:src="@{/js/avaliacoes.js}"></script>
+</body>
+</html>

@@ -32,15 +32,19 @@
                         </select>
                         <input th:if="${not isAdmin}" id="prestador" type="text" th:value="${prestadorAtual.nome}" readonly>
                     </div>
-                    <!-- Categoria = especialidade principal do prestador (definida no servidor; não é editável aqui) -->
+                    <!-- Categoria: o prestador escolhe entre as próprias especialidades (principal + secundárias).
+                         O admin continua com a especialidade principal do profissional escolhido (o servidor valida os dois casos). -->
                     <div class="field">
                         <label for="categoria">Categoria</label>
                         <th:block th:unless="${isAdmin}">
-                            <input id="categoria" type="text" readonly aria-readonly="true" class="input-fixed"
-                                   th:value="${prestadorAtual != null and prestadorAtual.categoria != null ? prestadorAtual.categoria.nome : 'Especialidade principal não definida'}"
-                                   aria-describedby="categoria-ajuda">
-                            <small id="categoria-ajuda" th:if="${prestadorAtual != null and prestadorAtual.categoria != null}">Definida pela sua especialidade principal. Para mudar, edite em <a href="/clientes">Minha conta</a>.</small>
-                            <small id="categoria-ajuda" th:unless="${prestadorAtual != null and prestadorAtual.categoria != null}" class="text-warning">Defina sua especialidade principal em <a href="/clientes">Minha conta</a> antes de salvar o serviço.</small>
+                            <select th:if="${prestadorAtual != null and !#lists.isEmpty(prestadorAtual.categorias)}" id="categoria" th:field="*{categoria}"
+                                     aria-describedby="categoria-ajuda" required>
+                                <option th:each="cat : ${prestadorAtual.categorias}" th:value="${cat.id}" th:text="${cat.nome}"></option>
+                            </select>
+                            <input th:unless="${prestadorAtual != null and !#lists.isEmpty(prestadorAtual.categorias)}" id="categoria" type="text" readonly aria-readonly="true" class="input-fixed"
+                                   value="Especialidade principal não definida" aria-describedby="categoria-ajuda">
+                            <small id="categoria-ajuda" th:if="${prestadorAtual != null and !#lists.isEmpty(prestadorAtual.categorias)}">Escolha entre as especialidades do seu perfil. Para adicionar outra, edite em <a href="/clientes">Minha conta</a>.</small>
+                            <small id="categoria-ajuda" th:unless="${prestadorAtual != null and !#lists.isEmpty(prestadorAtual.categorias)}" class="text-warning">Defina sua especialidade principal em <a href="/clientes">Minha conta</a> antes de salvar o serviço.</small>
                         </th:block>
                         <th:block th:if="${isAdmin}">
                             <input id="categoria" type="text" readonly aria-readonly="true" class="input-fixed"

@@ -22,8 +22,10 @@ public class DashboardService {
     private final AvaliacaoClienteRepository avaliacoesCliente;
     private final com.obraslink.repository.PrestadorRepository prestadores;
     public record Barra(String titulo, long valor, int percentual) {}
+    /** Quantas linhas do período entram no bloco oculto que alimenta o detalhe por status (clique no gráfico de pizza). */
+    private static final int LIMITE_DETALHE_STATUS = 200;
     public record Resumo(long total, long andamento, long concluidos, List<Barra> status,
-                         List<Barra> meses, List<Atendimento> recentes) {}
+                         List<Barra> meses, List<Atendimento> recentes, List<Atendimento> detalheStatus) {}
     public record ResumoCliente(long totalContatos, long emAndamento, long concluidos,
                                 List<Atendimento> recentes, List<AvaliacaoCliente> avaliacoes) {}
 
@@ -137,7 +139,8 @@ public class DashboardService {
         for (int i = 0; i < 6; i++) meses.add(barra(atual.minusMonths(5-i).format(DateTimeFormatter.ofPattern("MMM/yy", Locale.forLanguageTag("pt-BR"))), contagens[i], totalPeriodo));
         status.sort(Comparator.comparingLong(Barra::valor).reversed());
         meses.sort(Comparator.comparingLong(Barra::valor).reversed());
-        return new Resumo(total, andamento, concluidos, status, meses, lista.stream().limit(5).toList());
+        return new Resumo(total, andamento, concluidos, status, meses, lista.stream().limit(5).toList(),
+                lista.stream().limit(LIMITE_DETALHE_STATUS).toList());
     }
 
     private void validarPrestador(Usuario usuario) {

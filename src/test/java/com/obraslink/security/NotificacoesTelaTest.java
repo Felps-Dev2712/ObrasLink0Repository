@@ -43,6 +43,7 @@ class NotificacoesTelaTest {
         @Bean AtendimentoService atendimentoService() { return mock(AtendimentoService.class); }
         @Bean AvaliacaoClienteService avaliacaoClienteService() { return mock(AvaliacaoClienteService.class); }
         @Bean com.obraslink.service.AvaliacaoPrestadorService avaliacaoPrestadorService() { return mock(com.obraslink.service.AvaliacaoPrestadorService.class); }
+        @Bean com.obraslink.service.DenunciaService denunciaService() { return mock(com.obraslink.service.DenunciaService.class); }
         @Bean TermosSecurityTest.Modelo modelo() { return new TermosSecurityTest.Modelo(); }
         @Bean org.thymeleaf.spring6.view.ThymeleafViewResolver viewResolver(org.springframework.context.ApplicationContext context) {
             var templates = new org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver();

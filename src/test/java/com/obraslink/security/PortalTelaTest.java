@@ -32,7 +32,7 @@ class PortalTelaTest {
   assertTrue(html.contains("login-layout"));assertTrue(html.contains("Pintura"));assertTrue(html.contains("name=\"username\""));assertTrue(html.contains("name=\"password\""));assertFalse(html.contains("usuario@email.com"));
  }
  @Test void dashboardVazioRenderizaSemErro() throws Exception {
-  when(dashboard.usuarioTemPerfilPrestador()).thenReturn(true);when(dashboard.dataInicioPadrao()).thenReturn(java.time.LocalDate.now());when(dashboard.dataFimPadrao()).thenReturn(java.time.LocalDate.now());when(dashboard.carregar(any(),any())).thenReturn(new DashboardService.Resumo(0,0,0,List.of(),List.of(),List.of()));
+  when(dashboard.usuarioTemPerfilPrestador()).thenReturn(true);when(dashboard.dataInicioPadrao()).thenReturn(java.time.LocalDate.now());when(dashboard.dataFimPadrao()).thenReturn(java.time.LocalDate.now());when(dashboard.carregar(any(),any())).thenReturn(new DashboardService.Resumo(0,0,0,List.of(),List.of(),List.of(),List.of()));
   String html=MockMvcBuilders.webAppContextSetup(context).build().perform(get("/dashboard")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();assertTrue(html.contains("dashboard-metrics"));
  }
 }

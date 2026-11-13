@@ -150,6 +150,17 @@
                             </div>
                         </th:block>
                     </div>
+
+                    <div class="tracking-report">
+                        <a th:unless="${denunciasFeitas.contains(atendimento.id)}" th:href="@{/atendimentos/{id}/denunciar(id=${atendimento.id})}" class="btn btn-ghost btn-sm btn-report">
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                            Denunciar
+                        </a>
+                        <span th:if="${denunciasFeitas.contains(atendimento.id)}" class="text-subtle tracking-report-sent">
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                            Denúncia enviada
+                        </span>
+                    </div>
                 </article>
 
                 <div class="empty-state" data-filter-empty hidden>

@@ -9,6 +9,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import com.obraslink.service.AcessoService;
 import com.obraslink.service.TermosService;
 
@@ -18,10 +20,18 @@ import com.obraslink.service.TermosService;
 public class SecurityConfig {
     private final AcessoService acessoService;
     private final TermosService termosService;
+    private final ContaVinculadaAuthenticationSuccessHandler contaVinculadaAuthenticationSuccessHandler;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityContextRepository securityContextRepository() {
+        // Também usado pelo controller de troca de conta, para ativar a nova sessão sem passar pelo login de novo.
+        return new HttpSessionSecurityContextRepository();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityContextRepository securityContextRepository) throws Exception {
         http
+                .securityContext(sc -> sc.securityContextRepository(securityContextRepository))
                 .authorizeHttpRequests(auth -> auth
                         // Só login, cadastro, recuperação de senha, documentos legais e arquivos estáticos são públicos.
                         // Todo o resto (inclusive a home, categorias, profissionais e vitrine) exige login.
@@ -38,7 +48,7 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/", true)
+                        .successHandler(contaVinculadaAuthenticationSuccessHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout
