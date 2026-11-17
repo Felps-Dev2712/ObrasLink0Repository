@@ -1097,8 +1097,10 @@ html:not(.js) [data-reveal] { opacity: 1; transform: none; }
 .best-rated-providers > p { font-size: .9375rem; color: var(--fixed-ink-400); }
 
 .login-card { display: flex; flex-direction: column; justify-content: center; width: 100%; max-width: 440px; margin: 0 auto; padding: 40px 24px; }
-.auth-mobile-brand { margin-bottom: 32px; }
-@media (min-width: 1024px) { .auth-mobile-brand { display: none !important; } }
+.login-card-top { display: flex; align-items: center; justify-content: flex-end; margin-bottom: -8px; }
+.login-theme-toggle { margin-left: auto; }
+.auth-mobile-brand { margin-bottom: 32px; margin-right: auto; }
+@media (min-width: 1024px) { .auth-mobile-brand { display: none !important; } .login-card-top { justify-content: flex-end; } }
 .login-card h2 { font-size: 1.75rem; }
 .login-card-intro { margin: 6px 0 24px; color: var(--text-muted); }
 .login-form { display: grid; gap: 8px; }
@@ -1538,11 +1540,15 @@ button.chip { font-family: var(--font-sans); cursor: pointer; }
 .sidebar-label { margin: 16px 12px 4px; font-size: .6875rem; font-weight: 600; letter-spacing: .1em; color: var(--fixed-ink-500); }
 .sidebar-nav { display: flex; flex-wrap: wrap; gap: 2px; }
 @media (min-width: 1024px) { .sidebar-nav { flex-direction: column; } }
-.sidebar-nav a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; font-size: .9375rem; font-weight: 500; color: var(--fixed-ink-300); border-radius: var(--radius-sm); }
-.sidebar-nav a:hover { color: #fff; background: rgba(255,255,255,.06); text-decoration: none; }
+.sidebar-nav a, .sidebar-theme-toggle { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; font: 500 .9375rem var(--font-sans); color: var(--fixed-ink-300); background: none; border: 0; border-radius: var(--radius-sm); cursor: pointer; }
+.sidebar-nav a:hover, .sidebar-theme-toggle:hover { color: #fff; background: rgba(255,255,255,.06); text-decoration: none; }
 .sidebar-nav a.active { color: #fff; background: rgba(249,115,22,.16); }
 .sidebar-nav a.active .icon { color: var(--brand-500); }
-.sidebar-logout { margin-top: auto; padding-top: 12px; }
+/* O botão de tema reaproveita a lógica de alternância de ícone de .theme-toggle, só com a aparência de item do menu.
+   Fica no rodapé fixo do menu (fora do que o painel.js troca ao navegar), visível em qualquer tela do painel. */
+.sidebar-theme-toggle.theme-toggle { justify-content: flex-start; }
+.sidebar-theme-toggle .icon { width: 18px; height: 18px; flex: none; }
+.sidebar-footer { margin-top: auto; padding-top: 12px; }
 .sidebar-logout button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; font: 500 .9375rem var(--font-sans); color: var(--fixed-ink-400); background: none; border: 0; border-radius: var(--radius-sm); cursor: pointer; }
 .sidebar-logout button:hover { color: #fff; background: rgba(255,255,255,.06); }
 .app-main { min-width: 0; padding: 28px 20px 64px; }
@@ -1560,9 +1566,11 @@ button.chip { font-family: var(--font-sans); cursor: pointer; }
     .sidebar-nav { order: 3; flex: 1 0 100%; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
     .sidebar-nav ~ .sidebar-nav { display: none; }
     .sidebar-nav a { white-space: nowrap; padding: 8px 12px; }
-    .sidebar-logout { margin: 0 0 0 auto; padding: 0; }
+    .sidebar-footer { margin: 0 0 0 auto; padding: 0; display: flex; align-items: center; gap: 4px; }
     .sidebar-logout button { padding: 8px; font-size: 0; gap: 0; }
     .sidebar-logout .icon { width: 20px; height: 20px; }
+    .sidebar-theme-toggle { width: auto; padding: 8px; font-size: 0; }
+    .sidebar-theme-toggle .icon { width: 20px; height: 20px; }
 }
 
 /* Cabeçalho, filtros e indicadores do painel do profissional */
@@ -1879,20 +1887,20 @@ button.chip { font-family: var(--font-sans); cursor: pointer; }
     place-items: center;
     width: 44px;
     height: 44px;
-    color: var(--ink-800);
-    background: var(--surface);
-    border: 1px solid var(--border);
+    color: #fff;
+    background: var(--brand-600);
+    border: 1px solid var(--brand-600);
     border-radius: 50%;
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 10px 24px -8px rgba(234, 88, 12, .55), var(--shadow-md);
     cursor: pointer;
     opacity: 0;
     visibility: hidden;
     transform: translateY(8px);
-    transition: opacity .2s var(--ease), transform .2s var(--ease), visibility .2s;
+    transition: opacity .2s var(--ease), transform .2s var(--ease), visibility .2s, background-color .15s var(--ease);
 }
 .back-to-top svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .back-to-top.is-visible { opacity: 1; visibility: visible; transform: none; }
-.back-to-top:hover { background: var(--ink-50); }
+.back-to-top:hover { background: var(--brand-700); border-color: var(--brand-700); }
 
 /* Mascote Tchuros: pequeno e discreto, no canto inferior esquerdo (ver tchuros.js) */
 .tchuros { position: fixed; left: 16px; bottom: 16px; z-index: 850; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; max-width: min(280px, calc(100vw - 32px)); animation: tchuros-entrar .5s var(--ease) backwards; }
@@ -1904,13 +1912,10 @@ button.chip { font-family: var(--font-sans); cursor: pointer; }
 .tchuros-fechar { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; color: var(--text-subtle); background: none; border: 0; border-radius: 50%; cursor: pointer; }
 .tchuros-fechar:hover { color: var(--text); background: var(--surface-muted); }
 .tchuros-fechar .icon { width: 14px; height: 14px; }
-.tchuros-personagem { width: 76px; height: auto; flex: none; filter: drop-shadow(0 6px 10px rgba(15, 23, 42, .3)); animation: tchuros-flutuar 3.6s ease-in-out infinite; }
-.tchuros-sombra { fill: rgba(15, 23, 42, .2); }
-.tchuros-braco { transform-origin: 86px 80px; animation: tchuros-acenar 2.2s ease-in-out infinite; }
+.tchuros-personagem { width: 128px; height: auto; flex: none; filter: drop-shadow(0 6px 10px rgba(15, 23, 42, .3)); animation: tchuros-flutuar 3.6s ease-in-out infinite; }
 @keyframes tchuros-entrar { from { opacity: 0; transform: translateY(24px) scale(.85); } }
 @keyframes tchuros-flutuar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-@keyframes tchuros-acenar { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-18deg); } 50% { transform: rotate(4deg); } 75% { transform: rotate(-14deg); } }
-@media (max-width: 479px) { .tchuros { left: 10px; bottom: 10px; } .tchuros-personagem { width: 62px; } .tchuros-bubble { font-size: .8125rem; padding: 12px 14px; } }
+@media (max-width: 479px) { .tchuros { left: 10px; bottom: 10px; } .tchuros-personagem { width: 104px; } .tchuros-bubble { font-size: .8125rem; padding: 12px 14px; } }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
@@ -2341,3 +2346,59 @@ input[type="range"]:focus-visible { outline: 2px solid var(--brand-500); outline
 .field-error-text { color: var(--danger-700) !important; font-weight: 500; }
 /* Link "Voltar" das páginas estreitas no painel: vira bloco para acompanhar a coluna centralizada */
 .painel-view.container-narrow > .page-back, .painel-view.container-tight > .page-back { display: flex; width: 100%; }
+
+/* Seleção de vários prestadores (mesma categoria) para um pedido de orçamento em conjunto */
+.pro-card-select {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 8px 10px;
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--ink-700);
+    background: var(--ink-50);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color .15s var(--ease), background-color .15s var(--ease);
+}
+.pro-card-select:has(input:checked) { color: var(--brand-800); background: var(--brand-50); border-color: var(--brand-200); }
+.pro-card-select.is-disabled { opacity: .45; cursor: not-allowed; }
+.pro-card-select input { width: 16px; height: 16px; accent-color: var(--brand-600); }
+
+.orcamento-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    color: var(--ink-900);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-50%);
+}
+.orcamento-bar[hidden] { display: none; }
+.orcamento-bar span { font-weight: 700; white-space: nowrap; }
+.orcamento-bar small { color: var(--text-subtle); white-space: nowrap; }
+@media (max-width: 640px) {
+    .orcamento-bar { left: 16px; right: 16px; bottom: 16px; transform: none; flex-wrap: wrap; justify-content: center; }
+}
+
+/* Formulário de orçamento em conjunto e a revisão das mensagens antes do envio */
+.orcamento-destinatarios { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.orcamento-destinatarios li { padding: 5px 12px; font-size: .8125rem; font-weight: 600; color: var(--brand-800); background: var(--brand-50); border: 1px solid var(--brand-200); border-radius: var(--radius-full); }
+.orcamento-item { padding: 18px 0; border-top: 1px solid var(--border); }
+.orcamento-item:first-child { border-top: 0; padding-top: 0; }
+.orcamento-item textarea { min-height: 160px; }
+.orcamento-item-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.orcamento-item-head strong { font-size: 1rem; }
+.orcamento-enviado-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.orcamento-enviado-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: var(--ink-50); border: 1px solid var(--border); border-radius: var(--radius-md); }

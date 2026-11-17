@@ -1,6 +1,7 @@
 package com.obraslink.controller;
 
 import com.obraslink.service.ImagemService;
+import com.obraslink.service.OrcamentoAnexoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
@@ -12,7 +13,8 @@ import static org.mockito.Mockito.*;
 
 class ImagemControllerTest {
     private final ImagemService imagens = mock(ImagemService.class);
-    private final ImagemController controller = new ImagemController(imagens);
+    private final OrcamentoAnexoService orcamentoAnexos = mock(OrcamentoAnexoService.class);
+    private final ImagemController controller = new ImagemController(imagens, orcamentoAnexos);
 
     @Test
     void retornoAceitaSoTelasConhecidas() {

@@ -47,6 +47,14 @@ public class Endereco {
         return latitude != null && longitude != null;
     }
 
+    /** Endereço completo numa linha, para exibição e para entrar nas mensagens enviadas aos prestadores. */
+    @Transient
+    public String getEnderecoCompleto() {
+        return logradouro + ", " + numero
+                + (complemento == null || complemento.isBlank() ? "" : " - " + complemento)
+                + " - " + bairro + ", " + cidade + "/" + estado;
+    }
+
     /** Copia os campos editáveis vindos de um formulário, mantendo o id deste endereço. */
     public void atualizarCom(Endereco o) {
         cep = o.cep; logradouro = o.logradouro; numero = o.numero; complemento = o.complemento;
