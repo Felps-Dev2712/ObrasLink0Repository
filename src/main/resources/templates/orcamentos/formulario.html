@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Pedido de orçamento - ObraLink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo" class="container container-narrow page workspace-page">
+    <a href="/prestadores" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar aos profissionais</a>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow" th:text="${solicitacao.categoriaNome}">Categoria</p>
+            <h1>Pedido de orçamento</h1>
+            <p>Preencha uma única vez: cada profissional selecionado recebe uma mensagem individual com estas informações, sem ver a resposta dos outros.</p>
+        </div>
+    </header>
+
+    <ul class="orcamento-destinatarios" aria-label="Profissionais selecionados">
+        <li th:each="item : ${itens}" th:text="${item.prestadorNome}">Profissional</li>
+    </ul>
+
+    <div class="card mt-24" data-reveal>
+        <div class="card-body">
+            <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+            <form th:action="@{/orcamentos/{id}/formulario(id=${solicitacao.id})}" th:object="${form}" method="post" enctype="multipart/form-data" data-submit-once>
+                <div class="form-grid">
+                    <!-- Endereço de execução: parte do endereço do perfil como padrão, com a opção de usar outro só nesta solicitação. -->
+                    <div class="field span-all" data-endereco-execucao>
+                        <span class="label-text">Endereço de execução</span>
+                        <div class="register-consent" th:if="${enderecoCadastrado != null}">
+                            <label class="consent-option">
+                                <input type="radio" name="usarEnderecoCadastrado" value="true" data-endereco-opcao
+                                       th:checked="${form.usarEnderecoCadastrado}">
+                                <span><strong>Usar o endereço do meu perfil</strong><br><small th:text="${enderecoCadastrado.enderecoCompleto}">Rua X, 123 - Bairro, Cidade/UF</small></span>
+                            </label>
+                            <label class="consent-option">
+                                <input type="radio" name="usarEnderecoCadastrado" value="false" data-endereco-opcao
+                                       th:checked="${!form.usarEnderecoCadastrado}">
+                                <span><strong>Usar outro endereço</strong><br><small>Só para esta solicitação — não altera o seu perfil</small></span>
+                            </label>
+                        </div>
+                        <input type="hidden" name="usarEnderecoCadastrado" value="false" th:if="${enderecoCadastrado == null}">
+                        <p th:if="${enderecoCadastrado == null}" class="text-subtle">Você ainda não tem um endereço cadastrado no perfil — informe abaixo o endereço de execução.</p>
+
+                        <div class="form-grid form-grid-address" data-endereco-outro>
+                            <div class="field col-2"><label for="o-cep">CEP</label><input id="o-cep" th:field="*{enderecoExecucao.cep}" maxlength="9" inputmode="numeric" autocomplete="postal-code" required></div>
+                            <div class="field col-4"><label for="o-rua">Rua ou avenida</label><input id="o-rua" th:field="*{enderecoExecucao.logradouro}" autocomplete="address-line1" required></div>
+                            <div class="field col-2"><label for="o-num">Número</label><input id="o-num" th:field="*{enderecoExecucao.numero}" required></div>
+                            <div class="field col-4"><label for="o-comp">Complemento <span class="text-subtle">(opcional)</span></label><input id="o-comp" th:field="*{enderecoExecucao.complemento}" autocomplete="address-line2"></div>
+                            <div class="field col-2"><label for="o-bairro">Bairro</label><input id="o-bairro" th:field="*{enderecoExecucao.bairro}" required></div>
+                            <div class="field col-3"><label for="o-cidade">Cidade</label><input id="o-cidade" th:field="*{enderecoExecucao.cidade}" autocomplete="address-level2" required></div>
+                            <div class="field col-1"><label for="o-uf">UF</label><input id="o-uf" th:field="*{enderecoExecucao.estado}" maxlength="2" autocomplete="address-level1" required></div>
+                        </div>
+                        <!-- Evita o "flash" do formulário de endereço aparecendo e sumindo ao carregar a página. -->
+                        <script th:if="${enderecoCadastrado != null}" th:inline="javascript">
+                            document.currentScript.closest('[data-endereco-execucao]').querySelector('[data-endereco-outro]')
+                                .hidden = /*[[${form.usarEnderecoCadastrado}]]*/ true;
+                        </script>
+                    </div>
+                    <div class="field span-all">
+                        <label for="descricaoGeral">Descrição geral do serviço</label>
+                        <textarea id="descricaoGeral" th:field="*{descricaoGeral}" rows="4" required placeholder="O que você precisa, de forma geral"></textarea>
+                    </div>
+                    <div class="field">
+                        <label for="dataPrevisao">Previsão para início <span class="text-subtle">(opcional)</span></label>
+                        <input id="dataPrevisao" type="date" th:field="*{dataPrevisao}">
+                    </div>
+                    <div class="field">
+                        <label for="urgencia">Nível de urgência</label>
+                        <select id="urgencia" th:field="*{urgencia}">
+                            <option th:each="u : ${urgencias}" th:value="${u}"
+                                    th:text="${u.name() == 'BAIXA' ? 'Sem pressa' : (u.name() == 'ALTA' ? 'Urgente' : 'Moderada')}">Moderada</option>
+                        </select>
+                    </div>
+
+                    <!-- Campos específicos da categoria selecionada (vazio = a categoria só usa os campos gerais) -->
+                    <th:block th:each="campo : ${campos}">
+                        <div class="field span-all">
+                            <label th:for="${'campo-' + campo.chave}" th:text="${campo.rotulo}">Campo</label>
+                            <input th:id="${'campo-' + campo.chave}" type="text" th:field="*{campos[__${campo.chave}__]}"
+                                   th:required="${campo.obrigatorio}" th:attr="inputmode=${campo.tipo == 'numero' ? 'decimal' : null}">
+                        </div>
+                    </th:block>
+
+                    <div class="field span-all">
+                        <label for="informacoesComplementares">Informações complementares <span class="text-subtle">(opcional)</span></label>
+                        <textarea id="informacoesComplementares" th:field="*{informacoesComplementares}" rows="3" placeholder="Qualquer outro detalhe que ajude o profissional a entender o pedido"></textarea>
+                    </div>
+
+                    <!-- Anexos: imagens de referência. Ficam guardados no ObraLink; a mensagem do WhatsApp só avisa que existem. -->
+                    <div class="field span-all" th:with="restantes=${maxAnexos - #lists.size(anexos)}">
+                        <span class="label-text">Anexos e imagens de referência <span class="text-subtle" th:text="${'(até ' + restantes + (restantes == 1 ? ' arquivo' : ' arquivos') + ', JPG/PNG/WebP de até 5 MB)'}">(até 6 arquivos)</span></span>
+                        <label class="dropzone" th:classappend="${restantes <= 0} ? ' is-disabled'" data-dropzone th:attr="data-max=${restantes}">
+                            <input type="file" name="anexos" accept="image/jpeg,image/png,image/webp" multiple class="sr-only" th:disabled="${restantes <= 0}">
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 7"/></svg>
+                            <strong th:text="${restantes <= 0 ? 'Limite de anexos atingido' : 'Clique ou arraste imagens aqui'}">Clique ou arraste imagens aqui</strong>
+                            <small>Fotos do local, referências de acabamento, plantas, etc.</small>
+                        </label>
+                        <div class="photo-preview" data-photo-preview></div>
+                        <small class="photo-error" data-photo-error hidden></small>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <a href="/prestadores" class="btn btn-ghost">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Continuar para revisão</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Anexos já enviados -->
+    <section class="card mt-24" data-reveal th:unless="${#lists.isEmpty(anexos)}" aria-labelledby="anexos-title">
+        <div class="card-header">
+            <div>
+                <h2 id="anexos-title">Anexos enviados</h2>
+                <p th:text="${#lists.size(anexos) + ' de ' + maxAnexos + ' arquivos'}">0 de 6 arquivos</p>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="photo-grid">
+                <figure class="photo-item" th:each="anexo : ${anexos}">
+                    <a th:href="@{/orcamentos/anexos/{c}(c=${anexo.chave})}" data-lightbox data-lightbox-group="orcamento">
+                        <img th:src="@{/orcamentos/anexos/{c}(c=${anexo.chave})}" alt="Imagem de referência" loading="lazy">
+                    </a>
+                    <form th:action="@{/orcamentos/{id}/anexos/{a}/excluir(id=${solicitacao.id},a=${anexo.id})}" method="post"
+                          onsubmit="return confirm('Remover este anexo?');">
+                        <button type="submit" class="photo-remove" aria-label="Remover anexo">
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                    </form>
+                </figure>
+            </div>
+        </div>
+    </section>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

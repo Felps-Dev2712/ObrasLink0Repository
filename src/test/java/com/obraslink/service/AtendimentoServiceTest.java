@@ -75,6 +75,26 @@ class AtendimentoServiceTest {
     }
 
     @Test
+    void contatarComMensagemUsaOTextoInformadoSemAplicarOModeloFixo() {
+        String url = service.contatarComMensagem(10L, "Mensagem pronta do orçamento em conjunto");
+        assertTrue(url.startsWith("https://wa.me/5511999999999?text="), url);
+        String mensagem = java.net.URLDecoder.decode(url.substring(url.indexOf("text=") + 5), java.nio.charset.StandardCharsets.UTF_8);
+        assertEquals("Mensagem pronta do orçamento em conjunto", mensagem);
+        verify(repository).save(argThat(a -> a.getClienteUsuarioId().equals(1L) && a.getPrestadorId().equals(10L) && a.getServicoId() == null));
+        verify(notificacoes).criar(eq(2L), contains("Cliente"), eq("/notificacoes"));
+    }
+
+    @Test
+    void contatarComMensagemReaproveitaAtendimentoAbertoERejeitaMensagemVazia() {
+        when(repository.findFirstByClienteUsuarioIdAndPrestadorIdAndStatusNotOrderByIdDesc(1L, 10L, Atendimento.Status.CONCLUIDO))
+                .thenReturn(Optional.of(new Atendimento()));
+        service.contatarComMensagem(10L, "Olá");
+        verify(repository, never()).save(any());
+        assertThrows(IllegalArgumentException.class, () -> service.contatarComMensagem(10L, " "));
+        assertThrows(IllegalArgumentException.class, () -> service.contatarComMensagem(10L, null));
+    }
+
+    @Test
     void somenteFornecedorResponsavelPodeAlterar() {
         Atendimento atendimento = atendimento();
         assertThrows(IllegalArgumentException.class, () -> service.atualizar(20L, false));

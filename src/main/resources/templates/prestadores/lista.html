@@ -78,6 +78,14 @@
                          th:insert="~{fragments/favorito :: botao(${prestador.id}, ${favoritosPrestadores.contains(prestador.id)})}"></div>
                 </div>
 
+                <!-- Seleção para pedir orçamento a vários prestadores da mesma categoria de uma vez -->
+                <label class="pro-card-select"
+                       th:if="${auth['authenticated'] and auth['hasCliente'] and auth['perfilAtivo'] == 'CLIENTE' and prestador.usuarioId != auth['usuarioId'] and prestador.categoria != null}">
+                    <input type="checkbox" name="prestadorId" form="orcamento-form" th:value="${prestador.id}"
+                           th:attr="data-categoria-id=${prestador.categoria.id}, data-categoria-nome=${prestador.categoria.nome}, data-nome=${prestador.nome}">
+                    <span>Selecionar para orçamento</span>
+                </label>
+
                 <p class="pro-desc" th:if="${prestador.descricao != null and !#strings.isEmpty(prestador.descricao)}" th:text="${prestador.descricao}">Descrição</p>
 
                 <ul class="pro-facts">
@@ -119,6 +127,15 @@
             <a href="/prestadores" class="btn btn-outline">Ver todos os profissionais</a>
         </div>
     </section>
+
+    <!-- Barra flutuante: aparece ao marcar prestadores da mesma categoria para pedir orçamento em conjunto -->
+    <form id="orcamento-form" class="orcamento-bar" method="get" action="/orcamentos/novo" hidden
+          th:if="${auth['authenticated'] and auth['hasCliente'] and auth['perfilAtivo'] == 'CLIENTE'}">
+        <span data-orcamento-contagem>0 selecionados</span>
+        <small data-orcamento-categoria></small>
+        <button type="submit" class="btn btn-primary btn-sm">Solicitar orçamento</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-orcamento-limpar>Limpar seleção</button>
+    </form>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 <th:block th:replace="~{fragments/layout :: scripts}"></th:block>

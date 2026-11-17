@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Revisar pedido de orçamento - ObraLink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo" class="container container-narrow page review-page">
+    <a th:href="@{/orcamentos/{id}/formulario(id=${solicitacao.id})}" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar ao formulário</a>
+
+    <header class="page-header review-header">
+        <div>
+            <p class="eyebrow">Revisão</p>
+            <h1>Confira as mensagens antes de enviar</h1>
+            <p>Uma mensagem por profissional, já preenchida com o que você respondeu. Você pode ajustar o texto de cada uma — nenhum profissional vê a mensagem ou a resposta dos outros.</p>
+        </div>
+    </header>
+
+    <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+
+    <form th:action="@{/orcamentos/{id}/confirmar(id=${solicitacao.id})}" method="post" class="review-form" data-submit-once
+          onsubmit="return confirm('Enviar a solicitação de orçamento para todos os profissionais selecionados?');">
+        <section class="card review-panel" data-reveal>
+            <div class="orcamento-item" th:each="item, stat : ${itens}">
+                <div class="orcamento-item-head">
+                    <span class="pro-avatar" aria-hidden="true" th:text="${#strings.isEmpty(item.prestadorNome) ? '?' : #strings.substring(item.prestadorNome, 0, 1)}">P</span>
+                    <strong th:text="${item.prestadorNome}">Profissional</strong>
+                </div>
+                <label th:for="${'mensagem-' + item.id}" class="sr-only" th:text="${'Mensagem para ' + item.prestadorNome}">Mensagem</label>
+                <textarea th:id="${'mensagem-' + item.id}" th:name="${'mensagem_' + item.id}" required th:text="${item.mensagem}"></textarea>
+            </div>
+            <div class="review-actions">
+                <p>Ao confirmar, o WhatsApp abre uma conversa por profissional — você envia cada uma manualmente, como já acontece no contato avulso do ObraLink.</p>
+                <button type="submit" class="btn btn-primary">Confirmar e enviar</button>
+            </div>
+        </section>
+    </form>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

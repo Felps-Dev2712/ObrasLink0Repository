@@ -1,6 +1,7 @@
 package com.obraslink.controller;
 
 import com.obraslink.service.ImagemService;
+import com.obraslink.service.OrcamentoAnexoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.CacheControl;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class ImagemController {
     private final ImagemService imagens;
+    private final OrcamentoAnexoService orcamentoAnexos;
 
     /** Exibe uma imagem enviada. Só aceita chaves geradas pelo sistema (nome aleatório + extensão). */
     @GetMapping("/imagens/{chave}")
@@ -26,6 +28,18 @@ public class ImagemController {
         return imagens.arquivo(chave)
                 .map(caminho -> ResponseEntity.ok()
                         .contentType(MediaType.parseMediaType(ImagemService.tipoMime(chave)))
+                        .cacheControl(CacheControl.maxAge(7, TimeUnit.DAYS).cachePrivate())
+                        .body(new FileSystemResource(caminho)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /** Imagem de referência anexada a um pedido de orçamento. Mesmo critério das demais: chave aleatória, sem adivinhação. */
+    @GetMapping("/orcamentos/anexos/{chave}")
+    @ResponseBody
+    public ResponseEntity<FileSystemResource> exibirAnexoOrcamento(@PathVariable String chave) {
+        return orcamentoAnexos.arquivo(chave)
+                .map(caminho -> ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(OrcamentoAnexoService.tipoMime(chave)))
                         .cacheControl(CacheControl.maxAge(7, TimeUnit.DAYS).cachePrivate())
                         .body(new FileSystemResource(caminho)))
                 .orElse(ResponseEntity.notFound().build());

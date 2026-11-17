@@ -44,11 +44,62 @@ public class AtendimentoService {
 
     @Transactional
     public String contatar(Long prestadorId, Long servicoId) {
+        Usuario usuario = exigirClienteAtual();
+        // Serializa cliques simultâneos no mesmo fornecedor antes de procurar contato aberto.
+        Prestador prestador = travarPrestadorDisponivel(prestadorId, usuario);
+        Servico servicoSolicitado=null;
+        if(servicoId!=null){
+            if(servicos==null) throw new IllegalArgumentException("Não foi possível validar a disponibilidade do serviço.");
+            servicoSolicitado=servicos.findById(servicoId).orElseThrow(()->new IllegalArgumentException("Serviço não encontrado."));
+            if(!servicoSolicitado.getPrestador().getId().equals(prestadorId)||!Boolean.TRUE.equals(servicoSolicitado.getDisponivel())) throw new IllegalArgumentException("Este serviço está indisponível para contratação.");
+        }
+        Cliente cliente = clientes.findByUsuarioId(usuario.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Complete seu cadastro de cliente antes de entrar em contato."));
+        Atendimento atendimento = servicoId==null
+                ? atendimentos.findFirstByClienteUsuarioIdAndPrestadorIdAndStatusNotOrderByIdDesc(usuario.getId(),prestadorId,Atendimento.Status.CONCLUIDO).orElse(null)
+                : atendimentos.findFirstByClienteUsuarioIdAndPrestadorIdAndServicoIdAndStatusNotOrderByIdDesc(usuario.getId(),prestadorId,servicoId,Atendimento.Status.CONCLUIDO).orElse(null);
+        if (atendimento == null) {
+            criarAtendimento(usuario, cliente, prestador, servicoId, servicoSolicitado);
+        }
+        String mensagem = "Olá, sou " + cliente.getNome() + ". Vim pelo ObraLink e gostaria de solicitar um orçamento"
+                + (servicoSolicitado==null?"":" para " + servicoSolicitado.getTitulo()) + " com "
+                + prestador.getNome() + "."
+                + "\nCategoria: " + (prestador.getCategoria() == null ? "Não informada" : prestador.getCategoria().getNome())
+                + "\nPreço mínimo: " + (prestador.getPrecoMinimo() == null ? "Sob consulta" : "R$ " + prestador.getPrecoMinimo())
+                + "\nLocal: " + (prestador.getEndereco() == null ? "Não informado" : prestador.getEndereco().getCidade() + " - " + prestador.getEndereco().getEstado())
+                + "\nPoderia me passar mais detalhes?";
+        return linkWhatsapp(prestador, mensagem);
+    }
+
+    /**
+     * Mesma validação, trava e deduplicação de {@link #contatar(Long, Long)}, mas com uma mensagem já
+     * pronta (usada pela solicitação de orçamento a vários prestadores da mesma categoria) em vez do
+     * modelo fixo. Não associa serviço algum ao atendimento.
+     */
+    @Transactional
+    public String contatarComMensagem(Long prestadorId, String mensagem) {
+        if (mensagem == null || mensagem.isBlank()) throw new IllegalArgumentException("A mensagem não pode ficar vazia.");
+        Usuario usuario = exigirClienteAtual();
+        Prestador prestador = travarPrestadorDisponivel(prestadorId, usuario);
+        Cliente cliente = clientes.findByUsuarioId(usuario.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Complete seu cadastro de cliente antes de entrar em contato."));
+        Atendimento atendimento = atendimentos.findFirstByClienteUsuarioIdAndPrestadorIdAndStatusNotOrderByIdDesc(
+                usuario.getId(), prestadorId, Atendimento.Status.CONCLUIDO).orElse(null);
+        if (atendimento == null) {
+            criarAtendimento(usuario, cliente, prestador, null, null);
+        }
+        return linkWhatsapp(prestador, mensagem);
+    }
+
+    private Usuario exigirClienteAtual() {
         Usuario usuario = acessoService.getUsuarioAtualOrThrow();
         if (!Boolean.TRUE.equals(usuario.getAtivo()) || !usuario.getPapeis().contains(PapelUsuario.CLIENTE)||(perfil!=null&&perfil.atual()!=PapelUsuario.CLIENTE)) {
             throw new IllegalArgumentException("Entre com um perfil de cliente para solicitar um serviço.");
         }
-        // Serializa cliques simultâneos no mesmo fornecedor antes de procurar contato aberto.
+        return usuario;
+    }
+
+    private Prestador travarPrestadorDisponivel(Long prestadorId, Usuario usuario) {
         Prestador prestador = entityManager.find(Prestador.class, prestadorId, LockModeType.PESSIMISTIC_WRITE);
         if (prestador == null || !Boolean.TRUE.equals(prestador.getAtivo()) || prestador.getUsuarioId() == null) {
             throw new IllegalArgumentException("Este fornecedor não está disponível para receber contatos.");
@@ -63,37 +114,25 @@ public class AtendimentoService {
         if (!DadosCadastrais.telefoneValido(prestador.getWhatsapp())) {
             throw new IllegalArgumentException("O fornecedor precisa cadastrar um WhatsApp válido com DDD.");
         }
-        Servico servicoSolicitado=null;
-        if(servicoId!=null){
-            if(servicos==null) throw new IllegalArgumentException("Não foi possível validar a disponibilidade do serviço.");
-            servicoSolicitado=servicos.findById(servicoId).orElseThrow(()->new IllegalArgumentException("Serviço não encontrado."));
-            if(!servicoSolicitado.getPrestador().getId().equals(prestadorId)||!Boolean.TRUE.equals(servicoSolicitado.getDisponivel())) throw new IllegalArgumentException("Este serviço está indisponível para contratação.");
-        }
+        return prestador;
+    }
+
+    private Atendimento criarAtendimento(Usuario usuario, Cliente cliente, Prestador prestador, Long servicoId, Servico servicoSolicitado) {
+        Atendimento atendimento = new Atendimento();
+        atendimento.setClienteUsuarioId(usuario.getId());
+        atendimento.setPrestadorUsuarioId(prestador.getUsuarioId());
+        atendimento.setPrestadorId(prestador.getId());
+        atendimento.setServicoId(servicoId);
+        atendimento.setServicoTitulo(servicoSolicitado==null?null:servicoSolicitado.getTitulo());
+        atendimento.setClienteNome(cliente.getNome());
+        atendimento.setPrestadorNome(prestador.getNome());
+        atendimentos.save(atendimento);
+        notificacoes.criar(prestador.getUsuarioId(), cliente.getNome() + " solicitou contato pelo WhatsApp. Confirme aqui quando fechar o serviço.", "/notificacoes");
+        return atendimento;
+    }
+
+    private static String linkWhatsapp(Prestador prestador, String mensagem) {
         String numero = "55" + DadosCadastrais.telefoneSemMascara(prestador.getWhatsapp());
-        Cliente cliente = clientes.findByUsuarioId(usuario.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Complete seu cadastro de cliente antes de entrar em contato."));
-        Atendimento atendimento = servicoId==null
-                ? atendimentos.findFirstByClienteUsuarioIdAndPrestadorIdAndStatusNotOrderByIdDesc(usuario.getId(),prestadorId,Atendimento.Status.CONCLUIDO).orElse(null)
-                : atendimentos.findFirstByClienteUsuarioIdAndPrestadorIdAndServicoIdAndStatusNotOrderByIdDesc(usuario.getId(),prestadorId,servicoId,Atendimento.Status.CONCLUIDO).orElse(null);
-        if (atendimento == null) {
-            atendimento = new Atendimento();
-            atendimento.setClienteUsuarioId(usuario.getId());
-            atendimento.setPrestadorUsuarioId(prestador.getUsuarioId());
-            atendimento.setPrestadorId(prestadorId);
-            atendimento.setServicoId(servicoId);
-            atendimento.setServicoTitulo(servicoSolicitado==null?null:servicoSolicitado.getTitulo());
-            atendimento.setClienteNome(cliente.getNome());
-            atendimento.setPrestadorNome(prestador.getNome());
-            atendimentos.save(atendimento);
-            notificacoes.criar(prestador.getUsuarioId(), cliente.getNome() + " solicitou contato pelo WhatsApp. Confirme aqui quando fechar o serviço.", "/notificacoes");
-        }
-        String mensagem = "Olá, sou " + cliente.getNome() + ". Vim pelo ObraLink e gostaria de solicitar um orçamento"
-                + (servicoSolicitado==null?"":" para " + servicoSolicitado.getTitulo()) + " com "
-                + prestador.getNome() + "."
-                + "\nCategoria: " + (prestador.getCategoria() == null ? "Não informada" : prestador.getCategoria().getNome())
-                + "\nPreço mínimo: " + (prestador.getPrecoMinimo() == null ? "Sob consulta" : "R$ " + prestador.getPrecoMinimo())
-                + "\nLocal: " + (prestador.getEndereco() == null ? "Não informado" : prestador.getEndereco().getCidade() + " - " + prestador.getEndereco().getEstado())
-                + "\nPoderia me passar mais detalhes?";
         return "https://wa.me/" + numero + "?text=" + URLEncoder.encode(mensagem, StandardCharsets.UTF_8);
     }
 
