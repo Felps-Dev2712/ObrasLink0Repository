@@ -38,6 +38,20 @@ public class DataSeeder {
 
     static final String SENHA_TESTE = "Obras@2026";
     static final String SENHA_ADMIN = "admin123";
+    static final String EMAIL_ADMIN = "admin@obraslink.com";
+    static final String EMAIL_CLIENTE_TESTE = "cliente.teste@obraslink.com";
+    static final String EMAIL_PRESTADOR_TESTE = "prestador.teste@obraslink.com";
+    static final String EMAIL_AMBOS_TESTE = "ambos.teste@obraslink.com";
+
+    /** E-mails de todas as contas de demonstração, exceto o administrador. Usado pelo perfil "prod" para removê-las. */
+    static final List<String> EMAILS_DEMONSTRACAO = List.of(
+            EMAIL_CLIENTE_TESTE, EMAIL_PRESTADOR_TESTE, EMAIL_AMBOS_TESTE,
+            "joao.pedreiro@obraslink.com", "marta.mestre@obraslink.com", "construtora.horizonte@obraslink.com",
+            "paulo.eletrica@obraslink.com", "ana.hidraulica@obraslink.com", "diego.encanador@obraslink.com",
+            "cores.pinturas@obraslink.com", "madeira.nobre@obraslink.com", "gesso.arte@obraslink.com",
+            "osasco.reformas@obraslink.com", "guarulhos.eletrica@obraslink.com", "campinas.obras@obraslink.com",
+            "beatriz.cliente@obraslink.com", "carlos.cliente@obraslink.com", "fernanda.cliente@obraslink.com",
+            "gustavo.cliente@obraslink.com", "helena.cliente@obraslink.com", "igor.cliente@obraslink.com");
 
     private final CategoriaRepository categoriaRepository;
     private final UsuarioRepository usuarioRepository;
@@ -104,13 +118,13 @@ public class DataSeeder {
 
     private void semear() {
         Map<String, Categoria> cat = semearCategorias();
-        criarUsuario("admin@obraslink.com", "Administrador", SENHA_ADMIN, Set.of(PapelUsuario.ADMIN), 240);
+        criarUsuario(EMAIL_ADMIN, "Administrador", SENHA_ADMIN, Set.of(PapelUsuario.ADMIN), 240);
 
         // ---------- Contas de teste principais ----------
-        Usuario uCliente = criarUsuario("cliente.teste@obraslink.com", "Camila Teste", SENHA_TESTE, Set.of(PapelUsuario.CLIENTE), 200);
+        Usuario uCliente = criarUsuario(EMAIL_CLIENTE_TESTE, "Camila Teste", SENHA_TESTE, Set.of(PapelUsuario.CLIENTE), 200);
         Cliente clienteTeste = criarCliente(uCliente, "Camila Teste", VILA_MARIANA, 200);
 
-        Pro proTeste = new Pro("prestador.teste@obraslink.com", "Rafael Teste Elétrica", "Eletricista", PINHEIROS, 20, 12, 150,
+        Pro proTeste = new Pro(EMAIL_PRESTADOR_TESTE, "Rafael Teste Elétrica", "Eletricista", PINHEIROS, 20, 12, 150,
                 "Eletricista com 12 anos de experiência em reformas residenciais e comerciais. Quadros de distribuição, troca de fiação, "
                         + "iluminação em LED e laudos. Atendo com hora marcada e deixo o ambiente limpo.",
                 new String[][]{
@@ -121,7 +135,7 @@ public class DataSeeder {
         Usuario uPrestador = criarUsuario(proTeste.email(), proTeste.nome(), SENHA_TESTE, Set.of(PapelUsuario.PRESTADOR), 400);
         Prestador prestadorTeste = criarPrestador(uPrestador, proTeste, cat, 400);
 
-        Usuario uAmbos = criarUsuario("ambos.teste@obraslink.com", "Lucas Teste", SENHA_TESTE, Set.of(PapelUsuario.CLIENTE, PapelUsuario.PRESTADOR), 150);
+        Usuario uAmbos = criarUsuario(EMAIL_AMBOS_TESTE, "Lucas Teste", SENHA_TESTE, Set.of(PapelUsuario.CLIENTE, PapelUsuario.PRESTADOR), 150);
         Cliente clienteAmbos = criarCliente(uAmbos, "Lucas Teste", MOEMA, 150);
         Prestador prestadorAmbos = criarPrestador(uAmbos, new Pro(uAmbos.getEmail(), "Lucas Teste Pinturas", "Pintor", MOEMA, 10, 6, 200,
                 "Pintura residencial interna e externa, textura e grafiato. Orçamento sem compromisso na zona sul.",
@@ -221,6 +235,14 @@ public class DataSeeder {
     // ---------- Cadastros ----------
 
     private Map<String, Categoria> semearCategorias() {
+        garantirCategorias(categoriaRepository);
+        Map<String, Categoria> mapa = new HashMap<>();
+        categoriaRepository.findAll().forEach(c -> mapa.put(c.getNome(), c));
+        return mapa;
+    }
+
+    /** Categorias padrão do catálogo; só grava se ainda não houver nenhuma. Também usado em produção. */
+    static void garantirCategorias(CategoriaRepository categoriaRepository) {
         if (categoriaRepository.count() == 0) {
             categoriaRepository.saveAll(List.of(
                     Categoria.builder().nome("Pedreiro").descricao("Alvenaria, contrapiso, reboco e assentamento de pisos.").icone("🧱").build(),
@@ -232,9 +254,6 @@ public class DataSeeder {
                     Categoria.builder().nome("Marceneiro").descricao("Móveis planejados e sob medida.").icone("🪚").build(),
                     Categoria.builder().nome("Gesseiro").descricao("Forros de gesso, drywall, sancas e molduras.").icone("🧰").build()));
         }
-        Map<String, Categoria> mapa = new HashMap<>();
-        categoriaRepository.findAll().forEach(c -> mapa.put(c.getNome(), c));
-        return mapa;
     }
 
     private Usuario criarUsuario(String email, String nome, String senha, Set<PapelUsuario> papeis, int diasAtras) {

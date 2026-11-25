@@ -30,7 +30,12 @@ public class ContaService {
 
     @Transactional
     public void excluirMinhaConta() {
-        Usuario usuario = acessoService.getUsuarioAtualOrThrow();
+        excluirConta(acessoService.getUsuarioAtualOrThrow());
+    }
+
+    /** Exclui a conta e tudo o que depende dela (perfis, atendimentos, avaliações, arquivos). */
+    @Transactional
+    public void excluirConta(Usuario usuario) {
         // Comprovantes das certificações: arquivos apagados do disco depois do commit (as linhas saem abaixo).
         if (certificacaoService != null) {
             prestadorRepository.findByUsuarioId(usuario.getId())
