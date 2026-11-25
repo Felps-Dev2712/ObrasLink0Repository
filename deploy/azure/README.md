@@ -152,3 +152,5 @@ az group delete -n rg-<NAME> --subscription <subscription-id>
 | Site doesn't load after the script ends | `ssh ... 'sudo cloud-init status --long; tail -50 /var/log/obraslink-first-deploy.log'` |
 | Browser shows a certificate error | Caddy is still getting the certificate (ports 80/443 must be open): `docker compose logs caddy`. |
 | SSH times out | Your IP may be outside `SSH_GEO_COUNTRY`; use `az vm run-command` (above). |
+| `REMOTE HOST IDENTIFICATION HAS CHANGED` after recreating | The new VM has a new host key: `ssh-keygen -R <NAME>.<LOCATION>.cloudapp.azure.com`. |
+| Script warns the SSH country filter is not active | The registry list couldn't be downloaded; SSH is open (key-only + fail2ban). Retry: `az vm run-command invoke ... --scripts 'systemctl start ssh-geo'`. |

@@ -74,6 +74,7 @@ write_files:
               v4.append(f"{s}-{s + int(p[4]) - 1}")
           elif p[2] == 'ipv6':
               v6.append(f"{p[3]}/{p[4]}")
+      print(f"# ipv4 ranges: {len(v4)}")
       print("table inet sshgeo")
       print("delete table inet sshgeo")
       print("table inet sshgeo {")
@@ -91,7 +92,7 @@ write_files:
       PY
       nft -c -f "$out"
       nft -f "$out"
-      echo "ssh-geo: SSH limited to ${SSH_GEO_COUNTRY} ($(grep -o -- '-' "$out" | wc -l) IPv4 ranges)"
+      echo "ssh-geo: SSH limited to ${SSH_GEO_COUNTRY} ($(sed -n 's/^# ipv4 ranges: //p' "$out") IPv4 ranges)"
 
   - path: /etc/systemd/system/ssh-geo.service
     content: |
