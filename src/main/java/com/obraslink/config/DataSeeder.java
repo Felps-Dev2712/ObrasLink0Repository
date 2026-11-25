@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,14 +28,20 @@ import java.util.*;
  * Dados fictícios para testar a plataforma localmente.
  * Só roda com o banco vazio (nenhum usuário): nunca mexe em dados existentes.
  * As contas e senhas estão documentadas em docs/contas-de-teste.md.
+ * Desligado no perfil "prod" (ver {@link ProducaoBootstrap}).
  */
 @Slf4j
 @Configuration
+@Profile("!prod")
 @RequiredArgsConstructor
 public class DataSeeder {
 
     static final String SENHA_TESTE = "Obras@2026";
     static final String SENHA_ADMIN = "admin123";
+    static final String EMAIL_ADMIN = "admin@obraslink.com";
+    static final String EMAIL_CLIENTE_TESTE = "cliente.teste@obraslink.com";
+    static final String EMAIL_PRESTADOR_TESTE = "prestador.teste@obraslink.com";
+    static final String EMAIL_AMBOS_TESTE = "ambos.teste@obraslink.com";
 
     private final CategoriaRepository categoriaRepository;
     private final UsuarioRepository usuarioRepository;
@@ -85,6 +92,70 @@ public class DataSeeder {
     private record Pro(String email, String nome, String categoria, Local local, int raioKm, int anos, int preco,
                        String descricao, String[][] servicos) { }
 
+    private static final List<Pro> OUTROS_PROFISSIONAIS = List.of(
+            new Pro("joao.pedreiro@obraslink.com", "João Batista Construções", "Pedreiro", BUTANTA, 15, 20, 250,
+                    "Alvenaria, contrapiso, reboco e assentamento de pisos. Equipe de 3 pessoas.",
+                    new String[][]{{"Assentamento de porcelanato", "Assentamento de porcelanato com nivelamento, preço por m².", "70"},
+                            {"Construção de muro", "Muro em bloco com reboco e pintura, preço por m².", "180"},
+                            {"Contrapiso", "Contrapiso nivelado para receber piso, preço por m².", "45"}}),
+            new Pro("marta.mestre@obraslink.com", "Marta Oliveira Gestão de Obras", "Mestre de Obras", BELA_VISTA, 25, 18, 3000,
+                    "Coordeno reformas completas: cronograma, compra de material e equipe.",
+                    new String[][]{{"Gestão de reforma completa", "Acompanhamento diário da obra do início ao fim, valor mensal.", "6500"},
+                            {"Vistoria técnica", "Visita técnica com relatório de patologias e orçamento.", "400"}}),
+            new Pro("construtora.horizonte@obraslink.com", "Construtora Horizonte", "Empreiteira", SANTO_ANDRE, 40, 15, 15000,
+                    "Empreiteira para obras residenciais e comerciais no ABC e em São Paulo.",
+                    new String[][]{{"Construção de casa térrea", "Construção completa por m², do alicerce ao acabamento.", "2400"},
+                            {"Reforma de loja", "Reforma comercial com entrega em prazo fechado.", "35000"}}),
+            new Pro("paulo.eletrica@obraslink.com", "Paulo Santos Elétrica", "Eletricista", SANTANA, 12, 8, 120,
+                    "Atendimento rápido na zona norte, urgências elétricas e manutenção.",
+                    new String[][]{{"Visita para reparo elétrico", "Diagnóstico e reparo de curto-circuito ou disjuntor desarmando.", "150"},
+                            {"Instalação de ventilador de teto", "Instalação com suporte e ligação no interruptor.", "160"}}),
+            new Pro("ana.hidraulica@obraslink.com", "Ana Costa Hidráulica", "Encanador", PERDIZES, 15, 10, 130,
+                    "Vazamentos, caça-vazamento com geofone, troca de registros e aquecedores.",
+                    new String[][]{{"Caça-vazamento", "Localização de vazamento sem quebra-quebra.", "350"},
+                            {"Troca de registro", "Troca de registro de gaveta ou pressão.", "220"},
+                            {"Instalação de aquecedor a gás", "Instalação de aquecedor de passagem com teste de estanqueidade.", "480"}}),
+            new Pro("diego.encanador@obraslink.com", "Diego Lima Encanamentos", "Encanador", TATUAPE, 10, 5, 100,
+                    "Desentupimentos e reparos hidráulicos na zona leste.",
+                    new String[][]{{"Desentupimento de pia e ralo", "Desentupimento com máquina elétrica.", "180"},
+                            {"Troca de sifão e torneira", "Troca de peças hidráulicas de cozinha e banheiro.", "120"}}),
+            new Pro("cores.pinturas@obraslink.com", "Cores & Cia Pinturas", "Pintor", LAPA, 20, 14, 300,
+                    "Pintura de apartamentos, casas e condomínios com equipe própria.",
+                    new String[][]{{"Pintura de fachada", "Pintura de fachada com lavagem prévia, preço por m².", "38"},
+                            {"Pintura de quarto", "Pintura de quarto com até 12 m² de piso.", "650"}}),
+            new Pro("madeira.nobre@obraslink.com", "Madeira Nobre Marcenaria", "Marceneiro", MOOCA, 30, 22, 1200,
+                    "Móveis planejados sob medida em MDF e madeira maciça.",
+                    new String[][]{{"Cozinha planejada", "Projeto 3D e fabricação de cozinha planejada.", "9800"},
+                            {"Guarda-roupa sob medida", "Guarda-roupa com portas de correr e iluminação.", "5200"}}),
+            new Pro("gesso.arte@obraslink.com", "Gesso Arte Acabamentos", "Gesseiro", IPIRANGA, 18, 9, 90,
+                    "Forro de gesso, drywall, sancas e molduras.",
+                    new String[][]{{"Forro de gesso", "Forro liso com acabamento, preço por m².", "85"},
+                            {"Parede de drywall", "Parede divisória com isolamento acústico, preço por m².", "140"}}),
+            new Pro("osasco.reformas@obraslink.com", "Silva Reformas Osasco", "Pedreiro", OSASCO, 12, 7, 200,
+                    "Pequenas reformas, banheiros e cozinhas em Osasco e zona oeste.",
+                    new String[][]{{"Reforma de banheiro", "Troca de revestimento, louças e metais.", "7500"}}),
+            new Pro("guarulhos.eletrica@obraslink.com", "Elétrica Guarulhos", "Eletricista", GUARULHOS, 8, 4, 100,
+                    "Eletricista em Guarulhos para residências e pequenos comércios.",
+                    new String[][]{{"Instalação de tomada", "Ponto de tomada novo com eletroduto aparente.", "120"}}),
+            new Pro("campinas.obras@obraslink.com", "Campinas Obras e Projetos", "Mestre de Obras", CAMPINAS, 30, 16, 2500,
+                    "Atendemos Campinas e região. Fora da Grande São Paulo, ótimo para testar o filtro de região.",
+                    new String[][]{{"Acompanhamento de obra", "Gestão mensal de obra residencial.", "5800"}}));
+
+    private static final Object[][] OUTROS_CLIENTES = {
+            {"beatriz.cliente@obraslink.com", "Beatriz Almeida", PINHEIROS},
+            {"carlos.cliente@obraslink.com", "Carlos Mendes", SANTANA},
+            {"fernanda.cliente@obraslink.com", "Fernanda Rocha", TATUAPE},
+            {"gustavo.cliente@obraslink.com", "Gustavo Ferreira", SANTO_AMARO},
+            {"helena.cliente@obraslink.com", "Helena Martins", ITAQUERA},
+            {"igor.cliente@obraslink.com", "Igor Nascimento", BUTANTA}};
+
+    /** E-mails de todas as contas de demonstração, exceto o administrador. */
+    static final List<String> EMAILS_DEMONSTRACAO = java.util.stream.Stream.of(
+                    java.util.stream.Stream.of(EMAIL_CLIENTE_TESTE, EMAIL_PRESTADOR_TESTE, EMAIL_AMBOS_TESTE),
+                    OUTROS_PROFISSIONAIS.stream().map(Pro::email),
+                    Arrays.stream(OUTROS_CLIENTES).map(c -> (String) c[0]))
+            .flatMap(e -> e).toList();
+
     private int seq = 0;
 
     @Bean
@@ -101,13 +172,13 @@ public class DataSeeder {
 
     private void semear() {
         Map<String, Categoria> cat = semearCategorias();
-        criarUsuario("admin@obraslink.com", "Administrador", SENHA_ADMIN, Set.of(PapelUsuario.ADMIN), 240);
+        criarUsuario(EMAIL_ADMIN, "Administrador", SENHA_ADMIN, Set.of(PapelUsuario.ADMIN), 240);
 
         // ---------- Contas de teste principais ----------
-        Usuario uCliente = criarUsuario("cliente.teste@obraslink.com", "Camila Teste", SENHA_TESTE, Set.of(PapelUsuario.CLIENTE), 200);
+        Usuario uCliente = criarUsuario(EMAIL_CLIENTE_TESTE, "Camila Teste", SENHA_TESTE, Set.of(PapelUsuario.CLIENTE), 200);
         Cliente clienteTeste = criarCliente(uCliente, "Camila Teste", VILA_MARIANA, 200);
 
-        Pro proTeste = new Pro("prestador.teste@obraslink.com", "Rafael Teste Elétrica", "Eletricista", PINHEIROS, 20, 12, 150,
+        Pro proTeste = new Pro(EMAIL_PRESTADOR_TESTE, "Rafael Teste Elétrica", "Eletricista", PINHEIROS, 20, 12, 150,
                 "Eletricista com 12 anos de experiência em reformas residenciais e comerciais. Quadros de distribuição, troca de fiação, "
                         + "iluminação em LED e laudos. Atendo com hora marcada e deixo o ambiente limpo.",
                 new String[][]{
@@ -118,7 +189,7 @@ public class DataSeeder {
         Usuario uPrestador = criarUsuario(proTeste.email(), proTeste.nome(), SENHA_TESTE, Set.of(PapelUsuario.PRESTADOR), 400);
         Prestador prestadorTeste = criarPrestador(uPrestador, proTeste, cat, 400);
 
-        Usuario uAmbos = criarUsuario("ambos.teste@obraslink.com", "Lucas Teste", SENHA_TESTE, Set.of(PapelUsuario.CLIENTE, PapelUsuario.PRESTADOR), 150);
+        Usuario uAmbos = criarUsuario(EMAIL_AMBOS_TESTE, "Lucas Teste", SENHA_TESTE, Set.of(PapelUsuario.CLIENTE, PapelUsuario.PRESTADOR), 150);
         Cliente clienteAmbos = criarCliente(uAmbos, "Lucas Teste", MOEMA, 150);
         Prestador prestadorAmbos = criarPrestador(uAmbos, new Pro(uAmbos.getEmail(), "Lucas Teste Pinturas", "Pintor", MOEMA, 10, 6, 200,
                 "Pintura residencial interna e externa, textura e grafiato. Orçamento sem compromisso na zona sul.",
@@ -127,54 +198,7 @@ public class DataSeeder {
                         {"Textura e grafiato", "Aplicação de textura em fachadas e muros.", "45"}}), cat, 150);
 
         // ---------- Outros profissionais ----------
-        List<Pro> outros = List.of(
-                new Pro("joao.pedreiro@obraslink.com", "João Batista Construções", "Pedreiro", BUTANTA, 15, 20, 250,
-                        "Alvenaria, contrapiso, reboco e assentamento de pisos. Equipe de 3 pessoas.",
-                        new String[][]{{"Assentamento de porcelanato", "Assentamento de porcelanato com nivelamento, preço por m².", "70"},
-                                {"Construção de muro", "Muro em bloco com reboco e pintura, preço por m².", "180"},
-                                {"Contrapiso", "Contrapiso nivelado para receber piso, preço por m².", "45"}}),
-                new Pro("marta.mestre@obraslink.com", "Marta Oliveira Gestão de Obras", "Mestre de Obras", BELA_VISTA, 25, 18, 3000,
-                        "Coordeno reformas completas: cronograma, compra de material e equipe.",
-                        new String[][]{{"Gestão de reforma completa", "Acompanhamento diário da obra do início ao fim, valor mensal.", "6500"},
-                                {"Vistoria técnica", "Visita técnica com relatório de patologias e orçamento.", "400"}}),
-                new Pro("construtora.horizonte@obraslink.com", "Construtora Horizonte", "Empreiteira", SANTO_ANDRE, 40, 15, 15000,
-                        "Empreiteira para obras residenciais e comerciais no ABC e em São Paulo.",
-                        new String[][]{{"Construção de casa térrea", "Construção completa por m², do alicerce ao acabamento.", "2400"},
-                                {"Reforma de loja", "Reforma comercial com entrega em prazo fechado.", "35000"}}),
-                new Pro("paulo.eletrica@obraslink.com", "Paulo Santos Elétrica", "Eletricista", SANTANA, 12, 8, 120,
-                        "Atendimento rápido na zona norte, urgências elétricas e manutenção.",
-                        new String[][]{{"Visita para reparo elétrico", "Diagnóstico e reparo de curto-circuito ou disjuntor desarmando.", "150"},
-                                {"Instalação de ventilador de teto", "Instalação com suporte e ligação no interruptor.", "160"}}),
-                new Pro("ana.hidraulica@obraslink.com", "Ana Costa Hidráulica", "Encanador", PERDIZES, 15, 10, 130,
-                        "Vazamentos, caça-vazamento com geofone, troca de registros e aquecedores.",
-                        new String[][]{{"Caça-vazamento", "Localização de vazamento sem quebra-quebra.", "350"},
-                                {"Troca de registro", "Troca de registro de gaveta ou pressão.", "220"},
-                                {"Instalação de aquecedor a gás", "Instalação de aquecedor de passagem com teste de estanqueidade.", "480"}}),
-                new Pro("diego.encanador@obraslink.com", "Diego Lima Encanamentos", "Encanador", TATUAPE, 10, 5, 100,
-                        "Desentupimentos e reparos hidráulicos na zona leste.",
-                        new String[][]{{"Desentupimento de pia e ralo", "Desentupimento com máquina elétrica.", "180"},
-                                {"Troca de sifão e torneira", "Troca de peças hidráulicas de cozinha e banheiro.", "120"}}),
-                new Pro("cores.pinturas@obraslink.com", "Cores & Cia Pinturas", "Pintor", LAPA, 20, 14, 300,
-                        "Pintura de apartamentos, casas e condomínios com equipe própria.",
-                        new String[][]{{"Pintura de fachada", "Pintura de fachada com lavagem prévia, preço por m².", "38"},
-                                {"Pintura de quarto", "Pintura de quarto com até 12 m² de piso.", "650"}}),
-                new Pro("madeira.nobre@obraslink.com", "Madeira Nobre Marcenaria", "Marceneiro", MOOCA, 30, 22, 1200,
-                        "Móveis planejados sob medida em MDF e madeira maciça.",
-                        new String[][]{{"Cozinha planejada", "Projeto 3D e fabricação de cozinha planejada.", "9800"},
-                                {"Guarda-roupa sob medida", "Guarda-roupa com portas de correr e iluminação.", "5200"}}),
-                new Pro("gesso.arte@obraslink.com", "Gesso Arte Acabamentos", "Gesseiro", IPIRANGA, 18, 9, 90,
-                        "Forro de gesso, drywall, sancas e molduras.",
-                        new String[][]{{"Forro de gesso", "Forro liso com acabamento, preço por m².", "85"},
-                                {"Parede de drywall", "Parede divisória com isolamento acústico, preço por m².", "140"}}),
-                new Pro("osasco.reformas@obraslink.com", "Silva Reformas Osasco", "Pedreiro", OSASCO, 12, 7, 200,
-                        "Pequenas reformas, banheiros e cozinhas em Osasco e zona oeste.",
-                        new String[][]{{"Reforma de banheiro", "Troca de revestimento, louças e metais.", "7500"}}),
-                new Pro("guarulhos.eletrica@obraslink.com", "Elétrica Guarulhos", "Eletricista", GUARULHOS, 8, 4, 100,
-                        "Eletricista em Guarulhos para residências e pequenos comércios.",
-                        new String[][]{{"Instalação de tomada", "Ponto de tomada novo com eletroduto aparente.", "120"}}),
-                new Pro("campinas.obras@obraslink.com", "Campinas Obras e Projetos", "Mestre de Obras", CAMPINAS, 30, 16, 2500,
-                        "Atendemos Campinas e região. Fora da Grande São Paulo, ótimo para testar o filtro de região.",
-                        new String[][]{{"Acompanhamento de obra", "Gestão mensal de obra residencial.", "5800"}}));
+        List<Pro> outros = OUTROS_PROFISSIONAIS;
         List<Prestador> prestadores = new ArrayList<>();
         prestadores.add(prestadorTeste);
         prestadores.add(prestadorAmbos);
@@ -186,13 +210,7 @@ public class DataSeeder {
         }
 
         // ---------- Outros clientes ----------
-        Object[][] dadosClientes = {
-                {"beatriz.cliente@obraslink.com", "Beatriz Almeida", PINHEIROS},
-                {"carlos.cliente@obraslink.com", "Carlos Mendes", SANTANA},
-                {"fernanda.cliente@obraslink.com", "Fernanda Rocha", TATUAPE},
-                {"gustavo.cliente@obraslink.com", "Gustavo Ferreira", SANTO_AMARO},
-                {"helena.cliente@obraslink.com", "Helena Martins", ITAQUERA},
-                {"igor.cliente@obraslink.com", "Igor Nascimento", BUTANTA}};
+        Object[][] dadosClientes = OUTROS_CLIENTES;
         List<Usuario> usuariosClientes = new ArrayList<>();
         List<Cliente> clientes = new ArrayList<>();
         dias = 300;
@@ -218,6 +236,14 @@ public class DataSeeder {
     // ---------- Cadastros ----------
 
     private Map<String, Categoria> semearCategorias() {
+        garantirCategorias(categoriaRepository);
+        Map<String, Categoria> mapa = new HashMap<>();
+        categoriaRepository.findAll().forEach(c -> mapa.put(c.getNome(), c));
+        return mapa;
+    }
+
+    /** Categorias padrão do catálogo; só grava se ainda não houver nenhuma. Também usado em produção. */
+    static void garantirCategorias(CategoriaRepository categoriaRepository) {
         if (categoriaRepository.count() == 0) {
             categoriaRepository.saveAll(List.of(
                     Categoria.builder().nome("Pedreiro").descricao("Alvenaria, contrapiso, reboco e assentamento de pisos.").icone("🧱").build(),
@@ -229,9 +255,6 @@ public class DataSeeder {
                     Categoria.builder().nome("Marceneiro").descricao("Móveis planejados e sob medida.").icone("🪚").build(),
                     Categoria.builder().nome("Gesseiro").descricao("Forros de gesso, drywall, sancas e molduras.").icone("🧰").build()));
         }
-        Map<String, Categoria> mapa = new HashMap<>();
-        categoriaRepository.findAll().forEach(c -> mapa.put(c.getNome(), c));
-        return mapa;
     }
 
     private Usuario criarUsuario(String email, String nome, String senha, Set<PapelUsuario> papeis, int diasAtras) {

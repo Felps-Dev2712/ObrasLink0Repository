@@ -148,6 +148,9 @@ write_files:
             SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/obraslink
             SPRING_DATASOURCE_USERNAME: obraslink
             SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+            # Optional, set in .env: SPRING_PROFILES_ACTIVE=prod + OBRALINK_ADMIN_PASSWORD (see README).
+            SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+            OBRALINK_ADMIN_PASSWORD: ${OBRALINK_ADMIN_PASSWORD:-}
             SPRING_JPA_HIBERNATE_DDL_AUTO: update
             SPRING_JPA_SHOW_SQL: "false"
             LOGGING_LEVEL_COM_OBRASLINK: INFO
