@@ -126,6 +126,27 @@ ssh -i $K $H 'cd /opt/obraslink/deploy && docker compose down && docker volume r
 
 Pushing to the branch does **not** deploy by itself: run `redeploy.sh`.
 
+### Production profile (remove the demo accounts)
+
+The `prod` Spring profile ([`application-prod.properties`](../../src/main/resources/application-prod.properties))
+doesn't create demo data, **deletes every `DataSeeder` demo account** (with their services, requests,
+reviews, files…) and keeps only `admin@obraslink.com`, whose password comes from `OBRALINK_ADMIN_PASSWORD`
+(min. 12 characters). It refuses to start, without deleting anything, if the admin would keep the public
+demo password. Irreversible for the demo data: take a backup first if you need it.
+
+```bash
+ssh -i $K $H 'cd /opt/obraslink/deploy \
+  && docker compose exec -T db pg_dump -U obraslink obraslink > ~/backup-$(date +%F).sql \
+  && umask 077 && printf "SPRING_PROFILES_ACTIVE=prod\nOBRALINK_ADMIN_PASSWORD=%s\n" "$(openssl rand -base64 24)" >> .env \
+  && docker compose up -d && grep OBRALINK_ADMIN_PASSWORD .env'
+```
+
+The last command prints the new admin password; store it in a password manager. To go back to demo
+data: remove those two lines from `.env` and reset the database (above).
+
+> VMs created before this option existed need the two variables added to the `app` service in
+> `/opt/obraslink/deploy/compose.yml` (see [`cloud-init.yaml.tpl`](cloud-init.yaml.tpl)).
+
 On the VM:
 
 ```
