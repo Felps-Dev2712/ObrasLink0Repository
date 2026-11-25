@@ -63,6 +63,10 @@ docker-compose down
 docker-compose down -v
 ```
 
+## Deploy na Azure
+
+Ambiente de demonstração em uma VM (Postgres + app + HTTPS via Caddy), criado por um único script: veja [`deploy/azure/README.md`](deploy/azure/README.md).
+
 ## Estrutura do Projeto
 
 ```

@@ -1,0 +1,2 @@
+# cloud-init and shell scripts run on Linux: keep LF even on Windows checkouts.
+* text eol=lf
