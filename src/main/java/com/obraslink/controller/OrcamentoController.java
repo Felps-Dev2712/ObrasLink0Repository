@@ -2,7 +2,6 @@ package com.obraslink.controller;
 
 import com.obraslink.dto.OrcamentoFormularioRequest;
 import com.obraslink.model.SolicitacaoOrcamento;
-import com.obraslink.service.CampoOrcamentoCatalogo;
 import com.obraslink.service.OrcamentoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -28,10 +27,38 @@ public class OrcamentoController {
     public String iniciar(@RequestParam(required = false) List<Long> prestadorId, RedirectAttributes attributes) {
         try {
             Long id = orcamentoService.iniciar(prestadorId);
-            return "redirect:/orcamentos/" + id + "/formulario";
+            return proximaEtapa(id, orcamentoService.consultarFormulario(id));
         } catch (IllegalArgumentException ex) {
             attributes.addFlashAttribute("mensagemErro", ex.getMessage());
             return "redirect:/prestadores";
+        }
+    }
+
+    /** Quando os prestadores selecionados têm mais de uma especialidade em comum, escolhe-se antes do formulário. */
+    @GetMapping("/{id}/especialidades")
+    public String especialidades(@PathVariable Long id, Model model, RedirectAttributes attributes) {
+        try {
+            SolicitacaoOrcamento solicitacao = orcamentoService.consultarFormulario(id);
+            if (!solicitacao.getCategoriasNomes().isEmpty()) return "redirect:/orcamentos/" + id + "/formulario";
+            model.addAttribute("solicitacao", solicitacao);
+            model.addAttribute("itens", orcamentoService.itensDaSolicitacao(id));
+            model.addAttribute("comuns", orcamentoService.especialidadesComunsDaSolicitacao(id));
+            return "orcamentos/especialidades";
+        } catch (IllegalArgumentException ex) {
+            attributes.addFlashAttribute("mensagemErro", ex.getMessage());
+            return "redirect:/prestadores";
+        }
+    }
+
+    @PostMapping("/{id}/especialidades")
+    public String escolherEspecialidades(@PathVariable Long id, @RequestParam(required = false) List<Long> categoriaId,
+                                          RedirectAttributes attributes) {
+        try {
+            orcamentoService.escolherEspecialidades(id, categoriaId);
+            return "redirect:/orcamentos/" + id + "/formulario";
+        } catch (IllegalArgumentException ex) {
+            attributes.addFlashAttribute("mensagemErro", ex.getMessage());
+            return "redirect:/orcamentos/" + id + "/especialidades";
         }
     }
 
@@ -39,12 +66,17 @@ public class OrcamentoController {
     public String formulario(@PathVariable Long id, Model model, RedirectAttributes attributes) {
         try {
             SolicitacaoOrcamento solicitacao = orcamentoService.consultarFormulario(id);
+            if (solicitacao.getCategoriasNomes().isEmpty()) return "redirect:/orcamentos/" + id + "/especialidades";
             carregarFormulario(id, solicitacao, model);
             return "orcamentos/formulario";
         } catch (IllegalArgumentException ex) {
             attributes.addFlashAttribute("mensagemErro", ex.getMessage());
             return "redirect:/prestadores";
         }
+    }
+
+    private String proximaEtapa(Long id, SolicitacaoOrcamento solicitacao) {
+        return "redirect:/orcamentos/" + id + (solicitacao.getCategoriasNomes().isEmpty() ? "/especialidades" : "/formulario");
     }
 
     @PostMapping("/{id}/formulario")
@@ -103,7 +135,6 @@ public class OrcamentoController {
 
     private void carregarFormulario(Long id, SolicitacaoOrcamento solicitacao, Model model) {
         model.addAttribute("solicitacao", solicitacao);
-        model.addAttribute("campos", CampoOrcamentoCatalogo.campos(solicitacao.getCategoriaNome()));
         model.addAttribute("itens", orcamentoService.itensDaSolicitacao(id));
         model.addAttribute("anexos", orcamentoService.anexosDaSolicitacao(id));
         model.addAttribute("maxAnexos", com.obraslink.service.OrcamentoAnexoService.MAX_ANEXOS_POR_SOLICITACAO);

@@ -28,6 +28,19 @@ public class Prestador {
                 && com.obraslink.validation.DadosCadastrais.telefoneValido(whatsapp);
     }
 
+    /** Todas as especialidades, a principal primeiro e depois as secundárias, sem repetir. */
+    @Transient
+    public List<Categoria> getEspecialidades() {
+        List<Categoria> todas = new ArrayList<>();
+        if (categoria != null) todas.add(categoria);
+        if (categorias != null) {
+            for (Categoria c : categorias) {
+                if (todas.stream().noneMatch(ja -> ja.getId().equals(c.getId()))) todas.add(c);
+            }
+        }
+        return todas;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

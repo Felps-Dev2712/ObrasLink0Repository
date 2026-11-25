@@ -1,6 +1,6 @@
 # Termos de Uso e Aviso de Privacidade: aceite
 
-Versão atual dos documentos: **2026-11-12-v2** (`TermosService.VERSAO_ATUAL`, arquivos em `templates/legal/2026-11-12-v2`).
+Versão atual dos documentos: **2026-11-23-v3** (`TermosService.VERSAO_ATUAL`, arquivos em `templates/legal/2026-11-23-v3`). Conteúdo ainda pendente de revisão jurídica antes de valer como versão definitiva.
 
 ## Aceite no cadastro (obrigatório)
 

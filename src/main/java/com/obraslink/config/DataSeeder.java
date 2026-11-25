@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,9 +28,11 @@ import java.util.*;
  * Dados fictícios para testar a plataforma localmente.
  * Só roda com o banco vazio (nenhum usuário): nunca mexe em dados existentes.
  * As contas e senhas estão documentadas em docs/contas-de-teste.md.
+ * Para a instância pública de demonstração (nomes sem "Teste"), ver {@link DemoSeeder}, ativado com o perfil "demo".
  */
 @Slf4j
 @Configuration
+@Profile("!demo")
 @RequiredArgsConstructor
 public class DataSeeder {
 

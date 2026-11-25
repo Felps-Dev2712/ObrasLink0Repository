@@ -36,7 +36,11 @@ public class OrcamentoService {
 
     public record PrestadorSelecionavel(Long id, String nome) {}
 
-    /** Cria o rascunho da solicitação a partir dos prestadores marcados na vitrine: todos precisam ser da mesma categoria. */
+    /**
+     * Cria o rascunho da solicitação a partir dos prestadores marcados na vitrine: todos precisam ter ao
+     * menos uma especialidade em comum (a principal ou uma secundária de cada um). Se houver só uma em
+     * comum, ela já é usada; se houver mais de uma, o cliente escolhe em seguida (ver {@link #escolherEspecialidades}).
+     */
     @Transactional
     public Long iniciar(List<Long> prestadorIds) {
         Usuario usuario = exigirClienteAtual();
@@ -51,20 +55,18 @@ public class OrcamentoService {
             if (prestador.getUsuarioId().equals(usuario.getId())) {
                 throw new IllegalArgumentException("Você não pode solicitar um orçamento para si mesmo.");
             }
-            if (prestador.getCategoria() == null) {
+            if (prestador.getEspecialidades().isEmpty()) {
                 throw new IllegalArgumentException(prestador.getNome() + " não tem categoria definida.");
             }
         }
-        Categoria categoria = selecionados.get(0).getCategoria();
-        boolean mesmaCategoria = selecionados.stream().allMatch(p -> categoria.getId().equals(p.getCategoria().getId()));
-        if (!mesmaCategoria) {
-            throw new IllegalArgumentException("Selecione prestadores da mesma categoria para pedir um orçamento em conjunto.");
+        List<Categoria> comuns = especialidadesComuns(selecionados);
+        if (comuns.isEmpty()) {
+            throw new IllegalArgumentException("Selecione prestadores que tenham ao menos uma especialidade em comum.");
         }
 
         SolicitacaoOrcamento solicitacao = new SolicitacaoOrcamento();
         solicitacao.setClienteUsuarioId(usuario.getId());
-        solicitacao.setCategoriaId(categoria.getId());
-        solicitacao.setCategoriaNome(categoria.getNome());
+        if (comuns.size() == 1) solicitacao.setCategoriasNomes(new ArrayList<>(List.of(comuns.get(0).getNome())));
         solicitacoes.save(solicitacao);
 
         List<SolicitacaoOrcamentoItem> novosItens = selecionados.stream()
@@ -77,6 +79,44 @@ public class OrcamentoService {
                 .toList();
         itens.saveAll(novosItens);
         return solicitacao.getId();
+    }
+
+    /** Especialidades (principal + secundárias) comuns a todos os prestadores desta lista, na ordem do primeiro. */
+    private List<Categoria> especialidadesComuns(List<Prestador> lista) {
+        List<Categoria> comuns = new ArrayList<>(lista.get(0).getEspecialidades());
+        for (int i = 1; i < lista.size(); i++) {
+            Set<Long> idsDoOutro = lista.get(i).getEspecialidades().stream().map(Categoria::getId).collect(Collectors.toSet());
+            comuns.removeIf(c -> !idsDoOutro.contains(c.getId()));
+        }
+        return comuns;
+    }
+
+    /**
+     * Especialidades em comum entre os prestadores desta solicitação, recalculadas a partir dos dados
+     * atuais deles (podem ter mudado depois da seleção). Vazia só se a solicitação não tiver itens.
+     */
+    @Transactional(readOnly = true)
+    public List<Categoria> especialidadesComunsDaSolicitacao(Long id) {
+        solicitacaoDoClienteAtual(id);
+        List<Long> prestadorIds = itens.findBySolicitacaoIdOrderByIdAsc(id).stream().map(SolicitacaoOrcamentoItem::getPrestadorId).toList();
+        List<Prestador> provs = prestadores.findAllById(prestadorIds);
+        return provs.isEmpty() ? List.of() : especialidadesComuns(provs);
+    }
+
+    /** Registra para quais das especialidades em comum o cliente quer pedir o orçamento (uma ou mais). */
+    @Transactional
+    public void escolherEspecialidades(Long id, List<Long> categoriaIds) {
+        SolicitacaoOrcamento solicitacao = solicitacaoDoClienteAtual(id);
+        if (categoriaIds == null || categoriaIds.isEmpty()) {
+            throw new IllegalArgumentException("Selecione ao menos uma especialidade.");
+        }
+        List<Long> escolhidos = categoriaIds.stream().distinct().toList();
+        List<Categoria> comuns = especialidadesComunsDaSolicitacao(id);
+        List<String> nomes = comuns.stream().filter(c -> escolhidos.contains(c.getId())).map(Categoria::getNome).toList();
+        if (nomes.size() != escolhidos.size()) {
+            throw new IllegalArgumentException("Uma das especialidades escolhidas não é mais comum a todos os prestadores selecionados.");
+        }
+        solicitacao.setCategoriasNomes(new ArrayList<>(nomes));
     }
 
     @Transactional(readOnly = true)
@@ -107,18 +147,24 @@ public class OrcamentoService {
     @Transactional
     public void salvarFormulario(Long id, OrcamentoFormularioRequest form, List<MultipartFile> novosAnexos) {
         SolicitacaoOrcamento solicitacao = solicitacaoDoClienteAtual(id);
+        if (solicitacao.getCategoriasNomes().isEmpty()) {
+            throw new IllegalArgumentException("Escolha para quais especialidades você quer pedir o orçamento.");
+        }
         Endereco endereco = resolverEnderecoExecucao(solicitacao, form);
         if (form.getDescricaoGeral() == null || form.getDescricaoGeral().isBlank()) {
             throw new IllegalArgumentException("Descreva o serviço que você precisa.");
         }
-        List<CampoOrcamentoCatalogo.Campo> camposCategoria = CampoOrcamentoCatalogo.campos(solicitacao.getCategoriaNome());
         Map<String, String> valores = new LinkedHashMap<>();
-        for (CampoOrcamentoCatalogo.Campo campo : camposCategoria) {
-            String valor = form.getCampos() == null ? null : form.getCampos().get(campo.chave());
-            if (campo.obrigatorio() && (valor == null || valor.isBlank())) {
-                throw new IllegalArgumentException("Preencha o campo \"" + campo.rotulo() + "\".");
+        List<String> categoriasNomes = solicitacao.getCategoriasNomes();
+        for (int indice = 0; indice < categoriasNomes.size(); indice++) {
+            for (CampoOrcamentoCatalogo.Campo campo : CampoOrcamentoCatalogo.campos(categoriasNomes.get(indice))) {
+                String chaveComposta = chaveComposta(indice, campo);
+                String valor = form.getCampos() == null ? null : form.getCampos().get(chaveComposta);
+                if (campo.obrigatorio() && (valor == null || valor.isBlank())) {
+                    throw new IllegalArgumentException("Preencha o campo \"" + campo.rotulo() + "\".");
+                }
+                if (valor != null && !valor.isBlank()) valores.put(chaveComposta, valor.trim());
             }
-            if (valor != null && !valor.isBlank()) valores.put(campo.chave(), valor.trim());
         }
 
         List<MultipartFile> validos = novosAnexos == null ? List.of()
@@ -145,7 +191,7 @@ public class OrcamentoService {
         Cliente cliente = clientes.findByUsuarioId(solicitacao.getClienteUsuarioId())
                 .orElseThrow(() -> new IllegalArgumentException("Complete seu cadastro de cliente antes de continuar."));
         for (SolicitacaoOrcamentoItem item : itens.findBySolicitacaoIdOrderByIdAsc(id)) {
-            item.setMensagem(gerarMensagem(cliente, solicitacao, item.getPrestadorNome(), camposCategoria, totalAnexos));
+            item.setMensagem(gerarMensagem(cliente, solicitacao, item.getPrestadorNome(), totalAnexos));
         }
         itens.saveAll(itens.findBySolicitacaoIdOrderByIdAsc(id));
     }
@@ -181,6 +227,15 @@ public class OrcamentoService {
 
     private static boolean vazio(String valor) {
         return valor == null || valor.isBlank();
+    }
+
+    /**
+     * Chave usada para gravar e ler um campo específico: namespaceada pela posição da categoria em
+     * {@code categoriasNomes} (estável, já que a ordem é gravada e nunca muda depois de escolhida),
+     * para não colidir quando duas especialidades escolhidas tiverem um campo de mesma chave (ex.: "areaM2").
+     */
+    private static String chaveComposta(int indiceCategoria, CampoOrcamentoCatalogo.Campo campo) {
+        return "c" + indiceCategoria + "_" + campo.chave();
     }
 
     @Transactional
@@ -224,18 +279,20 @@ public class OrcamentoService {
         return resultados;
     }
 
-    private String gerarMensagem(Cliente cliente, SolicitacaoOrcamento solicitacao, String prestadorNome,
-                                  List<CampoOrcamentoCatalogo.Campo> camposCategoria, int totalAnexos) {
+    private String gerarMensagem(Cliente cliente, SolicitacaoOrcamento solicitacao, String prestadorNome, int totalAnexos) {
         StringBuilder msg = new StringBuilder();
         msg.append("Olá, sou ").append(cliente.getNome()).append(". Vim pelo ObraLink e gostaria de solicitar um orçamento de ")
-                .append(solicitacao.getCategoriaNome()).append(" com ").append(prestadorNome).append(".");
+                .append(solicitacao.getCategoriasResumo()).append(" com ").append(prestadorNome).append(".");
         msg.append("\nLocal: ").append(solicitacao.getEnderecoExecucao().getEnderecoCompleto());
         msg.append("\nDescrição: ").append(solicitacao.getDescricaoGeral());
         msg.append("\nPrevisão: ").append(solicitacao.getDataPrevisao() == null ? "A combinar" : DATA_BR.format(solicitacao.getDataPrevisao()));
         msg.append("\nUrgência: ").append(urgenciaTexto(solicitacao.getUrgencia()));
-        for (CampoOrcamentoCatalogo.Campo campo : camposCategoria) {
-            String valor = solicitacao.getCamposEspecificos().get(campo.chave());
-            if (valor != null && !valor.isBlank()) msg.append("\n").append(campo.rotulo()).append(": ").append(valor);
+        List<String> categoriasNomes = solicitacao.getCategoriasNomes();
+        for (int indice = 0; indice < categoriasNomes.size(); indice++) {
+            for (CampoOrcamentoCatalogo.Campo campo : CampoOrcamentoCatalogo.campos(categoriasNomes.get(indice))) {
+                String valor = solicitacao.getCamposEspecificos().get(chaveComposta(indice, campo));
+                if (valor != null && !valor.isBlank()) msg.append("\n").append(campo.rotulo()).append(": ").append(valor);
+            }
         }
         if (totalAnexos > 0) {
             msg.append("\nAnexei ").append(totalAnexos).append(totalAnexos == 1 ? " arquivo" : " arquivos")

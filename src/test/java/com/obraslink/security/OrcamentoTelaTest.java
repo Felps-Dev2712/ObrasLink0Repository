@@ -46,23 +46,72 @@ class OrcamentoTelaTest {
     private SolicitacaoOrcamento solicitacao() {
         SolicitacaoOrcamento s = new SolicitacaoOrcamento();
         s.setId(100L);
-        s.setCategoriaNome("Pintor");
+        s.setCategoriasNomes(new java.util.ArrayList<>(List.of("Pintor")));
+        return s;
+    }
+
+    private SolicitacaoOrcamento solicitacaoPendente() {
+        SolicitacaoOrcamento s = new SolicitacaoOrcamento();
+        s.setId(100L);
+        s.setCategoriasNomes(new java.util.ArrayList<>());
         return s;
     }
 
     @Test
-    void iniciarRedirecionaParaOFormularioDaNovaSolicitacao() throws Exception {
+    void iniciarRedirecionaParaOFormularioQuandoJaTemUmaEspecialidade() throws Exception {
         when(service.iniciar(List.of(10L, 11L))).thenReturn(100L);
+        when(service.consultarFormulario(100L)).thenReturn(solicitacao());
         mvc.perform(get("/orcamentos/novo").param("prestadorId", "10", "11"))
                 .andExpect(redirectedUrl("/orcamentos/100/formulario"));
     }
 
     @Test
+    void iniciarRedirecionaParaEspecialidadesQuandoHaMaisDeUmaEmComum() throws Exception {
+        when(service.iniciar(List.of(10L))).thenReturn(100L);
+        when(service.consultarFormulario(100L)).thenReturn(solicitacaoPendente());
+        mvc.perform(get("/orcamentos/novo").param("prestadorId", "10"))
+                .andExpect(redirectedUrl("/orcamentos/100/especialidades"));
+    }
+
+    @Test
     void iniciarComErroVoltaParaAVitrineComAMensagem() throws Exception {
-        when(service.iniciar(any())).thenThrow(new IllegalArgumentException("Selecione prestadores da mesma categoria para pedir um orçamento em conjunto."));
+        when(service.iniciar(any())).thenThrow(new IllegalArgumentException("Selecione prestadores que tenham ao menos uma especialidade em comum."));
         mvc.perform(get("/orcamentos/novo").param("prestadorId", "10", "12"))
                 .andExpect(redirectedUrl("/prestadores"))
-                .andExpect(flash().attribute("mensagemErro", "Selecione prestadores da mesma categoria para pedir um orçamento em conjunto."));
+                .andExpect(flash().attribute("mensagemErro", "Selecione prestadores que tenham ao menos uma especialidade em comum."));
+    }
+
+    @Test
+    void mostraAsEspecialidadesEmComumParaEscolher() throws Exception {
+        when(service.consultarFormulario(100L)).thenReturn(solicitacaoPendente());
+        when(service.itensDaSolicitacao(100L)).thenReturn(List.of(
+                SolicitacaoOrcamentoItem.builder().id(1L).prestadorId(10L).prestadorNome("Prestador Um").mensagem("").build()));
+        when(service.especialidadesComunsDaSolicitacao(100L)).thenReturn(List.of(
+                com.obraslink.model.Categoria.builder().id(5L).nome("Pintor").build(),
+                com.obraslink.model.Categoria.builder().id(6L).nome("Eletricista").build()));
+        String html = mvc.perform(get("/orcamentos/100/especialidades")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertTrueContains(html, "Prestador Um");
+        assertTrueContains(html, "Pintor");
+        assertTrueContains(html, "Eletricista");
+    }
+
+    @Test
+    void jaTendoEspecialidadeEscolhidaPulaDiretoParaOFormulario() throws Exception {
+        when(service.consultarFormulario(100L)).thenReturn(solicitacao());
+        mvc.perform(get("/orcamentos/100/especialidades")).andExpect(redirectedUrl("/orcamentos/100/formulario"));
+    }
+
+    @Test
+    void escolherEspecialidadesRedirecionaParaOFormularioOuVoltaComErro() throws Exception {
+        mvc.perform(post("/orcamentos/100/especialidades").param("categoriaId", "5", "6"))
+                .andExpect(redirectedUrl("/orcamentos/100/formulario"));
+        verify(service).escolherEspecialidades(100L, List.of(5L, 6L));
+
+        doThrow(new IllegalArgumentException("Selecione ao menos uma especialidade.")).when(service).escolherEspecialidades(eq(100L), any());
+        mvc.perform(post("/orcamentos/100/especialidades"))
+                .andExpect(redirectedUrl("/orcamentos/100/especialidades"))
+                .andExpect(flash().attribute("mensagemErro", "Selecione ao menos uma especialidade."));
     }
 
     @Test

@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TermosService {
     // Cada versão corresponde a documentos imutáveis na pasta templates/legal.
-    public static final String VERSAO_ATUAL = "2026-11-12-v2";
+    public static final String VERSAO_ATUAL = "2026-11-23-v3";
     private final AcessoService acessoService;
     private final AceiteTermosRepository aceites;
     private final EntityManager entityManager;

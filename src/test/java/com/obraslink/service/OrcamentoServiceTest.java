@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +31,7 @@ class OrcamentoServiceTest {
             solicitacoes, itens, anexosRepo, anexoService, atendimentoService);
 
     private Usuario usuario;
-    private Categoria pintor;
+    private Categoria pintor, eletricista;
     private Prestador p1, p2;
     private Endereco enderecoCadastro;
 
@@ -38,6 +39,7 @@ class OrcamentoServiceTest {
     void preparar() {
         usuario = Usuario.builder().id(1L).papeis(Set.of(PapelUsuario.CLIENTE)).ativo(true).build();
         pintor = Categoria.builder().id(5L).nome("Pintor").build();
+        eletricista = Categoria.builder().id(6L).nome("Eletricista").build();
         p1 = Prestador.builder().id(10L).usuarioId(20L).nome("Prestador Um").categoria(pintor).ativo(true).build();
         p2 = Prestador.builder().id(11L).usuarioId(21L).nome("Prestador Dois").categoria(pintor).ativo(true).build();
         when(acesso.getUsuarioAtualOrThrow()).thenReturn(usuario);
@@ -55,25 +57,34 @@ class OrcamentoServiceTest {
     }
 
     @Test
-    void iniciarCriaSolicitacaoEUmItemPorPrestadorDaMesmaCategoria() {
+    void iniciarCriaSolicitacaoEUmItemPorPrestadorQuandoHaUmaSoEspecialidadeEmComum() {
         when(prestadores.findAllById(List.of(10L, 11L))).thenReturn(List.of(p1, p2));
         Long id = service.iniciar(List.of(10L, 11L));
         assertEquals(100L, id);
-        verify(solicitacoes).save(argThat(s -> s.getCategoriaId().equals(5L) && s.getCategoriaNome().equals("Pintor") && s.getClienteUsuarioId().equals(1L)));
+        verify(solicitacoes).save(argThat(s -> s.getCategoriasNomes().equals(List.of("Pintor")) && s.getClienteUsuarioId().equals(1L)));
         verify(itens).saveAll(argThat((List<SolicitacaoOrcamentoItem> lista) -> lista.size() == 2
                 && lista.stream().anyMatch(i -> i.getPrestadorId().equals(10L)) && lista.stream().anyMatch(i -> i.getPrestadorId().equals(11L))));
     }
 
     @Test
-    void iniciarRejeitaListaVaziaECategoriasDiferentes() {
+    void iniciarDeixaEspecialidadesVaziaQuandoHaMaisDeUmaEmComum() {
+        // Um prestador só, mas com duas especialidades: a solicitação fica pendente até o cliente escolher.
+        p1.setCategorias(List.of(eletricista));
+        when(prestadores.findAllById(List.of(10L))).thenReturn(List.of(p1));
+        Long id = service.iniciar(List.of(10L));
+        assertEquals(100L, id);
+        verify(solicitacoes).save(argThat(s -> s.getCategoriasNomes().isEmpty()));
+    }
+
+    @Test
+    void iniciarRejeitaListaVaziaESemEspecialidadeEmComum() {
         assertThrows(IllegalArgumentException.class, () -> service.iniciar(List.of()));
         assertThrows(IllegalArgumentException.class, () -> service.iniciar(null));
 
-        Categoria eletricista = Categoria.builder().id(6L).nome("Eletricista").build();
-        Prestador outraCategoria = Prestador.builder().id(12L).usuarioId(22L).nome("Outro").categoria(eletricista).ativo(true).build();
-        when(prestadores.findAllById(List.of(10L, 12L))).thenReturn(List.of(p1, outraCategoria));
+        Prestador semEspecialidadeComum = Prestador.builder().id(12L).usuarioId(22L).nome("Outro").categoria(eletricista).ativo(true).build();
+        when(prestadores.findAllById(List.of(10L, 12L))).thenReturn(List.of(p1, semEspecialidadeComum));
         var erro = assertThrows(IllegalArgumentException.class, () -> service.iniciar(List.of(10L, 12L)));
-        assertTrue(erro.getMessage().contains("mesma categoria"), erro.getMessage());
+        assertTrue(erro.getMessage().contains("especialidade em comum"), erro.getMessage());
     }
 
     @Test
@@ -88,12 +99,45 @@ class OrcamentoServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.iniciar(List.of(10L)));
     }
 
+    @Test
+    void especialidadesComunsDaSolicitacaoRecalculaAPartirDosPrestadoresAtuais() {
+        solicitacaoPintor();
+        when(itens.findBySolicitacaoIdOrderByIdAsc(100L)).thenReturn(List.of(item(1L, 10L, "Prestador Um"), item(2L, 11L, "Prestador Dois")));
+        when(prestadores.findAllById(List.of(10L, 11L))).thenReturn(List.of(p1, p2));
+        var comuns = service.especialidadesComunsDaSolicitacao(100L);
+        assertEquals(List.of("Pintor"), comuns.stream().map(Categoria::getNome).toList());
+    }
+
+    @Test
+    void escolherEspecialidadesGravaAsEscolhidasDentreAsComuns() {
+        SolicitacaoOrcamento solicitacao = solicitacaoPintor();
+        solicitacao.setCategoriasNomes(new ArrayList<>()); // ainda pendente
+        p1.setCategorias(List.of(eletricista));
+        when(itens.findBySolicitacaoIdOrderByIdAsc(100L)).thenReturn(List.of(item(1L, 10L, "Prestador Um")));
+        when(prestadores.findAllById(List.of(10L))).thenReturn(List.of(p1));
+
+        service.escolherEspecialidades(100L, List.of(6L));
+        assertEquals(List.of("Eletricista"), solicitacao.getCategoriasNomes());
+    }
+
+    @Test
+    void escolherEspecialidadesRejeitaVazioOuForaDasComuns() {
+        SolicitacaoOrcamento solicitacao = solicitacaoPintor();
+        solicitacao.setCategoriasNomes(new ArrayList<>());
+        when(itens.findBySolicitacaoIdOrderByIdAsc(100L)).thenReturn(List.of(item(1L, 10L, "Prestador Um")));
+        when(prestadores.findAllById(List.of(10L))).thenReturn(List.of(p1));
+
+        assertThrows(IllegalArgumentException.class, () -> service.escolherEspecialidades(100L, List.of()));
+        assertThrows(IllegalArgumentException.class, () -> service.escolherEspecialidades(100L, null));
+        var erro = assertThrows(IllegalArgumentException.class, () -> service.escolherEspecialidades(100L, List.of(6L)));
+        assertTrue(erro.getMessage().contains("não é mais comum"), erro.getMessage());
+    }
+
     private SolicitacaoOrcamento solicitacaoPintor() {
         SolicitacaoOrcamento s = new SolicitacaoOrcamento();
         s.setId(100L);
         s.setClienteUsuarioId(1L);
-        s.setCategoriaId(5L);
-        s.setCategoriaNome("Pintor");
+        s.setCategoriasNomes(new ArrayList<>(List.of("Pintor")));
         when(solicitacoes.findByIdAndClienteUsuarioId(100L, 1L)).thenReturn(Optional.of(s));
         return s;
     }
@@ -105,6 +149,11 @@ class OrcamentoServiceTest {
     private static Endereco enderecoCustom() {
         return Endereco.builder().cep("04000-000").logradouro("Av. Brasil").numero("500")
                 .bairro("Jardim").cidade("São Paulo").estado("sp").build();
+    }
+
+    private static Map<String, String> camposPintorValidos() {
+        return Map.of("c0_areaM2", "30", "c0_tipoSuperficie", "Alvenaria", "c0_quantidadeComodos", "2",
+                "c0_estadoSuperficie", "Boa", "c0_necessitaPreparacao", "Não");
     }
 
     @Test
@@ -121,12 +170,22 @@ class OrcamentoServiceTest {
     }
 
     @Test
+    void salvarFormularioExigeEspecialidadeEscolhida() {
+        SolicitacaoOrcamento solicitacao = solicitacaoPintor();
+        solicitacao.setCategoriasNomes(new ArrayList<>());
+        OrcamentoFormularioRequest form = new OrcamentoFormularioRequest();
+        form.setDescricaoGeral("Pintar a sala");
+        var erro = assertThrows(IllegalArgumentException.class, () -> service.salvarFormulario(100L, form, null));
+        assertTrue(erro.getMessage().contains("especialidades"), erro.getMessage());
+    }
+
+    @Test
     void salvarFormularioExigeEnderecoCadastradoOuOutroInformado() {
         solicitacaoPintor();
         when(clientes.findByUsuarioId(1L)).thenReturn(Optional.of(Cliente.builder().nome("Sem endereço").build()));
         OrcamentoFormularioRequest form = new OrcamentoFormularioRequest();
         form.setDescricaoGeral("Pintar a sala");
-        form.setCampos(Map.of("areaM2", "30", "tipoSuperficie", "a", "quantidadeComodos", "1", "estadoSuperficie", "a", "necessitaPreparacao", "a"));
+        form.setCampos(camposPintorValidos());
         var erro = assertThrows(IllegalArgumentException.class, () -> service.salvarFormulario(100L, form, null));
         assertTrue(erro.getMessage().contains("endereço"), erro.getMessage());
 
@@ -141,7 +200,7 @@ class OrcamentoServiceTest {
         SolicitacaoOrcamento solicitacao = solicitacaoPintor();
         OrcamentoFormularioRequest form = new OrcamentoFormularioRequest();
         form.setDescricaoGeral("Pintar a sala");
-        form.setCampos(Map.of("areaM2", "30", "tipoSuperficie", "Alvenaria", "quantidadeComodos", "2", "estadoSuperficie", "Boa", "necessitaPreparacao", "Não"));
+        form.setCampos(camposPintorValidos());
         List<SolicitacaoOrcamentoItem> lista = List.of(item(1L, 10L, "Prestador Um"));
         when(itens.findBySolicitacaoIdOrderByIdAsc(100L)).thenReturn(lista);
         when(anexosRepo.countBySolicitacaoId(100L)).thenReturn(0L);
@@ -162,7 +221,7 @@ class OrcamentoServiceTest {
         form.setUsarEnderecoCadastrado(false);
         form.setEnderecoExecucao(enderecoCustom());
         form.setDescricaoGeral("Pintar a fachada");
-        form.setCampos(Map.of("areaM2", "80", "tipoSuperficie", "Alvenaria", "quantidadeComodos", "N/A", "estadoSuperficie", "Boa", "necessitaPreparacao", "Não"));
+        form.setCampos(camposPintorValidos());
         List<SolicitacaoOrcamentoItem> lista = List.of(item(1L, 10L, "Prestador Um"));
         when(itens.findBySolicitacaoIdOrderByIdAsc(100L)).thenReturn(lista);
         when(anexosRepo.countBySolicitacaoId(100L)).thenReturn(0L);
@@ -182,7 +241,7 @@ class OrcamentoServiceTest {
         solicitacao.setEnderecoExecucao(existente);
         OrcamentoFormularioRequest form = new OrcamentoFormularioRequest();
         form.setDescricaoGeral("Pintar a sala");
-        form.setCampos(Map.of("areaM2", "30", "tipoSuperficie", "a", "quantidadeComodos", "1", "estadoSuperficie", "a", "necessitaPreparacao", "a"));
+        form.setCampos(camposPintorValidos());
         when(itens.findBySolicitacaoIdOrderByIdAsc(100L)).thenReturn(List.of());
         when(anexosRepo.countBySolicitacaoId(100L)).thenReturn(0L);
 
@@ -198,13 +257,7 @@ class OrcamentoServiceTest {
         OrcamentoFormularioRequest form = new OrcamentoFormularioRequest();
         form.setDescricaoGeral("Pintar a sala");
         form.setUrgencia(SolicitacaoOrcamento.Urgencia.ALTA);
-        form.setCampos(Map.of(
-                "areaM2", "30",
-                "tipoSuperficie", "Alvenaria",
-                "quantidadeComodos", "2",
-                "estadoSuperficie", "Com trincas",
-                "necessitaPreparacao", "Sim"
-        ));
+        form.setCampos(camposPintorValidos());
         List<SolicitacaoOrcamentoItem> lista = List.of(item(1L, 10L, "Prestador Um"), item(2L, 11L, "Prestador Dois"));
         when(itens.findBySolicitacaoIdOrderByIdAsc(100L)).thenReturn(lista);
         when(anexosRepo.countBySolicitacaoId(100L)).thenReturn(0L);
@@ -220,11 +273,37 @@ class OrcamentoServiceTest {
     }
 
     @Test
+    void salvarFormularioComDuasEspecialidadesEscolhidasNamespaceiaOsCamposENaoColide() {
+        SolicitacaoOrcamento solicitacao = solicitacaoPintor();
+        solicitacao.setCategoriasNomes(new ArrayList<>(List.of("Pintor", "Eletricista")));
+        OrcamentoFormularioRequest form = new OrcamentoFormularioRequest();
+        form.setDescricaoGeral("Pintura e instalação elétrica");
+        form.setCampos(Map.of(
+                "c0_areaM2", "30", "c0_tipoSuperficie", "Alvenaria", "c0_quantidadeComodos", "2",
+                "c0_estadoSuperficie", "Boa", "c0_necessitaPreparacao", "Não",
+                "c1_tipoInstalacao", "Residencial", "c1_tipoServico", "Troca de fiação",
+                "c1_descricaoPontos", "5 pontos", "c1_quantidadeAproximada", "5", "c1_estadoInstalacao", "Antiga"
+        ));
+        List<SolicitacaoOrcamentoItem> lista = List.of(item(1L, 10L, "Prestador Um"));
+        when(itens.findBySolicitacaoIdOrderByIdAsc(100L)).thenReturn(lista);
+        when(anexosRepo.countBySolicitacaoId(100L)).thenReturn(0L);
+
+        service.salvarFormulario(100L, form, null);
+
+        assertEquals("30", solicitacao.getCamposEspecificos().get("c0_areaM2"));
+        assertEquals("Residencial", solicitacao.getCamposEspecificos().get("c1_tipoInstalacao"));
+        verify(itens).saveAll(argThat((List<SolicitacaoOrcamentoItem> salvos) -> {
+            String msg = salvos.get(0).getMensagem();
+            return msg.contains("Pintor + Eletricista") && msg.contains("Área aproximada (m²): 30") && msg.contains("Tipo de instalação: Residencial");
+        }));
+    }
+
+    @Test
     void salvarFormularioRespeitaLimiteDeAnexos() {
         solicitacaoPintor();
         OrcamentoFormularioRequest form = new OrcamentoFormularioRequest();
         form.setDescricaoGeral("Pintar a sala");
-        form.setCampos(Map.of("areaM2", "30", "tipoSuperficie", "a", "quantidadeComodos", "1", "estadoSuperficie", "a", "necessitaPreparacao", "a"));
+        form.setCampos(camposPintorValidos());
         when(anexosRepo.countBySolicitacaoId(100L)).thenReturn(6L);
         when(itens.findBySolicitacaoIdOrderByIdAsc(100L)).thenReturn(List.of());
         MockMultipartFile foto = new MockMultipartFile("anexos", "foto.jpg", "image/jpeg", new byte[]{1});

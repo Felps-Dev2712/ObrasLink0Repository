@@ -7,7 +7,7 @@
     <a href="/prestadores" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar aos profissionais</a>
     <header class="page-header">
         <div>
-            <p class="eyebrow" th:text="${solicitacao.categoriaNome}">Categoria</p>
+            <p class="eyebrow" th:text="${solicitacao.categoriasResumo}">Categoria</p>
             <h1>Pedido de orçamento</h1>
             <p>Preencha uma única vez: cada profissional selecionado recebe uma mensagem individual com estas informações, sem ver a resposta dos outros.</p>
         </div>
@@ -49,10 +49,17 @@
                             <div class="field col-3"><label for="o-cidade">Cidade</label><input id="o-cidade" th:field="*{enderecoExecucao.cidade}" autocomplete="address-level2" required></div>
                             <div class="field col-1"><label for="o-uf">UF</label><input id="o-uf" th:field="*{enderecoExecucao.estado}" maxlength="2" autocomplete="address-level1" required></div>
                         </div>
-                        <!-- Evita o "flash" do formulário de endereço aparecendo e sumindo ao carregar a página. -->
+                        <!-- Evita o "flash" do formulário de endereço aparecendo e sumindo ao carregar a página.
+                             Também tira o "required" dos campos escondidos, senão eles travam o envio do formulário. -->
                         <script th:if="${enderecoCadastrado != null}" th:inline="javascript">
-                            document.currentScript.closest('[data-endereco-execucao]').querySelector('[data-endereco-outro]')
-                                .hidden = /*[[${form.usarEnderecoCadastrado}]]*/ true;
+                            (() => {
+                                const outro = document.currentScript.closest('[data-endereco-execucao]').querySelector('[data-endereco-outro]');
+                                const usarCadastro = /*[[${form.usarEnderecoCadastrado}]]*/ true;
+                                outro.hidden = usarCadastro;
+                                outro.querySelectorAll('input').forEach(input => {
+                                    if (usarCadastro) { if (input.required) input.dataset.obrigatorio = '1'; input.required = false; }
+                                });
+                            })();
                         </script>
                     </div>
                     <div class="field span-all">
@@ -71,13 +78,19 @@
                         </select>
                     </div>
 
-                    <!-- Campos específicos da categoria selecionada (vazio = a categoria só usa os campos gerais) -->
-                    <th:block th:each="campo : ${campos}">
-                        <div class="field span-all">
-                            <label th:for="${'campo-' + campo.chave}" th:text="${campo.rotulo}">Campo</label>
-                            <input th:id="${'campo-' + campo.chave}" type="text" th:field="*{campos[__${campo.chave}__]}"
-                                   th:required="${campo.obrigatorio}" th:attr="inputmode=${campo.tipo == 'numero' ? 'decimal' : null}">
-                        </div>
+                    <!-- Campos específicos de cada especialidade escolhida (nenhuma = só os campos gerais).
+                         A chave de cada campo é namespaceada pela posição da categoria ("c0_", "c1_"...) para não
+                         colidir quando duas especialidades escolhidas tiverem um campo de mesma chave (ex.: "areaM2"). -->
+                    <th:block th:each="catNome, catStat : ${solicitacao.categoriasNomes}">
+                        <p th:if="${#lists.size(solicitacao.categoriasNomes) > 1}" class="field span-all label-text" th:text="${'Campos de ' + catNome}">Campos da especialidade</p>
+                        <th:block th:each="campo : ${T(com.obraslink.service.CampoOrcamentoCatalogo).campos(catNome)}">
+                            <div class="field span-all">
+                                <label th:for="${'campo-' + catStat.index + '-' + campo.chave}" th:text="${campo.rotulo}">Campo</label>
+                                <input th:id="${'campo-' + catStat.index + '-' + campo.chave}" type="text"
+                                       th:field="*{campos[__${'c' + catStat.index + '_' + campo.chave}__]}"
+                                       th:required="${campo.obrigatorio}" th:attr="inputmode=${campo.tipo == 'numero' ? 'decimal' : null}">
+                            </div>
+                        </th:block>
                     </th:block>
 
                     <div class="field span-all">

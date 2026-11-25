@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service @RequiredArgsConstructor
 public class RelacionamentosService {
-    public record FavoritoView(Long id,String nome,String categoria){}
+    public record FavoritoView(Long id,String nome,com.obraslink.model.Categoria categoria,java.util.List<com.obraslink.model.Categoria> categorias){}
     private final AcessoService acesso;
     private final FavoritoRepository favoritos;
     private final DisponibilidadeRepository disponibilidades;
@@ -17,7 +17,7 @@ public class RelacionamentosService {
     private final PerfilAtivoService perfil;
     @Transactional(readOnly=true) public java.util.List<FavoritoView> favoritosDoAtual(){
         var u=acesso.getUsuarioAtualOrThrow(); if(!Boolean.TRUE.equals(u.getAtivo())||!u.getPapeis().contains(com.obraslink.model.PapelUsuario.CLIENTE)||perfil.atual()!=com.obraslink.model.PapelUsuario.CLIENTE) throw new IllegalArgumentException("Ative o perfil de cliente para consultar favoritos.");
-        Long id=clientes.findByUsuarioId(u.getId()).orElseThrow(()->new IllegalArgumentException("Cadastro de cliente não encontrado.")).getId(); return favoritos.findPrestadoresFavoritos(id).stream().map(p->new FavoritoView(p.getId(),p.getNome(),p.getCategoria()==null?"Especialidade não informada":p.getCategoria().getNome())).toList();
+        Long id=clientes.findByUsuarioId(u.getId()).orElseThrow(()->new IllegalArgumentException("Cadastro de cliente não encontrado.")).getId(); return favoritos.findPrestadoresFavoritos(id).stream().map(p->new FavoritoView(p.getId(),p.getNome(),p.getCategoria(),p.getCategorias())).toList();
     }
     @Transactional(readOnly=true) public java.util.Set<Long> idsFavoritosDoAtual(){
         var u=acesso.getUsuarioAtual().orElse(null);

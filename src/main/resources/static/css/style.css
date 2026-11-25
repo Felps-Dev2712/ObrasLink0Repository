@@ -1336,6 +1336,8 @@ html:not(.js) [data-reveal] { opacity: 1; transform: none; }
 .pro-card-title h3 a::before { content: ""; position: absolute; inset: 0; z-index: 0; } /* cartão inteiro clicável */
 .pro-card-title h3 a:hover { text-decoration: none; }
 .pro-specialty { display: inline-block; margin-top: 4px; padding: 2px 10px; font-size: .75rem; font-weight: 600; color: var(--brand-800); background: var(--brand-50); border: 1px solid var(--brand-200); border-radius: var(--radius-full); }
+/* Todas as especialidades do profissional (principal + secundárias), não só a principal */
+.pro-specialties { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; padding: 0; list-style: none; }
 .pro-card-fav { position: relative; z-index: 1; }
 .pro-desc { margin-top: 14px; font-size: .9rem; color: var(--text-muted); display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .pro-facts { display: grid; gap: 8px; margin: 16px 0 18px; padding: 0; list-style: none; }

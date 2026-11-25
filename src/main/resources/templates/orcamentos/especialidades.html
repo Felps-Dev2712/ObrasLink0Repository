@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Escolher especialidade - ObraLink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo" class="container container-narrow page workspace-page">
+    <a href="/prestadores" class="page-back"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Voltar aos profissionais</a>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Pedido de orçamento</p>
+            <h1>Para qual especialidade você quer pedir orçamento?</h1>
+            <p>Os profissionais selecionados atuam em mais de uma especialidade em comum. Escolha uma ou mais — o formulário mostra os campos de cada especialidade escolhida.</p>
+        </div>
+    </header>
+
+    <ul class="orcamento-destinatarios" aria-label="Profissionais selecionados">
+        <li th:each="item : ${itens}" th:text="${item.prestadorNome}">Profissional</li>
+    </ul>
+
+    <div class="card mt-24" data-reveal>
+        <div class="card-body">
+            <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+            <form th:action="@{/orcamentos/{id}/especialidades(id=${solicitacao.id})}" method="post">
+                <div class="register-consent">
+                    <label class="consent-option" th:each="cat : ${comuns}">
+                        <input type="checkbox" name="categoriaId" th:value="${cat.id}">
+                        <span><strong th:text="${(cat.icone != null ? cat.icone + ' ' : '') + cat.nome}">Especialidade</strong></span>
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Continuar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

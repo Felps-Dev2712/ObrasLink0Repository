@@ -39,7 +39,14 @@
                     <span class="pro-avatar" aria-hidden="true" th:text="${#strings.isEmpty(fav.nome) ? 'P' : #strings.substring(fav.nome, 0, 1)}">P</span>
                     <div class="pro-card-title">
                         <h3><a th:href="@{/prestadores/{id}(id=${fav.id})}" th:text="${fav.nome}">Profissional</a></h3>
-                        <span class="pro-specialty" th:text="${fav.categoria}">Especialidade</span>
+                        <!-- Todas as especialidades, a principal primeiro, sem repetir -->
+                        <ul class="pro-specialties" aria-label="Especialidades">
+                            <li th:if="${fav.categoria != null}" class="badge badge-brand"
+                                th:text="${(fav.categoria.icone != null ? fav.categoria.icone + ' ' : '') + fav.categoria.nome}">Especialidade</li>
+                            <li th:each="cat : ${fav.categorias}" th:if="${fav.categoria == null or cat.id != fav.categoria.id}" class="badge badge-brand"
+                                th:text="${(cat.icone != null ? cat.icone + ' ' : '') + cat.nome}">Especialidade</li>
+                            <li th:if="${fav.categoria == null and #lists.isEmpty(fav.categorias)}" class="badge">Especialidade não informada</li>
+                        </ul>
                     </div>
                     <div class="pro-card-fav" th:insert="~{fragments/favorito :: botao(${fav.id}, true)}"></div>
                 </div>
