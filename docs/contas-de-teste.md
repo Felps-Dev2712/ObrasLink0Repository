@@ -52,3 +52,13 @@ docker compose up -d --build app
 ```
 
 Confira o usuário e o nome do banco no `docker-compose.yml` antes de rodar. Isso **apaga todos os dados locais**.
+
+## Produção (perfil `prod`)
+
+Com `SPRING_PROFILES_ACTIVE=prod` o `DataSeeder` não roda. Na inicialização, o `ProducaoBootstrap`:
+
+- exclui todas as contas desta página (com serviços, atendimentos, avaliações e arquivos), menos o administrador;
+- troca a senha de `admin@obraslink.com` pela de `OBRALINK_ADMIN_PASSWORD` (mínimo 12 caracteres), ou cria o administrador se o banco estiver vazio;
+- não sobe, e não apaga nada, se o administrador fosse ficar com a senha pública `admin123`.
+
+As categorias padrão são mantidas. Para ativar na Azure, veja [`deploy/azure/README.md`](../deploy/azure/README.md#production-profile-remove-the-demo-accounts).
