@@ -27,7 +27,7 @@ class CertificacaoArquivosTest {
     @Test
     void apagaOsComprovantesDoPrestadorSemTocarEmOutrosArquivosNemSairDaPasta() throws Exception {
         CertificacaoRepository certificacoes = mock(CertificacaoRepository.class);
-        CertificacaoService service = new CertificacaoService(mock(AcessoService.class), mock(PrestadorRepository.class), certificacoes, mock(PerfilAtivoService.class));
+        CertificacaoService service = new CertificacaoService(mock(AcessoService.class), mock(PrestadorRepository.class), certificacoes, mock(PerfilAtivoService.class), mock(PlanoService.class));
         ReflectionTestUtils.setField(service, "uploadDir", uploads.toString());
         Path doc1 = Files.writeString(uploads.resolve("a.pdf"), "x");
         Path doc2 = Files.writeString(uploads.resolve("b.png"), "x");
@@ -46,7 +46,7 @@ class CertificacaoArquivosTest {
     }
 
     private CertificacaoService servico() {
-        CertificacaoService service = new CertificacaoService(mock(AcessoService.class), mock(PrestadorRepository.class), mock(CertificacaoRepository.class), mock(PerfilAtivoService.class));
+        CertificacaoService service = new CertificacaoService(mock(AcessoService.class), mock(PrestadorRepository.class), mock(CertificacaoRepository.class), mock(PerfilAtivoService.class), mock(PlanoService.class));
         ReflectionTestUtils.setField(service, "uploadDir", uploads.toString());
         return service;
     }
@@ -86,7 +86,7 @@ class CertificacaoArquivosTest {
     @Test
     void semCertificacoesNaoFazNada() {
         CertificacaoRepository certificacoes = mock(CertificacaoRepository.class);
-        CertificacaoService service = new CertificacaoService(mock(AcessoService.class), mock(PrestadorRepository.class), certificacoes, mock(PerfilAtivoService.class));
+        CertificacaoService service = new CertificacaoService(mock(AcessoService.class), mock(PrestadorRepository.class), certificacoes, mock(PerfilAtivoService.class), mock(PlanoService.class));
         ReflectionTestUtils.setField(service, "uploadDir", uploads.toString());
         when(certificacoes.findByPrestadorIdOrderByCriadoEmDesc(30L)).thenReturn(List.of());
         assertDoesNotThrow(() -> service.excluirDocumentosDoPrestadorAposConfirmar(30L));

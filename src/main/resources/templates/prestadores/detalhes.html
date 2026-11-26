@@ -44,6 +44,7 @@
                     </form>
                 </div>
                 <h1 th:text="${prestador.nome}">Nome do profissional</h1>
+                <span th:if="${prestador.temSeloDestaque}" class="badge badge-brand" title="Profissional em destaque">⭐ Profissional em destaque</span>
                 <!-- Todas as especialidades em etiquetas iguais: a principal primeiro, depois as demais (sem repetir) -->
                 <ul class="provider-specialties" aria-label="Especialidades">
                     <li th:if="${prestador.categoria != null}" class="badge badge-brand"

@@ -1,11 +1,14 @@
 package com.obraslink.service;
 
 import com.obraslink.model.PapelUsuario;
+import com.obraslink.model.Plano;
 import com.obraslink.model.Prestador;
+import com.obraslink.model.Servico;
 import com.obraslink.model.ServicoFoto;
 import com.obraslink.model.Usuario;
 import com.obraslink.repository.PrestadorRepository;
 import com.obraslink.repository.ServicoFotoRepository;
+import com.obraslink.repository.ServicoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,17 +35,20 @@ class ImagemServiceTest {
     private final PrestadorRepository prestadores = mock(PrestadorRepository.class);
     private final ServicoFotoRepository fotos = mock(ServicoFotoRepository.class);
     private final PerfilAtivoService perfil = mock(PerfilAtivoService.class);
+    private final ServicoRepository servicos = mock(ServicoRepository.class);
     private ImagemService service;
     private Prestador prestador;
 
     @BeforeEach
     void preparar() {
-        service = new ImagemService(acesso, prestadores, fotos, perfil, pasta.toString());
+        service = new ImagemService(acesso, prestadores, fotos, perfil, servicos, pasta.toString());
         Usuario usuario = Usuario.builder().id(7L).email("p@x.com").senha("x").ativo(true).papeis(Set.of(PapelUsuario.PRESTADOR)).build();
-        prestador = Prestador.builder().id(30L).nome("Fornecedor").usuarioId(7L).build();
+        prestador = Prestador.builder().id(30L).nome("Fornecedor").usuarioId(7L).plano(Plano.PROFISSIONAL).build();
         when(acesso.getUsuarioAtualOrThrow()).thenReturn(usuario);
         when(perfil.atual()).thenReturn(PapelUsuario.PRESTADOR);
         when(prestadores.findByUsuarioId(7L)).thenReturn(Optional.of(prestador));
+        // Serviço de id 5 (usado nos testes de fotos do serviço), dono com plano cujo limite de fotos é 6.
+        when(servicos.findById(5L)).thenReturn(Optional.of(Servico.builder().id(5L).prestador(prestador).build()));
     }
 
     private static MockMultipartFile arquivo(String nome, byte[] conteudo) {
@@ -244,7 +250,7 @@ class ImagemServiceTest {
     @Test
     void clienteTrocaAFotoEAAnteriorEhApagada() {
         var clientes = mock(com.obraslink.repository.ClienteRepository.class);
-        var comCliente = new ImagemService(acesso, prestadores, fotos, perfil, clientes, pasta.toString());
+        var comCliente = new ImagemService(acesso, prestadores, fotos, perfil, clientes, servicos, pasta.toString());
         Usuario usuario = Usuario.builder().id(8L).email("c@x.com").senha("x").ativo(true).papeis(Set.of(PapelUsuario.CLIENTE)).build();
         com.obraslink.model.Cliente cliente = com.obraslink.model.Cliente.builder().id(40L).nome("Cliente").build();
         when(acesso.getUsuarioAtualOrThrow()).thenReturn(usuario);
@@ -264,7 +270,7 @@ class ImagemServiceTest {
     @Test
     void fotoDeClienteExigePerfilDeClienteAtivo() {
         var clientes = mock(com.obraslink.repository.ClienteRepository.class);
-        var comCliente = new ImagemService(acesso, prestadores, fotos, perfil, clientes, pasta.toString());
+        var comCliente = new ImagemService(acesso, prestadores, fotos, perfil, clientes, servicos, pasta.toString());
         // usuário do @BeforeEach só tem o papel PRESTADOR
         assertThrows(IllegalArgumentException.class, () -> comCliente.atualizarFotoCliente(arquivo("a.jpg", JPG)));
         verifyNoInteractions(clientes);

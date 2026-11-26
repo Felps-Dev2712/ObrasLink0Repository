@@ -49,6 +49,7 @@ public class CertificacaoController {
             attrs.addFlashAttribute("mensagem", "Certificação enviada para validação.");
         } catch (IllegalArgumentException e) {
             attrs.addFlashAttribute("mensagemErro", e.getMessage());
+            if (e.getMessage() != null && e.getMessage().contains("plano")) attrs.addFlashAttribute("mensagemErroPlano", true);
         }
         return "redirect:/prestadores/minhas-certificacoes";
     }

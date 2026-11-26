@@ -1,0 +1,52 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head th:replace="~{fragments/layout :: head('Planos - ObraLink')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<main id="conteudo" class="container page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">Perfil profissional</p>
+            <h1>Planos de assinatura</h1>
+            <p>Escolha o plano que acompanha o ritmo do seu negócio: mais serviços no catálogo, mais certificações,
+                mais alcance de atendimento e destaque na vitrine para quem vive de indicação.</p>
+        </div>
+    </header>
+
+    <p th:if="${mensagem}" class="alert alert-success" role="status" th:text="${mensagem}"></p>
+    <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+
+    <div class="plano-grid">
+        <article class="plano-card" th:each="plano : ${planos}"
+                  th:classappend="${(plano == planoAtual ? 'plano-card-atual' : '') + ' ' + (plano == T(com.obraslink.model.Plano).PROFISSIONAL ? 'plano-card-destaque' : '')}">
+            <span class="plano-card-selo" th:if="${plano == T(com.obraslink.model.Plano).PROFISSIONAL}">Mais popular</span>
+            <h2 class="plano-card-nome" th:text="${plano.nome}">Plano</h2>
+            <p class="plano-card-descricao" th:text="${plano.descricaoCurta}">Descrição</p>
+            <div class="plano-card-preco">
+                <strong th:if="${plano.precoMensal.signum() == 0}">Grátis</strong>
+                <th:block th:unless="${plano.precoMensal.signum() == 0}">
+                    <strong th:text="${'R$ ' + #numbers.formatDecimal(plano.precoMensal, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</strong>
+                    <span>/mês</span>
+                </th:block>
+            </div>
+            <ul class="plano-card-recursos">
+                <li th:each="recurso : ${plano.recursos}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+                    <span th:text="${recurso}">Recurso</span>
+                </li>
+            </ul>
+            <span class="plano-card-atual-tag" th:if="${plano == planoAtual}">✓ Seu plano atual</span>
+            <form th:unless="${plano == planoAtual}" th:action="@{/prestador/planos/assinar}" method="post">
+                <input type="hidden" name="plano" th:value="${plano}">
+                <button th:if="${plano.gratuito}" type="submit" class="btn btn-block btn-outline">Voltar para o gratuito</button>
+                <button th:unless="${plano.gratuito}" type="submit" class="btn btn-block"
+                        th:classappend="${plano.destaque ? 'btn-primary' : 'btn-outline'}"
+                        th:text="${(planoAtual.ordinal() lt plano.ordinal() ? 'Assinar ' : 'Mudar para ') + plano.nome}">Assinar</button>
+            </form>
+        </article>
+    </div>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

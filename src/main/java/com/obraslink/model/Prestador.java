@@ -109,6 +109,22 @@ public class Prestador {
         return raioAtendimentoKm == null ? com.obraslink.service.LocalizacaoService.RAIO_PADRAO_KM : raioAtendimentoKm;
     }
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'GRATUITO'")
+    @Builder.Default
+    private Plano plano = Plano.GRATUITO;
+
+    @Transient
+    public boolean isTemSeloDestaque() {
+        return plano != null && plano.isDestaque();
+    }
+
+    /** Usado para ordenar prestadores com plano de destaque antes dos demais, sem alterar a ordem entre eles. */
+    @Transient
+    public int getPesoBusca() {
+        return plano == null ? 0 : plano.ordinal();
+    }
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime criadoEm;

@@ -28,6 +28,7 @@ public class CertificacaoService {
     private final PrestadorRepository prestadores;
     private final CertificacaoRepository certificacoes;
     private final PerfilAtivoService perfil;
+    private final PlanoService planoService;
 
     @Value("${obralink.upload-dir:./uploads}")
     private String uploadDir;
@@ -63,6 +64,9 @@ public class CertificacaoService {
     @Transactional
     public void criarParaPrestador(Long prestadorId, String nome, String emissor, LocalDate emissao,
                                    LocalDate validade, String codigo, MultipartFile arquivo) {
+        com.obraslink.model.Plano plano = prestadores.findById(prestadorId)
+                .map(com.obraslink.model.Prestador::getPlano).orElse(com.obraslink.model.Plano.GRATUITO);
+        planoService.exigirLimiteCertificacoes(prestadorId, plano);
         validarCampos(nome, emissor, emissao, validade, codigo);
         String documentoChave = armazenarDocumento(arquivo, true);
         Certificacao c = new Certificacao();

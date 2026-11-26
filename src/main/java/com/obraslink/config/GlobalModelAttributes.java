@@ -64,6 +64,7 @@ public class GlobalModelAttributes {
                 .orElseGet(() -> prestador.map(p -> p.getNome()).filter(n -> !n.isBlank()).orElse("Minha conta")));
         auth.put("clienteId", clienteId);
         auth.put("prestadorId", prestadorId);
+        auth.put("plano", prestador.map(com.obraslink.model.Prestador::getPlano).orElse(null));
         auth.put("notificacoesNaoLidas", notificacaoService.contarNaoLidas(usuario.getId()));
         var perfilAtivo=perfilAtivoService.atual();
         // Foto do perfil em uso (cliente ou prestador); se ele não tiver, usa a do outro perfil da conta

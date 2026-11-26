@@ -35,6 +35,7 @@ public class PrestadorController {
     private com.obraslink.service.PerfilAtivoService perfilAtivoService;
     @org.springframework.beans.factory.annotation.Autowired(required=false)
     private com.obraslink.service.ImagemService imagemService;
+    private final com.obraslink.service.PlanoService planoService;
 
     private boolean podeGerenciarPrestador(Long id){return acessoService.isAdmin()||(perfilAtivoService==null||perfilAtivoService.atual()==PapelUsuario.PRESTADOR)&&acessoService.podeGerenciarPrestador(id);}
 
@@ -58,7 +59,13 @@ public class PrestadorController {
         if (prestador.getEndereco() == null) throw new IllegalArgumentException("Informe o endereço de atendimento.");
         if (localizacao != null) localizacao.completarCoordenadas(prestador.getEndereco());
         com.obraslink.service.LocalizacaoService.validarEndereco(prestador.getEndereco());
-        prestador.setRaioAtendimentoKm(com.obraslink.service.LocalizacaoService.validarRaio(prestador.getRaioAtendimentoKm()));
+        int raioValidado = com.obraslink.service.LocalizacaoService.validarRaio(prestador.getRaioAtendimentoKm());
+        com.obraslink.model.Plano plano = prestador.getPlano() == null ? com.obraslink.model.Plano.GRATUITO : prestador.getPlano();
+        if (raioValidado > plano.getRaioMaximoKm()) {
+            throw new IllegalArgumentException("Seu plano " + plano.getNome() + " permite até " + plano.getRaioMaximoKm()
+                    + " km de raio de atendimento. Assine um plano superior para atender mais longe.");
+        }
+        prestador.setRaioAtendimentoKm(raioValidado);
     }
 
     @GetMapping
@@ -81,7 +88,12 @@ public class PrestadorController {
                     if (d <= p.getRaioEfetivoKm()) atendeRegiao.add(p.getId());
                 });
             }
-            prestadores.sort(java.util.Comparator.comparing(p -> distancias.getOrDefault(p.getId(), Double.MAX_VALUE)));
+            prestadores.sort(java.util.Comparator
+                    .comparing((Prestador p) -> -p.getPesoBusca())
+                    .thenComparing(p -> distancias.getOrDefault(p.getId(), Double.MAX_VALUE)));
+        } else {
+            // Mantém a ordem por nome já vinda da consulta; só traz os planos com selo de destaque para o início.
+            prestadores.sort(java.util.Comparator.comparing((Prestador p) -> -p.getPesoBusca()));
         }
         boolean soRegiao = temLocalizacao && "1".equals(regiao);
         if (soRegiao) prestadores.removeIf(p -> !atendeRegiao.contains(p.getId()));

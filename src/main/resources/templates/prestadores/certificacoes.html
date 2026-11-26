@@ -13,7 +13,10 @@
     </header>
 
     <p th:if="${mensagem}" class="alert alert-success" role="status" th:text="${mensagem}"></p>
-    <p th:if="${mensagemErro}" class="alert alert-error" role="alert" th:text="${mensagemErro}"></p>
+    <div th:if="${mensagemErro}" class="alert alert-error" role="alert">
+        <span th:text="${mensagemErro}"></span>
+        <a th:if="${mensagemErroPlano}" href="/prestador/planos" class="btn btn-sm btn-outline" style="margin-left:12px">Ver planos</a>
+    </div>
 
     <section class="card" aria-labelledby="new-certification-title" data-reveal>
         <div class="card-header"><div><h2 id="new-certification-title">Adicionar certificação</h2><p>Anexe um comprovante legível. Ele só é visto por você e pela equipe de análise.</p></div></div>

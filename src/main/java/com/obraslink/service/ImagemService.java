@@ -31,7 +31,8 @@ import java.util.stream.Collectors;
 @Service
 public class ImagemService {
     public static final long TAMANHO_MAXIMO = 5L * 1024 * 1024;
-    public static final int MAX_FOTOS_POR_SERVICO = 6;
+    /** Usado só quando o serviço (ou o plano do dono) não puder ser determinado; normalmente o limite vem do plano. */
+    public static final int MAX_FOTOS_POR_SERVICO = com.obraslink.model.Plano.GRATUITO.getMaxFotosPorServico();
     private static final Pattern CHAVE_VALIDA = Pattern.compile("^[a-f0-9]{32}\\.(jpg|png|webp)$");
 
     private final AcessoService acesso;
@@ -39,23 +40,26 @@ public class ImagemService {
     private final ServicoFotoRepository fotos;
     private final PerfilAtivoService perfil;
     private final com.obraslink.repository.ClienteRepository clientes;
+    private final com.obraslink.repository.ServicoRepository servicos;
     private final Path pasta;
 
     @Autowired
     public ImagemService(AcessoService acesso, PrestadorRepository prestadores, ServicoFotoRepository fotos,
                          PerfilAtivoService perfil, com.obraslink.repository.ClienteRepository clientes,
+                         com.obraslink.repository.ServicoRepository servicos,
                          @Value("${obralink.upload-dir:./uploads}") String uploadDir) {
         this.acesso = acesso;
         this.prestadores = prestadores;
         this.fotos = fotos;
         this.perfil = perfil;
         this.clientes = clientes;
+        this.servicos = servicos;
         this.pasta = Path.of(uploadDir).toAbsolutePath().normalize().resolve("imagens");
     }
 
     public ImagemService(AcessoService acesso, PrestadorRepository prestadores, ServicoFotoRepository fotos,
-                         PerfilAtivoService perfil, String uploadDir) {
-        this(acesso, prestadores, fotos, perfil, null, uploadDir);
+                         PerfilAtivoService perfil, com.obraslink.repository.ServicoRepository servicos, String uploadDir) {
+        this(acesso, prestadores, fotos, perfil, null, servicos, uploadDir);
     }
 
     // ---------- Foto do cliente ----------
@@ -123,9 +127,11 @@ public class ImagemService {
                 : arquivos.stream().filter(a -> a != null && !a.isEmpty()).toList();
         if (validos.isEmpty()) return 0;
         exigirDonoDoServico(servicoId);
+        int maxFotos = maxFotosDoServico(servicoId);
         long atuais = fotos.countByServicoId(servicoId);
-        if (atuais + validos.size() > MAX_FOTOS_POR_SERVICO) {
-            throw new IllegalArgumentException("Cada serviço pode ter até " + MAX_FOTOS_POR_SERVICO + " fotos. Hoje ele tem " + atuais + ".");
+        if (atuais + validos.size() > maxFotos) {
+            throw new IllegalArgumentException("Cada serviço pode ter até " + maxFotos + " fotos nesse plano. Hoje ele tem " + atuais
+                    + ". Assine um plano superior para enviar mais fotos.");
         }
         // Valida todos antes de gravar qualquer um, para não salvar metade do envio.
         validos.forEach(this::validar);
@@ -316,6 +322,12 @@ public class ImagemService {
         }
         return prestadores.findByUsuarioId(usuario.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Cadastro profissional não encontrado."));
+    }
+
+    private int maxFotosDoServico(Long servicoId) {
+        return servicos.findById(servicoId).map(s -> s.getPrestador() == null || s.getPrestador().getPlano() == null
+                ? com.obraslink.model.Plano.GRATUITO.getMaxFotosPorServico() : s.getPrestador().getPlano().getMaxFotosPorServico())
+                .orElse(MAX_FOTOS_POR_SERVICO);
     }
 
     private void exigirDonoDoServico(Long servicoId) {

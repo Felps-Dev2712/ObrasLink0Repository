@@ -71,7 +71,8 @@
                 <div class="pro-card-head">
                     <span class="pro-avatar" aria-hidden="true"><img th:if="${prestador.fotoPerfilChave != null}" th:src="@{/imagens/{c}(c=${prestador.fotoPerfilChave})}" alt="" loading="lazy"><th:block th:unless="${prestador.fotoPerfilChave != null}" th:text="${#strings.isEmpty(prestador.nome) ? 'P' : #strings.substring(prestador.nome, 0, 1)}">P</th:block></span>
                     <div class="pro-card-title">
-                        <h3><a th:href="@{/prestadores/{id}(id=${prestador.id})}" th:text="${prestador.nome}">Profissional</a></h3>
+                        <h3><a th:href="@{/prestadores/{id}(id=${prestador.id})}" th:text="${prestador.nome}">Profissional</a>
+                            <span th:if="${prestador.temSeloDestaque}" class="badge badge-brand" title="Profissional em destaque">⭐ Destaque</span></h3>
                         <!-- Todas as especialidades, a principal primeiro, sem repetir -->
                         <ul class="pro-specialties" aria-label="Especialidades">
                             <li th:if="${prestador.categoria != null}" class="badge badge-brand"

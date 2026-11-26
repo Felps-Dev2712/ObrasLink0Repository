@@ -35,6 +35,7 @@ class ServicoDetalheTelaTest {
         @Bean CategoriaService categoriaService() { return mock(CategoriaService.class); }
         @Bean RelacionamentosService relacionamentosService() { return mock(RelacionamentosService.class); }
         @Bean ServicoDetalheService servicoDetalheService() { return mock(ServicoDetalheService.class); }
+        @Bean PlanoService planoService() { return mock(PlanoService.class); }
     }
 
     @Autowired WebApplicationContext context;

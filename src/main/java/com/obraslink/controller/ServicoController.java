@@ -26,6 +26,7 @@ public class ServicoController {
     private final CategoriaService categoriaService;
     private final AcessoService acessoService;
     private final com.obraslink.service.RelacionamentosService relacionamentosService;
+    private final com.obraslink.service.PlanoService planoService;
     @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.PerfilAtivoService perfilAtivo;
     @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.ServicoDetalheService detalheService;
     @org.springframework.beans.factory.annotation.Autowired(required=false) private com.obraslink.service.ImagemService imagemService;
@@ -197,6 +198,13 @@ public class ServicoController {
                 redirectAttributes.addFlashAttribute("mensagemErro", "Seu usuario nao possui cadastro de prestador.");
                 return "redirect:/servicos";
             }
+            try {
+                planoService.exigirLimiteServicos(prestadorAtual);
+            } catch (IllegalArgumentException e) {
+                redirectAttributes.addFlashAttribute("mensagemErro", e.getMessage());
+                redirectAttributes.addFlashAttribute("mensagemErroPlano", true);
+                return "redirect:/servicos";
+            }
             model.addAttribute("prestadores", List.of(prestadorAtual));
             model.addAttribute("prestadorAtual", prestadorAtual);
         }
@@ -226,6 +234,13 @@ public class ServicoController {
             Prestador prestadorAtual = prestadorService.findByUsuarioId(usuario.getId()).orElse(null);
             if (prestadorAtual == null) {
                 redirectAttributes.addFlashAttribute("mensagemErro", "Seu usuario nao possui cadastro de prestador.");
+                return "redirect:/servicos";
+            }
+            try {
+                planoService.exigirLimiteServicos(prestadorAtual);
+            } catch (IllegalArgumentException e) {
+                redirectAttributes.addFlashAttribute("mensagemErro", e.getMessage());
+                redirectAttributes.addFlashAttribute("mensagemErroPlano", true);
                 return "redirect:/servicos";
             }
             servico.setPrestador(prestadorAtual);

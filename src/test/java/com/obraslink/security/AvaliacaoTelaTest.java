@@ -32,6 +32,7 @@ class AvaliacaoTelaTest {
         @Bean PrestadorService prestadorService() { return mock(PrestadorService.class); }
         @Bean CategoriaService categoriaService() { return mock(CategoriaService.class); }
         @Bean AvaliacaoPrestadorService avaliacaoService() { return mock(AvaliacaoPrestadorService.class); }
+        @Bean PlanoService planoService() { return mock(PlanoService.class); }
     }
     @Autowired WebApplicationContext context;
     @Autowired PrestadorService prestadores;
