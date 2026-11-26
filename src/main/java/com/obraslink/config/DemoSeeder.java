@@ -49,7 +49,7 @@ public class DemoSeeder {
     private final AvaliacaoPrestadorRepository avaliacaoPrestadorRepository;
     private final AvaliacaoClienteRepository avaliacaoClienteRepository;
     private final FavoritoRepository favoritoRepository;
-    private final DisponibilidadeRepository disponibilidadeRepository;
+    private final AgendaDiaRepository agendaDiaRepository;
     private final CertificacaoRepository certificacaoRepository;
     private final NotificacaoRepository notificacaoRepository;
     private final AceiteTermosRepository aceiteTermosRepository;
@@ -417,17 +417,26 @@ public class DemoSeeder {
         favoritoRepository.saveAll(favoritos);
     }
 
+    /**
+     * Horário comercial (no próprio Prestador) e alguns dias do MÊS ATUAL marcados como livre/ocupado,
+     * pra não mostrar uma agenda de um mês que já passou.
+     */
     private void semearDisponibilidade(List<Prestador> prestadores) {
-        List<Disponibilidade> agenda = new ArrayList<>();
+        LocalDate hoje = LocalDate.now();
+        List<AgendaDia> agenda = new ArrayList<>();
         for (int i = 0; i < prestadores.size(); i++) {
-            Long id = prestadores.get(i).getId();
-            for (Disponibilidade.DiaSemana dia : List.of(Disponibilidade.DiaSemana.SEGUNDA, Disponibilidade.DiaSemana.TERCA,
-                    Disponibilidade.DiaSemana.QUARTA, Disponibilidade.DiaSemana.QUINTA, Disponibilidade.DiaSemana.SEXTA)) {
-                agenda.add(new Disponibilidade(id, dia, LocalTime.of(i % 2 == 0 ? 8 : 9, 0), LocalTime.of(i % 2 == 0 ? 17 : 18, 0)));
+            Prestador p = prestadores.get(i);
+            p.setHorarioComercialInicio(LocalTime.of(i % 2 == 0 ? 8 : 9, 0));
+            p.setHorarioComercialFim(LocalTime.of(i % 2 == 0 ? 17 : 18, 0));
+            prestadorRepository.save(p);
+            for (int d = 0; d < 12; d++) {
+                LocalDate data = hoje.plusDays(d);
+                if (!data.getMonth().equals(hoje.getMonth())) break;
+                if ((d + i) % 3 == 0) agenda.add(new AgendaDia(p.getId(), data, AgendaDia.Status.OCUPADO));
+                else if (d % 2 == 0) agenda.add(new AgendaDia(p.getId(), data, AgendaDia.Status.LIVRE));
             }
-            if (i % 3 != 2) agenda.add(new Disponibilidade(id, Disponibilidade.DiaSemana.SABADO, LocalTime.of(8, 0), LocalTime.of(12, 0)));
         }
-        disponibilidadeRepository.saveAll(agenda);
+        agendaDiaRepository.saveAll(agenda);
     }
 
     private void semearCertificacoes(Prestador prestadorPrincipal, List<Prestador> prestadores) {

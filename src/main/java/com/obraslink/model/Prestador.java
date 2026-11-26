@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,6 +114,15 @@ public class Prestador {
     @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'GRATUITO'")
     @Builder.Default
     private Plano plano = Plano.GRATUITO;
+
+    // Horário comercial (mesmo todos os dias de atendimento); exibido junto com a agenda do mês no perfil público.
+    private LocalTime horarioComercialInicio;
+    private LocalTime horarioComercialFim;
+
+    @Transient
+    public boolean isHorarioComercialInformado() {
+        return horarioComercialInicio != null && horarioComercialFim != null;
+    }
 
     @Transient
     public boolean isTemSeloDestaque() {

@@ -173,7 +173,7 @@ public class PrestadorController {
             // Fotos de todos os serviços do perfil numa consulta só
             model.addAttribute("fotosServicos", imagemService == null || servicosDoPerfil.isEmpty() ? java.util.Map.of()
                     : imagemService.fotosPorServico(servicosDoPerfil.stream().map(com.obraslink.model.Servico::getId).toList()));
-            model.addAttribute("disponibilidades",relacionamentosService==null?List.of():relacionamentosService.disponibilidade(prestador.getId()));
+            model.addAttribute("agenda", relacionamentosService == null ? null : relacionamentosService.agendaPublica(prestador));
             Long clienteId=acessoService.getUsuarioAtual().flatMap(u->u.getPapeis().contains(PapelUsuario.CLIENTE)?java.util.Optional.ofNullable(u.getId()):java.util.Optional.<Long>empty()).orElse(null);
             model.addAttribute("favorito",clienteId!=null&&relacionamentosService!=null&&relacionamentosService.ehFavorito(clienteId,prestador.getId()));
             model.addAttribute("perfilAtivo",perfilAtivoService==null||perfilAtivoService.atual()==null?"ADMIN":perfilAtivoService.atual().name());

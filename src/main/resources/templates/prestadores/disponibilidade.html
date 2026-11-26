@@ -3,12 +3,13 @@
 <head th:replace="~{fragments/layout :: head('Agenda - ObraLink')}"></head>
 <body>
 <nav th:replace="~{fragments/layout :: navbar}"></nav>
-<main id="conteudo" class="container container-narrow page workspace-page">
+<main id="conteudo" class="container page workspace-page">
     <header class="page-header">
         <div>
             <p class="eyebrow">Perfil profissional</p>
-            <h1>Disponibilidade semanal</h1>
-            <p>Informe os dias e horários em que você atende. Os horários aparecem no seu perfil público. Períodos sobrepostos no mesmo dia não são aceitos.</p>
+            <h1 th:text="${'Agenda de ' + agenda.mesLabel}">Agenda de Novembro de 2026</h1>
+            <p>Marque os dias em que você já está ocupado ou livre neste mês. Essa agenda aparece no seu perfil
+                público para o cliente ver antes de pedir um orçamento. Dias sem marcação ficam sem informação.</p>
         </div>
     </header>
 
@@ -17,53 +18,63 @@
 
     <div class="card" data-reveal>
         <div class="card-body">
-            <form th:action="@{/prestadores/minha-disponibilidade}" method="post" id="availability-form">
-                <div id="availability-rows">
-                    <div class="availability-row" th:each="d,stat : ${disponibilidades}">
-                        <label>Dia<select th:name="${'itens[' + stat.index + '].dia'}"><option th:each="dia : ${dias}" th:value="${dia}" th:text="${#strings.capitalize(#strings.toLowerCase(dia))}" th:selected="${dia == d.dia}"></option></select></label>
-                        <label>Início<input type="time" th:name="${'itens[' + stat.index + '].inicio'}" th:value="${d.inicio}" required></label>
-                        <label>Fim<input type="time" th:name="${'itens[' + stat.index + '].fim'}" th:value="${d.fim}" required></label>
-                        <button type="button" class="btn btn-ghost remove-availability">Remover</button>
-                    </div>
-                    <div th:if="${#lists.isEmpty(disponibilidades)}" class="availability-row">
-                        <label>Dia<select name="itens[0].dia" required><option value="">Selecione</option><option th:each="dia : ${dias}" th:value="${dia}" th:text="${#strings.capitalize(#strings.toLowerCase(dia))}"></option></select></label>
-                        <label>Início<input type="time" name="itens[0].inicio" required></label>
-                        <label>Fim<input type="time" name="itens[0].fim" required></label>
-                        <button type="button" class="btn btn-ghost remove-availability">Remover</button>
+            <form th:action="@{/prestadores/minha-disponibilidade}" method="post" id="agenda-form">
+                <div class="agenda-horario-comercial">
+                    <label>Horário comercial — início
+                        <input type="time" name="horarioInicio" th:value="${agenda.horarioInicio}">
+                    </label>
+                    <label>Horário comercial — fim
+                        <input type="time" name="horarioFim" th:value="${agenda.horarioFim}">
+                    </label>
+                    <p class="help" style="margin:0">Mesmo horário em todos os dias de atendimento. Deixe os dois campos em branco se preferir não informar.</p>
+                </div>
+
+                <div class="agenda-legenda">
+                    <span><i class="legenda-livre"></i> Livre</span>
+                    <span><i class="legenda-ocupado"></i> Ocupado</span>
+                    <span><i class="legenda-vazio"></i> Sem informação</span>
+                </div>
+
+                <div class="agenda-grid">
+                    <span class="agenda-weekday">Seg</span>
+                    <span class="agenda-weekday">Ter</span>
+                    <span class="agenda-weekday">Qua</span>
+                    <span class="agenda-weekday">Qui</span>
+                    <span class="agenda-weekday">Sex</span>
+                    <span class="agenda-weekday">Sáb</span>
+                    <span class="agenda-weekday">Dom</span>
+
+                    <span class="agenda-dia agenda-dia-vazio" th:if="${!#lists.isEmpty(agenda.dias)}"
+                          th:each="b : ${#numbers.sequence(1, agenda.dias[0].data.dayOfWeek.value - 1)}"></span>
+
+                    <div class="agenda-dia" th:each="d, stat : ${agenda.dias}"
+                         th:attr="data-status=${d.status != null ? d.status : ''}">
+                        <input type="hidden" th:name="${'itens[' + stat.index + '].data'}" th:value="${d.data}">
+                        <span class="agenda-dia-numero" th:text="${d.data.dayOfMonth}">1</span>
+                        <select th:name="${'itens[' + stat.index + '].status'}" class="agenda-dia-select">
+                            <option value="SEM_INFORMACAO" th:selected="${d.status == null}">Sem informação</option>
+                            <option value="LIVRE" th:selected="${d.status != null and d.status.name() == 'LIVRE'}">Livre</option>
+                            <option value="OCUPADO" th:selected="${d.status != null and d.status.name() == 'OCUPADO'}">Ocupado</option>
+                        </select>
                     </div>
                 </div>
-                <button type="button" id="add-availability" class="btn btn-outline btn-sm mt-16">+ Adicionar período</button>
+
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Salvar disponibilidade</button>
+                    <button type="submit" class="btn btn-primary">Salvar agenda</button>
                 </div>
             </form>
         </div>
     </div>
 </main>
 <footer th:replace="~{fragments/layout :: footer}"></footer>
-<script th:inline="javascript">var days = /*[[${dias}]]*/ [];</script>
 <script>
     (() => {
-        const wrap = document.getElementById('availability-rows');
-        const add = document.getElementById('add-availability');
-        const label = d => d.charAt(0) + d.slice(1).toLowerCase();
-        function renumber() {
-            [...wrap.children].forEach((row, i) => row.querySelectorAll('[name]').forEach(el => el.name = el.name.replace(/itens\[\d+\]/, 'itens[' + i + ']')));
-        }
-        add.addEventListener('click', () => {
-            const i = wrap.children.length;
-            const row = document.createElement('div');
-            row.className = 'availability-row';
-            row.innerHTML = '<label>Dia<select name="itens[' + i + '].dia" required><option value="">Selecione</option>'
-                + days.map(d => '<option value="' + d + '">' + label(d) + '</option>').join('')
-                + '</select></label><label>Início<input type="time" name="itens[' + i + '].inicio" required></label>'
-                + '<label>Fim<input type="time" name="itens[' + i + '].fim" required></label>'
-                + '<button type="button" class="btn btn-ghost remove-availability">Remover</button>';
-            wrap.appendChild(row);
-            row.querySelector('select').focus();
-        });
-        wrap.addEventListener('click', e => {
-            if (e.target.matches('.remove-availability')) { e.target.closest('.availability-row').remove(); renumber(); }
+        document.querySelectorAll('.agenda-dia').forEach(dia => {
+            const select = dia.querySelector('select');
+            if (!select) return;
+            const sincronizar = () => { dia.dataset.status = select.value === 'SEM_INFORMACAO' ? '' : select.value; };
+            select.addEventListener('change', sincronizar);
+            sincronizar();
         });
     })();
 </script>
